@@ -1,0 +1,46 @@
+{
+  "name": "pipeline-3stage",
+  "pattern": "pipeline",
+  "description": "Three agents run in sequence: Analyst → Builder → QA. Each consumes the previous stage's output.",
+  "files": [
+    {
+      "path": ".claude/agents/analyst.md",
+      "template": "agent.md",
+      "replace": {
+        "__AGENT_NAME__": "analyst",
+        "__AGENT_TITLE__": "Analyst Agent",
+        "TODO: One-sentence purpose. When the orchestrator should delegate to this agent.": "Analyzes the problem statement and produces a structured spec for the Builder.",
+        "TODO: Two-sentence charter. What is this agent accountable for, and what is\nexplicitly out of scope.": "Accountable for translating a user request into an unambiguous spec: inputs, outputs, constraints, edge cases. Out of scope: writing implementation code."
+      }
+    },
+    {
+      "path": ".claude/agents/builder.md",
+      "template": "agent.md",
+      "replace": {
+        "__AGENT_NAME__": "builder",
+        "__AGENT_TITLE__": "Builder Agent",
+        "TODO: One-sentence purpose. When the orchestrator should delegate to this agent.": "Implements the spec produced by the Analyst. Does not second-guess the spec.",
+        "TODO: Two-sentence charter. What is this agent accountable for, and what is\nexplicitly out of scope.": "Accountable for producing working code that satisfies the Analyst's spec. Out of scope: redefining requirements."
+      }
+    },
+    {
+      "path": ".claude/agents/qa.md",
+      "template": "agent.md",
+      "replace": {
+        "__AGENT_NAME__": "qa",
+        "__AGENT_TITLE__": "QA Agent",
+        "TODO: One-sentence purpose. When the orchestrator should delegate to this agent.": "Verifies the Builder's output against the Analyst's spec. Generates tests.",
+        "TODO: Two-sentence charter. What is this agent accountable for, and what is\nexplicitly out of scope.": "Accountable for confirming spec adherence via tests and edge case probing. Out of scope: reworking implementation."
+      }
+    },
+    {
+      "path": ".claude/skills/pipeline-flow/SKILL.md",
+      "template": "skill/SKILL.md",
+      "replace": {
+        "__SKILL_NAME__": "pipeline-flow",
+        "__SKILL_TITLE__": "Pipeline Flow",
+        "TODO: Describe in 2-4 sentences.\n  (1) WHEN this skill should trigger (keywords, user intents, file patterns)\n  (2) WHAT it does (the workflow or knowledge it injects)\n  (3) When it should NOT trigger (to avoid over-matching)": "Use when the user has a feature request that benefits from Analyst → Builder → QA sequencing. Invokes agents in order, passing each stage's output to the next. Do NOT trigger for trivial single-file edits."
+      }
+    }
+  ]
+}

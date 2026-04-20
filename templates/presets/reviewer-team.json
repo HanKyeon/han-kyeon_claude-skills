@@ -1,0 +1,56 @@
+{
+  "name": "reviewer-team",
+  "pattern": "expert-pool",
+  "description": "Parallel expert reviewers: security, performance, a11y, types. Orchestrator merges findings.",
+  "files": [
+    {
+      "path": ".claude/agents/security-reviewer.md",
+      "template": "agent.md",
+      "replace": {
+        "__AGENT_NAME__": "security-reviewer",
+        "__AGENT_TITLE__": "Security Reviewer",
+        "TODO: One-sentence purpose. When the orchestrator should delegate to this agent.": "Reviews a diff for OWASP-class issues: XSS, injection, auth gaps, secret leakage.",
+        "TODO: Two-sentence charter. What is this agent accountable for, and what is\nexplicitly out of scope.": "Accountable for flagging concrete security risks with file:line citations. Out of scope: style, performance, a11y."
+      }
+    },
+    {
+      "path": ".claude/agents/perf-reviewer.md",
+      "template": "agent.md",
+      "replace": {
+        "__AGENT_NAME__": "perf-reviewer",
+        "__AGENT_TITLE__": "Performance Reviewer",
+        "TODO: One-sentence purpose. When the orchestrator should delegate to this agent.": "Reviews a diff for runtime/render-cost regressions: unstable references, O(n^2), unneeded re-renders.",
+        "TODO: Two-sentence charter. What is this agent accountable for, and what is\nexplicitly out of scope.": "Accountable for flagging perf anti-patterns with measurement suggestions (Profiler, INP). Out of scope: security, style."
+      }
+    },
+    {
+      "path": ".claude/agents/a11y-reviewer.md",
+      "template": "agent.md",
+      "replace": {
+        "__AGENT_NAME__": "a11y-reviewer",
+        "__AGENT_TITLE__": "Accessibility Reviewer",
+        "TODO: One-sentence purpose. When the orchestrator should delegate to this agent.": "Reviews a diff for WCAG 2.1 AA issues: roles, labels, keyboard nav, contrast.",
+        "TODO: Two-sentence charter. What is this agent accountable for, and what is\nexplicitly out of scope.": "Accountable for flagging a11y gaps with cited WCAG criteria. Out of scope: non-UI code."
+      }
+    },
+    {
+      "path": ".claude/agents/types-reviewer.md",
+      "template": "agent.md",
+      "replace": {
+        "__AGENT_NAME__": "types-reviewer",
+        "__AGENT_TITLE__": "Types Reviewer",
+        "TODO: One-sentence purpose. When the orchestrator should delegate to this agent.": "Reviews TypeScript types: any leakage, unsound assertions, narrowing gaps.",
+        "TODO: Two-sentence charter. What is this agent accountable for, and what is\nexplicitly out of scope.": "Accountable for flagging type-safety regressions with suggested corrections. Out of scope: runtime behavior."
+      }
+    },
+    {
+      "path": ".claude/skills/expert-review-pool/SKILL.md",
+      "template": "skill/SKILL.md",
+      "replace": {
+        "__SKILL_NAME__": "expert-review-pool",
+        "__SKILL_TITLE__": "Expert Review Pool",
+        "TODO: Describe in 2-4 sentences.\n  (1) WHEN this skill should trigger (keywords, user intents, file patterns)\n  (2) WHAT it does (the workflow or knowledge it injects)\n  (3) When it should NOT trigger (to avoid over-matching)": "Use on PR review requests or when the user asks for a deep multi-axis code audit. Runs security, perf, a11y, and types reviewers in parallel and merges findings. Do NOT trigger for single-line fixes or docs-only diffs."
+      }
+    }
+  ]
+}

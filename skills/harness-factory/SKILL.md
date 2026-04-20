@@ -1,0 +1,133 @@
+---
+name: harness-factory
+description: |
+  Use this skill when the user wants to design a multi-agent team or scaffold a
+  coordinated set of agents+skills for a domain (keywords: "팀 에이전트", "team agents",
+  "build a harness", "agent team", "multi-agent", "orchestrate agents", "서브에이전트
+  구성"). Interviews the user, picks one of six architecture patterns, and generates
+  .claude/agents/*.md + .claude/skills/*/SKILL.md project-locally. Do NOT trigger for
+  single-skill authoring (use skill-author) or for using existing agents.
+---
+
+# Harness Factory
+
+도메인 설명을 받아 **에이전트 팀 + 전용 스킬**을 프로젝트 로컬(`.claude/`)에 생성하는 메타-스킬입니다. revfactory/harness와 같은 L3 meta-factory 역할.
+
+## 활성화 시 반드시
+
+1. **도메인 인터뷰를 먼저.** 사용자의 작업 특성을 듣지 않고 패턴부터 고르지 말 것.
+2. **6 패턴 중 1개만 선택.** 혼합은 실패 원인. 필요하면 2개 팀으로 분리.
+3. **프로젝트 로컬에 작성.** 출력은 `.claude/agents/`, `.claude/skills/` (사용자 전역 `~/.claude`가 아님).
+4. **CLI가 있으면 CLI 우선.** `cfh generate <preset>`으로 해결 가능한 경우는 그것을 제안. 커스텀이 필요할 때만 직접 파일 작성.
+5. **생성 후 실험 플래그 안내.** 에이전트 간 메시지 교환이 필요하면 `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` 필요함을 알림.
+
+## 6 Phase 워크플로
+
+```
+Phase 1: Domain Interview        (작업 특성 5 질문)
+   ↓
+Phase 2: Pattern Selection       (6 패턴 중 1개 추천 + 사용자 확인)
+   ↓
+Phase 3: Agent Roster            (각 에이전트 책임·도구·입출력 확정)
+   ↓
+Phase 4: Skill Design            (팀을 트리거할 스킬 + 오케스트레이션 스킬)
+   ↓
+Phase 5: Scaffold                (cfh generate 또는 직접 Write)
+   ↓
+Phase 6: Validate + Dry Run      (cfh validate + 샘플 태스크로 시운전)
+```
+
+## Phase 1 — Domain Interview
+
+아래 5개 질문 (→ `references/interview-flow.md`):
+
+1. **태스크 성격** — 반복적/선형적 / 병렬 가능 / 검토·비판이 중요 / 계층적 분해 필요 / 탐색적
+2. **입력·출력** — 한 번에 들어오는 입력 단위(파일/PR/요구사항) + 최종 산출물 형태
+3. **전문성 축** — 보안·성능·a11y·타입·도메인 중 몇 축이 독립적으로 평가되어야 하나
+4. **실패 비용** — 틀리면 롤백 쉬운가, 아니면 수정 비용이 큰가 (큰 경우 producer-reviewer 강제)
+5. **규모** — 에이전트 2~3개로 충분한가, 5개 이상이 필요한가 (5개 넘으면 계층 분해 검토)
+
+## Phase 2 — Pattern Selection
+
+6 패턴 카탈로그 (→ `references/patterns/`):
+
+| 패턴 | 언제 | 에이전트 수 | 통신 |
+|---|---|---|---|
+| **Pipeline** | 선형 단계 변환 (Analyst → Builder → QA) | 2~4 | 순차 |
+| **Fan-out/Fan-in** | 독립 부분 문제를 병렬 + 결과 병합 | 2~N | 병렬 + 집계 |
+| **Expert Pool** | 여러 전문가가 같은 입력을 각자 평가 | 2~6 | 병렬 |
+| **Producer-Reviewer** | 생성과 검증을 **인격 분리** — 오버핏 방지 | 2 | 2-step |
+| **Supervisor** | 1 supervisor가 worker를 동적 배정 | 1 + N | 중앙집중 |
+| **Hierarchical Delegation** | 큰 문제를 재귀 분해, 깊이 2+ | 3~N | 트리 |
+
+각 패턴 상세는 `references/patterns/<pattern>.md`. 사용자에게 추천 1개 + 이유 + 대안 1개 제시.
+
+## Phase 3 — Agent Roster
+
+각 에이전트별로 결정 (→ `references/agent-contract.md`):
+
+- `name` — kebab-case (예: `security-reviewer`)
+- `description` — 오케스트레이터가 언제 이 에이전트를 부르는가
+- `tools` — `Read, Grep, Glob` 등 최소 권한 원칙
+- `input` — 이 에이전트가 받을 것 (경로, 스펙, 이전 단계 출력)
+- `output` — 반환 형식 (단일 메시지 구조: 발견·권고·신뢰도)
+- `refusal` — 거부 조건 (범위 초과, 도구 부족)
+
+## Phase 4 — Skill Design
+
+팀을 **하나의 스킬**로 묶어 트리거 가능하게:
+
+- **트리거 스킬** (필수): 사용자의 의도와 팀의 연결. 예: `expert-review-pool` SKILL이 사용자 "리뷰해줘"에서 발동.
+- **오케스트레이션 스킬** (선택): 패턴이 복잡하면 워크플로를 별도 스킬로. 예: `pipeline-flow` SKILL.
+
+skill-author의 Phase 2~3 규약을 그대로 적용.
+
+## Phase 5 — Scaffold
+
+**옵션 A — CLI (권장, 프리셋에 맞으면)**:
+```bash
+cfh generate producer-reviewer
+cfh generate pipeline-3stage
+cfh generate reviewer-team
+```
+
+**옵션 B — Claude가 직접 Write**: 프리셋에 없는 커스텀 조합. 파일 구조:
+```
+.claude/
+├── agents/
+│   ├── <agent-1>.md
+│   └── <agent-2>.md
+└── skills/
+    └── <team-skill>/
+        └── SKILL.md
+```
+
+각 에이전트 md는 frontmatter `name`, `description`, `tools`를 포함해야 Claude Code가 등록. (→ `references/output-contract.md`)
+
+## Phase 6 — Validate + Dry Run
+
+1. `cfh validate` 실행.
+2. **샘플 태스크 시운전**: 사용자에게 "이 팀이 처음으로 풀 작은 태스크 1개"를 요청. 오케스트레이터가 에이전트들을 호출하는 흐름을 실제로 보고 문제점 파악.
+3. 실패 시 Phase 3~4로 돌아가 에이전트 책임 분할 조정.
+
+## 자주 하는 실수
+
+| 실수 | 대응 |
+|---|---|
+| 에이전트 역할 중복 | "2명이 같은 걸 본다" = 1명으로 병합하거나 축을 분명히 분리 |
+| Producer가 자기 검토 | Producer-Reviewer 패턴 핵심은 **인격 분리** — 같은 agent가 2번 돌지 않음 |
+| 5+ 에이전트 1 레벨 | Hierarchical로 재편 권장 (depth 2) |
+| 모든 에이전트에 `tools: *` | 최소 권한 — 각 역할에 필요한 도구만 |
+| 오케스트레이션을 SKILL.md에만 기술 | 실제 실행은 슬래시 커맨드에도 복제 (`/harness-run` 식) |
+
+## references/
+
+- `patterns/pipeline.md` — 선형 파이프라인
+- `patterns/fan-out-fan-in.md` — 병렬 분해 + 병합
+- `patterns/expert-pool.md` — 병렬 전문가 풀
+- `patterns/producer-reviewer.md` — 생성-검증 분리
+- `patterns/supervisor.md` — 중앙 배정자
+- `patterns/hierarchical-delegation.md` — 트리 분해
+- `interview-flow.md` — Phase 1 질문 상세
+- `agent-contract.md` — 에이전트 정의 프런트매터·입출력 계약
+- `output-contract.md` — `.claude/` 파일 구조와 Claude Code 등록 규칙

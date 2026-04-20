@@ -1,0 +1,164 @@
+<s>
+이 커맨드는 `tdd-first` 스킬을 활성화하여 **테스트 주도 개발 워크플로**를 시작합니다.
+스킬이 자동 트리거되지 않았다면 지금 `~/.claude/skills/tdd-first/SKILL.md`를 읽고 그 5 Phase에 따라 진행하세요.
+</s>
+
+<invocation>
+TDD 워크플로를 시작합니다.
+
+**대상**: `$ARGUMENTS`
+
+- 파일 경로가 주어졌고 **존재한다면**: Test-Fill 모드로 전환 (`/t` 커맨드 권장)
+- 파일 경로가 주어졌고 **존재하지 않는다면**: TDD 모드로 진행 (신규 작성)
+- 비어있다면 사용자에게 "무엇을 새로 만드시겠습니까?"를 질문
+
+</invocation>
+
+<workflow>
+
+## Phase 0 — Scope Narrowing (Phase 1 전 필수)
+
+`tdd-first/references/scope-narrowing.md`의 7 질문으로 작업 범위 먼저 좁히기:
+
+- Q1 작업 단위 (함수 / 컴포넌트 / 기능 / 페이지)
+- Q2 테스트 계층 (Unit / Component / Integration / E2E)
+- Q3 커버리지 목표 (Happy만 / Happy+Edge / 전체)
+- Q4 모킹 경계 (외부 API만 / 브라우저 API까지 / 의존 모듈까지)
+- Q5 의존성 처리 (함께 만듦 / 스텁 / 모킹)
+- Q6 시간 박스 (Phase 어디까지)
+- Q7 Writer/Implementer 분리 여부 (크리티컬 코드?)
+
+범위가 크면 **분해 제안**. 답변 받기 전에 Phase 1 진입 금지.
+
+## Phase 1 — Intent Interview (반드시 먼저)
+
+**코드 쓰기 전에** 사용자에게 아래 질문을 한 번에 리스트로 던지세요:
+
+```
+새 기능의 테스트를 작성하기 전에 의도를 확인하고 싶습니다. 답변해 주세요:
+
+1. **목표**: 이 기능이 하는 일을 한 문장으로?
+2. **Happy Path**: 대표 입력 1개와 기대 결과는?
+3. **Edge Cases**: 아래 중 처리해야 할 것?
+   - null / undefined / 빈 값
+   - 0 / 음수 / 매우 큰 수
+   - 빈 배열 / 중복 / 정렬되지 않음
+4. **Error Cases**: 어떤 입력은 거부/실패해야? (throw / return null / default)
+5. **Out of Scope**: 이번에 **하지 않을 것**은?
+6. **관찰 방법**: 무엇으로 검증? (반환값 / DOM / 콜백 / store / 네트워크)
+
+(유형별 추가)
+- [컴포넌트] Props / 인터랙션 / 외부 데이터 / ARIA
+- [훅] 입출력 / 내부 훅 / side effect / cleanup
+- [API] endpoint / method / 요청·응답 스키마 / 에러 형식 / 재시도
+- [순수 함수] 입출력 타입 / 결정론적인가?
+```
+
+답변이 불충분하면 **옵션 제시 / 가정 공개**로 재질문. 추정하지 말 것.
+
+## Phase 2 — Test Outline (제목만 먼저)
+
+describe/it 제목만 제시하고 사용자 승인 받기:
+
+```ts
+describe('<subject>', () => {
+  describe('happy path', () => {
+    it('does X for valid input');
+  });
+  describe('edge cases', () => {
+    it('returns null for empty array');
+    it('throws on negative');
+  });
+});
+```
+
+사용자가 추가/삭제/재명명. **승인 전 Phase 3 금지.**
+
+## Phase 3 — Failing Tests
+
+**규칙**:
+- 대상 파일의 **시그니처(export 선언)만** 확인. 본문 읽지 말 것.
+- Phase 1~2 합의만 기반으로 테스트 본문 작성.
+- 모든 테스트가 **FAIL 상태**여야 함.
+- 커밋 메시지: `test: add failing tests for <subject>`
+- 프로젝트 테스트 컨벤션(위치·네이밍·커스텀 render) 준수.
+
+## Phase 4 — Implementation (최소 구현)
+
+**규칙**:
+- 테스트를 GREEN으로 만드는 **최소** 구현
+- 테스트 입력에 대한 hard-coded 분기 금지
+- 테스트 파일 수정 금지
+- 테스트가 틀렸다고 판단되면 **필수 선언**:
+
+```
+🚨 TEST CHANGE REQUEST
+- 테스트: <it name>
+- 문제: <이유>
+- 제안: <변경>
+(사용자 승인 전 테스트 파일 수정 금지)
+```
+
+커밋 메시지: `feat: implement <subject>` (또는 `fix:`)
+
+## Phase 5 — Refactor + Intent Preservation
+
+### Refactor
+- 테스트 GREEN 유지하며 구조 개선 (매직 넘버 추출, 함수 분리)
+- 커밋 메시지: `refactor: <what>`
+
+### Intent Preservation 체크 (필수)
+아래를 **테스트와 독립적으로** 검증:
+
+1. Phase 1 Q1 "한 문장 목표"와 구현 요약 일치?
+2. Q3 edge case 중 테스트에 빠진 게 있는데 구현이 처리하는가?
+3. Q4 error 형식이 Q1 의도와 일치?
+4. Q5 out-of-scope가 구현에 섞이지 않았나?
+5. 프로젝트 컨벤션 위반 없는가?
+
+결과를 최종 출력에 명시.
+
+## Property-Based 보강 (선택)
+
+대상이 **순수 함수 / 유틸 / reducer**면 `fast-check`로 최소 1개 property 테스트 추가:
+
+```ts
+import fc from 'fast-check';
+it('property: ...', () => {
+  fc.assert(fc.property(fc.array(fc.integer()), (arr) => { ... }));
+});
+```
+
+상세: `tdd-first/references/property-based-examples.md`
+
+</workflow>
+
+<anti_overfit>
+
+## 오버핏 방지 규칙 (반드시 출력에 명시)
+
+1. **테스트 잠금**: 구현이 통과 못 하면 **구현을 고침**. 테스트 수정은 TEST CHANGE REQUEST로만.
+2. **행동 기반 assertion**: class name/internal state 금지. getByRole, 반환값, 최종 DOM.
+3. **Hard-coding 금지**: 테스트 입력에 대한 `if (x === 'specific') return ...` 금지.
+4. **Phase 1 답변 활용**: 구현이 Phase 1의 모든 요구를 충족하는지 자체 점검.
+5. **Intent Preservation 체크**: Phase 5에서 테스트와 독립적으로 의도 검증.
+
+</anti_overfit>
+
+<output_format>
+
+## 결과 설명 포맷 (출력 전용)
+
+테스트 시나리오 해설, Property-based 도입 제안, TEST CHANGE REQUEST, Intent Preservation 체크 결과는 **Why/What/How/What if 4축**(`tdd-first/references/reasoning-format.md`)으로 작성.
+
+질문(Phase 0·1)에는 이 포맷을 적용하지 말 것. 질문은 자연스러운 형태로.
+
+</output_format>
+
+<constraints>
+- `tdd-first` 스킬의 5 Phase 순서를 **건너뛰지 마세요**. 특히 Phase 1 Intent Interview.
+- Phase 3에서 구현 파일 본문 접근 금지. Phase 4에서 테스트 파일 수정 금지.
+- 프로젝트의 기존 테스트 컨벤션을 준수. 새 패턴 도입 금지.
+- 한국어 설명, describe/it과 코드는 영어.
+- 각 Phase 완료 시 사용자에게 확인 받고 다음 Phase 진입.
+</constraints>

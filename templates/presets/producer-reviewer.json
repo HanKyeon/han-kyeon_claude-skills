@@ -1,0 +1,36 @@
+{
+  "name": "producer-reviewer",
+  "pattern": "producer-reviewer",
+  "description": "Two agents: one produces (writer/implementer), another reviews independently. Used to defeat test-overfit or self-confirmation bias.",
+  "files": [
+    {
+      "path": ".claude/agents/producer.md",
+      "template": "agent.md",
+      "replace": {
+        "__AGENT_NAME__": "producer",
+        "__AGENT_TITLE__": "Producer Agent",
+        "TODO: One-sentence purpose. When the orchestrator should delegate to this agent.": "Writes code, tests, or content to satisfy the given spec. Never self-reviews.",
+        "TODO: Two-sentence charter. What is this agent accountable for, and what is\nexplicitly out of scope.": "Accountable for producing an artifact that satisfies the spec verbatim. Out of scope: judging whether the spec itself is good, or reviewing its own output."
+      }
+    },
+    {
+      "path": ".claude/agents/reviewer.md",
+      "template": "agent.md",
+      "replace": {
+        "__AGENT_NAME__": "reviewer",
+        "__AGENT_TITLE__": "Reviewer Agent",
+        "TODO: One-sentence purpose. When the orchestrator should delegate to this agent.": "Independently reviews a producer's output against the spec. Never sees the producer's reasoning, only the artifact.",
+        "TODO: Two-sentence charter. What is this agent accountable for, and what is\nexplicitly out of scope.": "Accountable for catching spec violations, oversights, and overfitting in the producer's artifact. Out of scope: fixing the artifact — only reports findings."
+      }
+    },
+    {
+      "path": ".claude/skills/producer-reviewer-flow/SKILL.md",
+      "template": "skill/SKILL.md",
+      "replace": {
+        "__SKILL_NAME__": "producer-reviewer-flow",
+        "__SKILL_TITLE__": "Producer/Reviewer Flow",
+        "TODO: Describe in 2-4 sentences.\n  (1) WHEN this skill should trigger (keywords, user intents, file patterns)\n  (2) WHAT it does (the workflow or knowledge it injects)\n  (3) When it should NOT trigger (to avoid over-matching)": "Use when the user wants independent review of produced code/tests to avoid overfit. Invokes the Producer agent to write, then the Reviewer agent to audit against the original spec without seeing the Producer's reasoning. Do NOT trigger for single-agent quick edits."
+      }
+    }
+  ]
+}
