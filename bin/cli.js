@@ -13,6 +13,9 @@ const { diff } = require('../lib/diff');
 const { doctor } = require('../lib/doctor');
 const { trace } = require('../lib/trace');
 const { logEvent, evolve } = require('../lib/evolve');
+const { search } = require('../lib/search');
+const { open: openCmd } = require('../lib/open');
+const { exportCmd, importCmd } = require('../lib/export-import');
 const { name: PKG_NAME, version: PKG_VERSION } = require('../package.json');
 
 const [, , command, ...args] = process.argv;
@@ -22,7 +25,7 @@ function getFlagValue(list, name) {
   return i >= 0 && list[i + 1] !== undefined ? list[i + 1] : null;
 }
 
-const FLAGS_WITH_VALUE = new Set(['--target', '--only', '--top', '--event', '--note', '--helpful', '--utterance']);
+const FLAGS_WITH_VALUE = new Set(['--target', '--only', '--top', '--event', '--note', '--helpful', '--utterance', '--kind', '--editor', '--output']);
 
 const flags = {
   link: args.includes('--link'),
@@ -47,6 +50,11 @@ const flags = {
   deep: args.includes('--deep'),
   fast: args.includes('--fast'),
   usage: args.includes('--usage'),
+  kind: getFlagValue(args, '--kind'),
+  editor: getFlagValue(args, '--editor'),
+  output: getFlagValue(args, '--output'),
+  all: args.includes('--all'),
+  caseSensitive: args.includes('--case-sensitive'),
 };
 
 const positional = [];
@@ -93,6 +101,12 @@ function printHelp() {
     '  log --enable | --disable      Turn telemetry on/off (opt-in, local only)',
     '  log --status                  Show telemetry state and log file summary',
     '  evolve [<skill>]              Analyze description + logs, print suggestions (no auto-apply)',
+    '',
+    'Utilities (0.7.0):',
+    '  search "<keyword>"            Search installed skills/commands by keyword (name + description + body)',
+    '  open <name>                   Open SKILL.md or command .md in $EDITOR',
+    '  export [names...]             Export user-authored assets to a JSON bundle (pass --all for managed too)',
+    '  import <bundle.json>          Import assets from a bundle (conflicts require --force or interactive confirm)',
     '',
     'Options:',
     '  --link                        Use symbolic links instead of copying (install only)',
@@ -232,6 +246,38 @@ async function main() {
       case 'evolve':
         await evolve({
           name: positional[0],
+        });
+        break;
+      case 'search':
+        await search({
+          query: positional.join(' '),
+          target: flags.target,
+          kind: flags.kind,
+          caseSensitive: flags.caseSensitive,
+        });
+        break;
+      case 'open':
+        await openCmd({
+          name: positional[0],
+          target: flags.target,
+          editor: flags.editor,
+        });
+        break;
+      case 'export':
+        await exportCmd({
+          output: flags.output,
+          target: flags.target,
+          all: flags.all,
+          names: positional,
+        });
+        break;
+      case 'import':
+        await importCmd({
+          input: positional[0],
+          target: flags.target,
+          force: flags.force,
+          yes: flags.yes,
+          dryRun: flags.dryRun,
         });
         break;
       case 'version':

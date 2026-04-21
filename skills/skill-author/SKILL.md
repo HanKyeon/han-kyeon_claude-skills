@@ -39,6 +39,16 @@ Phase 4: Write Files             (cfh new로 스캐폴드 + Edit으로 채움)
 Phase 5: Validate + Iterate      (cfh validate 실행 + 드라이런 시험 트리거)
 ```
 
+## Phase 복귀 규칙 (공통)
+
+Phase 2 이후에 초반 답변이 틀렸다고 판단되면 아래 트리거로 이전 Phase 복귀:
+- **"purpose 재인터뷰"** → Phase 1 Purpose Interview 재수행 (Q1~Q6)
+- **"trigger 재설계"** → Phase 2 Trigger Design (description 초안 재작성)
+- **"outline 수정"** → Phase 3 Outline (섹션·references 재구성)
+- **"write 재실행"** → Phase 4 Write Files 복귀 (생성 파일 삭제 후 재생성 또는 편집)
+
+복귀 시 이전 답변은 참고용으로 유지하고 변경된 부분만 갱신. 생성된 `~/.claude/skills/<name>/`이나 `./.claude/skills/<name>/`은 git으로 추적·되돌리기 가능.
+
 ## Phase 0 — Pre-scan
 
 인터뷰 시작 전에 `CLAUDE.md`, `package.json`, `~/.claude/skills/`, `./.claude/skills/`를 훑어 Phase 1의 답변 초안을 만듭니다. 사용자는 "맞음/틀림"만 확인하면 됩니다 (→ `references/pre-scan.md`).
@@ -111,7 +121,36 @@ SKILL.md 섹션 구조 제안 (→ `references/skill-structure.md`):
 
 ## Phase 4 — Write Files
 
-1. `cfh new skill <name>` (또는 `--project`로 프로젝트 로컬) 실행으로 스캐폴드 생성 지시. 사용자가 CLI 실행 권한이 없으면 Claude가 Write tool로 동일 구조 생성.
+### 4a. 이름 충돌 체크 (Write 전 필수)
+
+작성할 경로(`~/.claude/skills/<name>/` 또는 `./.claude/skills/<name>/`)의 **존재 여부를 반드시 확인**. 존재 시:
+
+```
+⚠️ 이름 충돌: `<name>` 스킬이 이미 존재합니다.
+   위치: <경로>
+   상태: <managed@X | user-authored | user-modified | user-authored (adopted)>
+
+어떻게 진행할까요?
+  (a) 다른 이름으로 새로 생성 — 이름 제안 받기
+  (b) 기존을 편집 모드로 전환 — 현재 SKILL.md를 Phase 2·3 결과에 맞춰 Edit
+  (c) 기존을 덮어쓰고 새로 생성 — ⚠️ 아래 경고
+  (d) 취소
+```
+
+**(c) 덮어쓰기 선택 시 추가 확인**:
+- 기존이 `user-authored` 또는 `user-modified`면 명시적 y/N:
+  ```
+  🚨 기존 `<name>`은 사용자 작성물입니다 (삭제 시 복구 불가).
+  정말 덮어쓰시겠습니까? [y/N]
+  ```
+  `y`만 통과. 그 외 전부 취소.
+- 기존이 managed이면 한 줄 경고("패키지 버전이 덮어써집니다") 후 진행.
+
+### 4b. 실제 작성
+
+1. `cfh new skill <name>` (또는 `--project`로 프로젝트 로컬) 실행으로 스캐폴드 생성. 충돌 체크 통과 후 실행하면 에러 없음.
+   - CLI 실행 권한이 없거나 덮어쓰기 승인된 경우 Claude가 Write tool로 동일 구조 생성.
+   - 덮어쓰기 승인 시 `cfh new ... --force` 사용.
 2. `SKILL.md`의 TODO 마커를 Phase 1~3 답변으로 대체.
 3. `references/`에 **각 참조 파일을 개별 생성.** 섹션 하나하나에 "언제 로드되는가"를 주석으로 표시.
 4. 커밋 메시지 초안: `feat(skill): add <skill-name> for <one-sentence purpose>`

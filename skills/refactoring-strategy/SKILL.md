@@ -24,6 +24,17 @@ description: |
 
 - **(z) 모르겠음 fallback.** Scope Narrowing의 모든 질문에 `(z) 모르겠음` 옵션 기본 탑재. 선택 시 `~/.claude/skills/asset-factory/references/unknown-answer-playbook.md`의 3단계 처리.
 
+## Step 복귀 규칙 (공통)
+
+Step 3 이후에 초반 판단이 틀렸다고 판단되면 아래 트리거로 이전 Step 복귀:
+- **"scope 재조정"** → Step 1 Scope Narrowing 재수행
+- **"blast radius 재산정"** → Step 3 Blast Radius 분석 재실행
+- **"safety net 재검토"** → Step 4 Safety Net (테스트 보강 계획 수정)
+- **"PR 분해 재설계"** → Step 5 Small PR 계획 재작성
+- **"legacy 재분류"** → Step 7 Legacy 기록 범위 조정
+
+복귀 시 이전 답변·스캔 결과는 참고용으로 유지하고 변경된 부분만 갱신. 각 PR 단위로 이미 커밋돼 있으면 `git revert` 또는 `git reset`으로 코드 레벨 되돌리기도 병행 가능.
+
 ## 워크플로 (시작 전 순서)
 
 ```

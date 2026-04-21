@@ -144,12 +144,47 @@ skill-author의 Phase 2~3 규약을 그대로 적용.
 
 ## Phase 5 — Scaffold
 
+### 5a. 이름 충돌 체크 (Scaffold 전 필수)
+
+생성할 각 파일의 경로를 **먼저 확인**:
+- `./.claude/agents/<agent-name>.md` × N개 (에이전트마다)
+- `./.claude/skills/<team-skill>/SKILL.md`
+
+하나라도 이미 존재하면:
+
+```
+⚠️ 이름 충돌 감지
+   다음 파일이 이미 존재합니다:
+   - ./.claude/agents/<name-1>.md (상태: <managed | user-authored | ...>)
+   - ./.claude/skills/<team>/SKILL.md (상태: ...)
+
+어떻게 진행할까요?
+  (a) 모든 충돌 이름 변경 — 팀 이름·에이전트 이름 재제안 인터뷰
+  (b) 일부만 재사용 — 충돌 파일 개별로 (편집 / 다른 이름 / 덮어쓰기) 결정
+  (c) 전부 덮어쓰기 — ⚠️ user-authored 대상은 아래 경고
+  (d) 취소
+```
+
+**(b) 또는 (c) 덮어쓰기 포함 시 user-authored 파일은 명시적 y/N 확인**:
+```
+🚨 ./.claude/agents/<name>.md는 사용자 작성물입니다 (삭제 시 복구 불가).
+정말 덮어쓰시겠습니까? [y/N]
+```
+`y`만 통과. 그 외 전부 해당 파일 취소.
+
+### 5b. 실제 생성
+
+충돌 체크 통과 후:
+
 **옵션 A — CLI (권장, 프리셋에 맞으면)**:
 ```bash
 cfh generate producer-reviewer
 cfh generate pipeline-3stage
 cfh generate reviewer-team
+cfh generate reviewer-team-backend
 ```
+
+덮어쓰기 승인이 있었다면 `cfh generate <preset> --force` 사용.
 
 **옵션 B — Claude가 직접 Write**: 프리셋에 없는 커스텀 조합. 파일 구조:
 ```

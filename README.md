@@ -35,11 +35,15 @@ cfh list                 # 5 skills + 12 commands 보이면 성공
 
 (5) /cfh-plan 막연한 작업 — 어디부터 시작할지 모름
    → 목표·성공 기준·제약 받고 접근법 카드 제안
+
+(6) /cfh-feedback tdd-first "인터뷰 중 어색했던 점 짧게"
+   → 피드백은 `~/.claude/.cfh-logs/`에만 저장 (외부 전송 없음).
+   → cfh evolve가 이 기록을 분석해 스킬 개선 제안을 만듭니다.
 ```
 
-위 5단계만 거치면 이 패키지의 **3대 핵심**(작업 자동 트리거 / dispatcher / 사용자 자산 작성)을 모두 만져보신 셈입니다. 다음은 [표준 사용법](#표준-사용법) 섹션이나 본인 상황에 맞는 [시나리오 가이드](#언제-무엇을-쓰나--시나리오-가이드)로 가시면 됩니다.
+위 6단계만 거치면 이 패키지의 **4대 핵심**(자동 트리거 / dispatcher / 자산 작성 / 피드백 루프)을 모두 만져보신 셈입니다. 다음은 [표준 사용법](#표준-사용법) 섹션이나 본인 상황에 맞는 [시나리오 가이드](#언제-무엇을-쓰나--시나리오-가이드)로 가시면 됩니다.
 
-> 익숙해지시면 `cfh-guide`·`cfh-trace`·`cfh-make`·`cfh-plan` 4개 슬래시 커맨드만 기억하셔도 95% 커버됩니다.
+> 익숙해지시면 `cfh-guide`·`cfh-trace`·`cfh-make`·`cfh-plan`·`cfh-feedback` 5개 슬래시 커맨드만 기억하셔도 95% 커버됩니다.
 
 ---
 
@@ -550,6 +554,10 @@ cfh trace "<이 스킬이 떠야 할 대표 발화>"
 | **변경 확인** | `cfh diff <name>` | 내가 뭘 바꿨는지 확인 |
 | **전체 점검** | `cfh doctor` | 트리거 충돌·고아 manifest·shadowing 진단 |
 | **트리거 확인** | `cfh trace "<발화>"` | 어느 스킬이 매칭될지 미리보기 |
+| **키워드 검색** | `cfh search "<키워드>"` *(0.7.0)* | 설치 자산을 name·description·본문 검색 |
+| **자산 편집** | `cfh open <name>` *(0.7.0)* | $EDITOR로 SKILL.md·command 열기 |
+| **자산 내보내기** | `cfh export` *(0.7.0)* | user-authored 자산을 JSON 번들로 |
+| **자산 가져오기** | `cfh import <bundle.json>` *(0.7.0)* | 번들을 풀어 설치 |
 | **로깅 제어** | `cfh log --enable/--disable/--status` | 옵트인 텔레메트리 제어 |
 | **이벤트 기록** | `cfh log <skill> --event --utterance --helpful` | 사용 패턴 수집 |
 | **스킬 제안** | `cfh evolve [<name>]` | description·원칙 개선 포인트 제안 |
@@ -779,6 +787,57 @@ cfh trace "이 PR 리뷰 좀" --top 10         # 상위 10개
 ```
 
 슬래시 커맨드 `/cfh-trace`는 인자 없이도 동작 — 발화를 묻는 인터뷰 모드로 전환합니다. 점수는 참고용이며, Claude Code의 실제 트리거는 대화 컨텍스트 전체를 고려해 결정됩니다.
+
+---
+
+## Utility commands (0.7.0)
+
+### `cfh search "<keyword>"`
+
+설치된 스킬·커맨드의 **name / description / 본문**을 키워드로 검색합니다. `cfh trace`가 발화 시뮬레이션이라면 `search`는 명시적 키워드 검색입니다.
+
+```bash
+cfh search "TDD"                         # 기본
+cfh search "리팩터링" --kind skill       # 스킬만
+cfh search "React" --case-sensitive      # 대소문자 구분
+cfh search "bluebird" --target ./.claude # 커스텀 경로
+```
+
+출력: 매칭된 자산의 경로 + 매칭 위치(name·description·body 중 어디서).
+
+### `cfh open <name>`
+
+설치된 자산의 파일을 `$EDITOR`로 엽니다. `adopt` 후 편집하거나 `cfh-feedback`으로 받은 개선 제안 반영할 때 편리합니다.
+
+```bash
+cfh open tdd-first                       # $EDITOR로 ~/.claude/skills/tdd-first/SKILL.md 열기
+cfh open cfh-review --editor "code -w"   # VSCode로
+cfh open my-skill --target ./.claude     # 프로젝트 로컬 대상
+```
+
+`$EDITOR`·`$VISUAL` 환경변수가 비어있으면 파일 경로만 출력. 프로젝트 로컬과 전역에 같은 이름이 있으면 **프로젝트 쪽이 우선**.
+
+### `cfh export` / `cfh import`
+
+user-authored 자산을 JSON 번들로 묶어 팀원과 공유하거나 다른 PC로 이식.
+
+```bash
+# Export — 기본은 user-authored만
+cfh export                               # cfh-export-2026-04-22.json 생성
+cfh export --output my-bundle.json
+cfh export --all                         # managed도 포함
+cfh export my-skill my-cmd               # 특정 항목만
+
+# Import
+cfh import my-bundle.json                # 충돌 시 에러 (기본)
+cfh import my-bundle.json --force        # 덮어쓰기 (user-authored는 여전히 확인 요구)
+cfh import my-bundle.json --dry-run      # 미리보기
+cfh import my-bundle.json --yes          # 일괄 승인
+```
+
+번들 포맷 (`cfh-bundle-v1`): JSON 하나에 파일 내용 전체 포함. zero-dep이라 별도 압축 라이브러리 없음. 작은 스킬 10~20개면 수십 KB 수준.
+
+**Import된 자산은 user-authored로 취급**(manifest 없음) — `cfh update`에서 자동 보호됨.
 
 ---
 
@@ -1082,6 +1141,98 @@ cfh list                # 커스텀 스킬은 그대로 user-authored로 남음
 
 ---
 
+## Monorepo 사용
+
+Nx / Turborepo / Yarn Workspaces / pnpm Workspaces 등 모노레포에서는 **패키지별로 다른 규약·스킬이 필요한 상황**이 생깁니다. 본 패키지는 monorepo 전용 기능은 제공하지 않지만, **Claude Code의 cwd 기준 `.claude/` 탐색**을 활용해 간단히 구성할 수 있습니다.
+
+### 3가지 배치 패턴
+
+#### A. 루트만 — 공통 `.claude/` (가장 단순)
+
+```
+monorepo/
+├── .claude/              # 모든 패키지에 공통 적용될 규약
+│   ├── skills/
+│   └── commands/
+├── CLAUDE.md
+├── packages/
+│   ├── web-fe/
+│   ├── api-backend/
+│   └── shared-lib/
+└── package.json
+```
+
+**언제 쓰나**: 패키지 간 규약 차이가 크지 않고 공통 스타일·TDD 원칙을 공유할 때.
+**한계**: 패키지별 스택 차이(FE vs BE)가 크면 스킬이 오발동.
+
+#### B. 패키지 로컬만 — 각 패키지에 `.claude/`
+
+```
+monorepo/
+├── packages/
+│   ├── web-fe/
+│   │   ├── .claude/           # FE 전용 규약 (예: /cfh-tdd 기반 RTL)
+│   │   │   ├── skills/
+│   │   │   └── commands/
+│   │   └── CLAUDE.md
+│   ├── api-backend/
+│   │   ├── .claude/           # BE 전용 규약 (예: /cfh-tdd-gen 기반)
+│   │   │   ├── skills/
+│   │   │   └── commands/
+│   │   └── CLAUDE.md
+│   └── shared-lib/
+│       └── .claude/           # 라이브러리 전용
+└── package.json
+```
+
+**언제 쓰나**: 패키지가 서로 다른 스택·도메인이라 공통 규약이 거의 없을 때.
+**사용법**: 해당 패키지 디렉터리에 `cd` 한 뒤 Claude Code 실행. cwd 기준 `.claude/`가 잡힘.
+```bash
+cd packages/api-backend
+claude    # 이 패키지의 .claude/만 인식됨
+```
+
+#### C. 하이브리드 — 루트 + 패키지별 override (권장, 대부분 실무)
+
+```
+monorepo/
+├── .claude/                   # 공통 최소 (skill-author·refactoring-strategy 등 메타만)
+├── packages/
+│   ├── web-fe/
+│   │   └── .claude/           # FE 특화 추가 (RTL 관례·디자인 시스템 규약)
+│   ├── api-backend/
+│   │   └── .claude/           # BE 특화 추가 (DB 마이그레이션 체크 등)
+│   └── shared-lib/
+│       └── .claude/           # 라이브러리 특화 (API stability 규약)
+```
+
+**언제 쓰나**: 공통 원칙은 있지만 패키지별 특화가 필요한 일반적 모노레포.
+
+### 명령 실행 위치 지침
+
+| 작업 | 실행 위치 | 결과 |
+|---|---|---|
+| 공통 규약 자산 생성 | 모노레포 **루트** | `<root>/.claude/`에 생성 |
+| 패키지 특화 자산 생성 | **해당 패키지 디렉터리** | `<root>/packages/<pkg>/.claude/`에 생성 |
+| `cfh generate <preset>` | 팀이 적용될 위치에서 | 실행한 위치의 `.claude/`에 생성 |
+| `cfh install` | 어디서든 | 항상 `~/.claude/` 전역 (변경 없음) |
+| `cfh list` | 패키지 디렉터리 | 전역 + 해당 패키지 `.claude/` 표시 |
+| `cfh doctor` | 패키지 디렉터리 | 해당 패키지 관점에서 점검 |
+
+### 알려진 한계
+
+- **자산 상속·오버라이드는 Claude Code 자체의 `.claude/` 탐색 규칙에 의존**합니다. 현재 Claude Code가 상위 디렉터리까지 자동 탐색하는지는 버전에 따라 다릅니다. 루트 공통 `.claude/`가 패키지 로컬 `.claude/`와 섞이길 기대하신다면 실제 동작을 **`cfh trace`·샘플 발화로 검증**하세요.
+- 본 패키지의 `cfh` CLI는 항상 **실행한 cwd 기준**으로 `./.claude/`를 봅니다. 여러 패키지를 한 번에 점검하는 `cfh --workspaces` 옵션은 0.7.0에 포함되지 않습니다 (실제 수요 확인 후 0.8.0+ 검토).
+- 패키지별 `.claude/`를 **git commit**하면 팀원이 clone 시 자동 적용되나, `~/.claude/` 전역 자산은 각자 `cfh install`이 필요.
+
+### 간단한 전략
+
+1. **처음에는 A 패턴** (루트 공통)으로 시작. 특화가 필요하면 그때 B·C로 확장.
+2. 각 패키지의 `CLAUDE.md`에 **"이 패키지 스택·규약"**을 짧게 명시 — cfh-review의 `stack_kind` 감지가 정확해짐.
+3. 공통 규약은 **`refactoring-strategy`·`skill-author`·`harness-factory`** 같은 메타-스킬 위주로, 패키지별로는 **도메인 스킬**(결제·인증·UI 컴포넌트 등)을 분리.
+
+---
+
 ## CI 통합
 
 `cfh validate`를 CI에 넣어 잘못된 스킬 merge를 차단:
@@ -1163,6 +1314,44 @@ cfh install --force
 ### Q. 팀 산출물이 잘못됐을 때 감지 못 할까 봐 걱정됩니다 *(0.6.0)*
 
 `/cfh-team` Phase 1 Q6 관측성 질문이 정확히 그 우려를 다룹니다. (e) 감지 경로 없음 + Q4 실패 비용 (b)/(c)이면 Sanity check R8이 트리거되어 Producer-Reviewer 강제 권고 또는 사람 승인 관문 추가를 제안합니다.
+
+### Q. Shell에서 cfh 자동완성을 쓰고 싶어요 *(0.7.0)*
+
+bash·zsh 자동완성 스크립트가 `completions/` 디렉터리에 포함돼 있습니다.
+
+```bash
+# bash
+echo 'source '$(npm root -g)'/@han-kyeon/claude-skills/completions/cfh.bash' >> ~/.bashrc
+
+# zsh
+echo 'fpath=('$(npm root -g)'/@han-kyeon/claude-skills/completions $fpath)' >> ~/.zshrc
+echo 'autoload -Uz compinit && compinit' >> ~/.zshrc
+```
+
+Tab을 누르면 서브커맨드·플래그·자산 이름(`remove <TAB>` 등)이 자동완성됩니다. 상세: `completions/README.md`.
+
+### Q. 자산을 팀원에게 공유하고 싶어요 *(0.7.0)*
+
+두 가지 방법:
+
+**방법 1 — 프로젝트 로컬 + git**: 팀 공유가 목적이면 `./.claude/`에 작성하고 git commit. 팀원은 `git pull`만 하면 자동 적용.
+
+**방법 2 — export/import 번들**: 전역 자산(`~/.claude/`)을 다른 PC로 옮기거나 일회성으로 공유할 때.
+```bash
+# 내보내기
+cfh export --output my-skills.json
+
+# 받은 사람
+cfh import my-skills.json
+```
+
+### Q. Hooks로 사용 로그를 자동 수집하고 싶어요
+
+`HOOKS.md`에 Claude Code `settings.json`의 `PostToolUse`·`Stop`·`UserPromptSubmit` 훅에 `cfh log`를 연결하는 7가지 레시피가 있습니다. CI에서 `cfh doctor`·`cfh evolve` 돌리는 예제도 포함.
+
+### Q. Monorepo에서는 어떻게 쓰나요 *(0.7.0)*
+
+`./.claude/`는 Claude Code가 cwd 기준으로 탐색하므로 **패키지 디렉터리에 cd한 뒤 Claude Code 실행**이 기본 패턴입니다. 3가지 배치(루트만 / 패키지만 / 하이브리드) 가이드는 이 README의 "Monorepo 사용" 섹션 참고.
 
 ### Q. 프로젝트별로 다른 스킬을 쓰고 싶습니다
 

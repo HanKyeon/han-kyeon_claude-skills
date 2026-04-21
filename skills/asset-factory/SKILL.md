@@ -40,16 +40,51 @@ Phase 2: Delegation              (분류 결과에 따라 skill-author / harness
 `$ARGUMENTS`가 있으면 그대로 사용 ("이대로 이해했는데 맞으십니까?"로 확인만). 없으면:
 > *"무엇을 Claude가 하도록 만들고 싶으신가요? 한 문장으로 설명해 주세요."*
 
-### Step 1b — Scoped Pre-scan (요구사항 기반 중복 검사)
+### Step 1b — Scoped Pre-scan (이름 충돌 + 요구사항 기반 중복 검사)
 
-요구사항 토큰을 기준으로 매칭 가능성 있는 자산만 스캔 (→ `references/classification-tree.md`의 Pre-scan 섹션):
+**두 단계 검사**를 수행 (→ `references/classification-tree.md`의 Pre-scan 섹션):
+
+#### (i) 정확한 이름 일치 검사 (우선순위 높음)
+
+요구사항에서 이름 후보가 추출되면(예: "payment-rules", "audit-command") 다음 위치에서 **정확한 이름 일치**를 먼저 확인:
+- `~/.claude/skills/<name>/SKILL.md`
+- `./.claude/skills/<name>/SKILL.md`
+- `~/.claude/commands/<name>.md`
+- `./.claude/commands/<name>.md`
+- `./.claude/agents/<name>.md`
+
+**이름 일치 발견 시**:
+```
+⚠️ 이름 충돌: `<name>` 자산이 이미 존재합니다.
+   위치: <경로>
+   상태: <managed@X | user-authored | user-modified | user-authored (adopted)>
+
+어떻게 진행할까요?
+  (a) 기존 자산 편집 모드로 전환 — skill-author·harness-factory가 '기존 편집'으로 위임
+  (b) 다른 이름으로 새로 생성 — 이름 제안 인터뷰로 이동
+  (c) 기존을 덮어쓰고 새로 생성 — ⚠️ 아래 경고 참고
+  (d) 취소
+```
+
+**(c) 덮어쓰기 선택 시 추가 확인**:
+- 기존이 `user-authored` 또는 `user-modified`면 다시 y/n 명시 확인:
+  ```
+  🚨 기존 `<name>`은 사용자 작성물입니다 (삭제 시 복구 불가).
+  정말 덮어쓰시겠습니까? [y/N]
+  ```
+  `y`만 통과. 그 외 (N·공백·Enter·다른 문자) 전부 취소 처리.
+- 기존이 managed이면 경고만("패키지 버전이 덮어써집니다") 후 진행.
+
+#### (ii) 요구사항 토큰 기반 유사도 검사 (기존)
+
+이름 일치가 없고 사용자가 (b) "다른 이름으로 새로 생성"을 선택한 경우에만 수행:
 
 1. `~/.claude/skills/*/SKILL.md`, `./.claude/skills/*/SKILL.md` frontmatter description만 추출
 2. `~/.claude/commands/*.md`, `./.claude/commands/*.md` 파일명과 1~3줄 요약 추출
 3. `./.claude/agents/*.md` (있으면) 존재 여부 확인
 4. 요구사항 토큰과 각 description 매칭 → **30% 이상 겹침**만 노출
 
-중복 발견 시:
+유사도 발견 시:
 ```
 🔎 기존에 유사한 자산이 있습니다:
 - `<name>` (<skill|command|team>): <1줄 설명>

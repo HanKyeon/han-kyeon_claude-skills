@@ -1,10 +1,14 @@
 ---
 name: tdd-first
 description: |
-  Use this skill when the user wants to follow TDD (test-driven development),
-  asks to write tests first (테스트 먼저, 테스트부터), is starting a new feature,
-  fixing a bug that lacks a regression test, or refactoring a tested area.
-  Runs a 5-phase workflow with structural defenses against test-overfit.
+  Use this skill when the user wants to follow TDD (test-driven development) for
+  **React/Vue/frontend components** — asks to write tests first (테스트 먼저, 테스트부터),
+  is starting a new feature, fixing a bug that lacks a regression test, or refactoring
+  a tested area. Runs a 5-phase workflow with structural defenses against test-overfit
+  and uses Testing Library (getByRole, userEvent, MSW) conventions. Do NOT trigger
+  when the project is backend-only (Node/Python/Go/Rust/Java without React or Vue),
+  CLI, library, or pure logic — `tdd-general` covers stack-neutral TDD with
+  framework-agnostic idioms.
 ---
 
 # TDD-First Workflow

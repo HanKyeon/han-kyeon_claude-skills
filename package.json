@@ -1,6 +1,6 @@
 {
   "name": "@han-kyeon/claude-skills",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Portable Claude Code skills, commands, and team-agent factory. FE-friendly with general-purpose meta-skills for authoring, team design, and evolution.",
   "publishConfig": {
     "access": "public"
@@ -15,6 +15,7 @@
     "skills",
     "commands",
     "templates",
+    "completions",
     "README.md",
     "LICENSE"
   ],
@@ -39,6 +40,8 @@
   "license": "MIT",
   "author": "hankyeon",
   "scripts": {
-    "test": "node bin/cli.js list --target ./.test-target"
+    "test": "node --test tests/*.test.js",
+    "test:watch": "node --test --watch tests/*.test.js",
+    "smoke": "node bin/cli.js list --target ./.test-target"
   }
 }
