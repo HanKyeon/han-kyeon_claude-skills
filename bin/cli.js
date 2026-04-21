@@ -13,6 +13,7 @@ const { diff } = require('../lib/diff');
 const { doctor } = require('../lib/doctor');
 const { trace } = require('../lib/trace');
 const { logEvent, evolve } = require('../lib/evolve');
+const { name: PKG_NAME, version: PKG_VERSION } = require('../package.json');
 
 const [, , command, ...args] = process.argv;
 
@@ -58,11 +59,12 @@ for (let i = 0; i < args.length; i++) {
 function printHelp() {
   const help = [
     '',
-    '@han-kyeon/claude-skills — Portable Claude Code skills, commands, and team-agent factory',
+    `@han-kyeon/claude-skills v${PKG_VERSION} — Portable Claude Code skills, commands, and team-agent factory`,
     '',
     'Usage:',
     '  claude-skills <command> [options] [args...]',
     '  cfh <command> [options] [args...]',
+    '  cfh --version              Print version and exit',
     '',
     'Install commands:',
     '  install [name...]             Install packaged skills + commands (copy by default)',
@@ -225,6 +227,12 @@ async function main() {
         await evolve({
           name: positional[0],
         });
+        break;
+      case 'version':
+      case '--version':
+      case '-v':
+        console.log(`${PKG_NAME} ${PKG_VERSION}`);
+        console.log(`node ${process.version}`);
         break;
       case undefined:
       case 'help':

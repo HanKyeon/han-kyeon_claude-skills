@@ -2,21 +2,30 @@
 
 사용자의 요구사항을 **skill / command / team / agent / (생성 불필요)** 중 하나로 분류하는 decision tree입니다. Phase 1의 Q1~Q3 질문을 해석하는 상세 가이드.
 
-## Pre-scan 프로토콜
+## Scoped Pre-scan 프로토콜
 
-Phase 1에 들어가기 전에 반드시:
+**Step 1a(요구사항) 후에만 실행.** 요구사항이 없는 상태에서 broad scan 금지.
 
-```
-1. Glob "~/.claude/skills/*/SKILL.md"           → frontmatter description만
-2. Glob "./.claude/skills/*/SKILL.md"           → frontmatter description만
-3. Glob "~/.claude/commands/*.md"               → 파일명 + 첫 3줄
-4. Glob "./.claude/commands/*.md"               → 파일명 + 첫 3줄
-5. Glob "./.claude/agents/*.md"                 → 존재 여부 + 개수
-```
+### 토큰 기반 scoped 스캔
 
-**중복 감지 룰**: 사용자 한 문장 요구사항의 명사·동사를 토큰화하여, 기존 자산 description과 **30% 이상 공통 토큰**이면 중복 후보로 표시.
+1. Step 1a 요구사항 문자열에서 **명사·동사 토큰 추출** (불용어 제외)
+2. 아래 Glob으로 자산의 **description/요약만** 수집 (경량 — 각 자산 3~5줄):
+   - `~/.claude/skills/*/SKILL.md` → frontmatter description
+   - `./.claude/skills/*/SKILL.md` → frontmatter description
+   - `~/.claude/commands/*.md` → 파일명 + `<invocation>` 또는 첫 3줄
+   - `./.claude/commands/*.md` → 동일
+   - `./.claude/agents/*.md` → 존재 여부 + 개수
+3. 각 자산 description 토큰과 요구사항 토큰의 **공통 비율** 계산
+4. **30% 이상 겹치는 자산만** 사용자에게 노출 (나머지는 보고 생략)
 
-중복 후보가 있으면 분류 질문 전에 먼저 안내:
+### 왜 scoped인가
+
+- Broad scan은 자산 10~30개 모두의 description을 사용자에게 나열하게 되어 시끄럽고 산만.
+- 요구사항 토큰 기반 필터링으로 **정말 중복 위험이 있는 자산만** 보여주면 사용자가 (a)/(b)/(c) 결정이 쉬움.
+- 스캔 자체 비용은 동일(모든 description을 읽긴 함)이나 **사용자에게 보여주는 부분**이 노이즈 감소.
+
+### 중복 발견 시 안내
+
 ```
 🔎 유사 자산 발견
 - `<name>` (<kind>): <description 1줄>
@@ -26,7 +35,17 @@ Phase 1에 들어가기 전에 반드시:
 (c) 이 자산을 먼저 확인하고 다시 결정
 ```
 
-(a) 선택 시 Phase 2로 바로 — 단 "새 생성" 대신 "편집 가이드"로 분기. (b) 선택 시 분류 질문 계속. (c)는 대화 종료.
+- (a) → Phase 2로 바로, 단 "새 생성" 대신 "편집 가이드"로 분기
+- (b) → Step 1c(분류 질문) 계속
+- (c) → 대화 종료
+
+### 중복 없음 시
+
+```
+✅ 유사 자산 없음. 분류 질문으로 진행합니다.
+```
+
+바로 Step 1c로.
 
 ---
 

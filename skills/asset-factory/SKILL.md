@@ -17,31 +17,38 @@ description: |
 
 ## 활성화 시 반드시
 
-1. **분류 먼저, 위임은 그 다음.** 3단계 질문 전에 파일 생성·다른 스킬 호출 금지.
-2. **one-shot 요청 걸러내기.** 진짜 반복 가능한 작업인지부터 확인. 한 번 쓰고 끝날 일이면 스킬·커맨드 불필요 — 바로 Claude에게 말하면 됨.
-3. **분류 결과 공개.** "skill로 판단했습니다. 이유: X. 다릅니까?"로 사용자에게 판단 근거를 보여주고 교정 기회 제공.
-4. **위임 시 컨텍스트 전달.** Q1~Q3 답변을 위임받는 메타-스킬이 재질문하지 않도록 충분히 넘겨줌.
-5. **중복 생성 금지.** 이미 해당 기능의 스킬이 있으면 (`~/.claude/skills/`, `./.claude/skills/` 스캔) 생성 대신 편집·확장 제안.
+1. **요구사항 먼저, 스캔은 그 위에.** 한 문장 요구사항을 받은 뒤, 그 요구사항 토큰으로 매칭되는 자산만 scoped 스캔. Broad scan 금지.
+2. **분류 먼저, 위임은 그 다음.** 3단계 질문 전에 파일 생성·다른 스킬 호출 금지.
+3. **one-shot 요청 걸러내기.** 진짜 반복 가능한 작업인지부터 확인. 한 번 쓰고 끝날 일이면 스킬·커맨드 불필요 — 바로 Claude에게 말하면 됨.
+4. **분류 결과 공개.** "skill로 판단했습니다. 이유: X. 다릅니까?"로 사용자에게 판단 근거를 보여주고 교정 기회 제공.
+5. **위임 시 컨텍스트 전달.** Q1~Q3 답변을 위임받는 메타-스킬이 재질문하지 않도록 충분히 넘겨줌.
+6. **중복 생성 금지.** 요구사항 토큰 기반 scoped 스캔에서 유사 자산 감지 시 생성 대신 편집·확장 제안.
 
-## 3 Phase 워크플로
+## 2 Phase 워크플로
 
 ```
-Phase 0: Pre-scan                (기존 자산 중복 확인)
-   ↓
-Phase 1: Intent Capture          (한 문장 요구사항 + 3 분류 질문)
+Phase 1: Intent Capture          (요구사항 → scoped Pre-scan → 3 분류 질문)
    ↓
 Phase 2: Delegation              (분류 결과에 따라 skill-author / harness-factory / 인라인)
 ```
 
-## Phase 0 — Pre-scan
+## Phase 1 — Intent Capture
 
-활성화 직후 아래를 수행 (→ `references/classification-tree.md`의 Pre-scan 섹션):
+### Step 1a — 한 문장 요구사항
+
+`$ARGUMENTS`가 있으면 그대로 사용 ("이대로 이해했는데 맞으십니까?"로 확인만). 없으면:
+> *"무엇을 Claude가 하도록 만들고 싶으신가요? 한 문장으로 설명해 주세요."*
+
+### Step 1b — Scoped Pre-scan (요구사항 기반 중복 검사)
+
+요구사항 토큰을 기준으로 매칭 가능성 있는 자산만 스캔 (→ `references/classification-tree.md`의 Pre-scan 섹션):
 
 1. `~/.claude/skills/*/SKILL.md`, `./.claude/skills/*/SKILL.md` frontmatter description만 추출
 2. `~/.claude/commands/*.md`, `./.claude/commands/*.md` 파일명과 1~3줄 요약 추출
 3. `./.claude/agents/*.md` (있으면) 존재 여부 확인
+4. 요구사항 토큰과 각 description 매칭 → **30% 이상 겹침**만 노출
 
-사용자 요구사항에 이미 존재하는 자산과 **30% 이상 의미 겹침**이 감지되면:
+중복 발견 시:
 ```
 🔎 기존에 유사한 자산이 있습니다:
 - `<name>` (<skill|command|team>): <1줄 설명>
@@ -49,14 +56,9 @@ Phase 2: Delegation              (분류 결과에 따라 skill-author / harness
 (a) 이 자산을 확장·편집 (b) 별도로 새로 생성 (c) 이 자산을 먼저 보고 결정 중 어느 쪽인가요?
 ```
 
-## Phase 1 — Intent Capture
+없으면 "✅ 유사 자산 없음" 한 줄 후 Step 1c로.
 
-### Step 1 — 한 문장 요구사항
-
-`$ARGUMENTS`가 있으면 그대로 사용. 없으면:
-> *"무엇을 Claude가 하도록 만들고 싶으신가요? 한 문장으로 설명해 주세요."*
-
-### Step 2 — 3 분류 질문
+### Step 1c — 3 분류 질문
 
 아래 3 질문을 순서대로. **Q2에서 (예)가 나오면 Q3 스킵하고 팀으로 확정.**
 
@@ -147,7 +149,7 @@ Q3 트리거: <답변>
 |---|---|
 | one-shot 요청을 스킬로 만들려 함 | Q1에서 (b) 답이면 생성 중단하고 "그냥 요청하세요" 안내 |
 | 팀인데 혼자 해도 될 것 같아서 skill로 보냄 | Q2에 "모르겠음" 답변 시 (c) 힌트 제시 |
-| 기존 스킬 있는데 새로 만듦 | Phase 0 Pre-scan 중복 체크 강제 |
+| 기존 스킬 있는데 새로 만듦 | Step 1b scoped Pre-scan 중복 체크 강제 |
 | 분류를 Claude가 혼자 결정 | 반드시 공개 + 사용자 승인 후 Phase 2 |
 | 위임하면서 답변 재질문 | Q1~Q3 답변을 위임 대상 메타-스킬에 컨텍스트로 전달 |
 

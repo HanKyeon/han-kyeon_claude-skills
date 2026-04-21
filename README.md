@@ -400,8 +400,10 @@ cfh trace "<이 스킬이 떠야 할 대표 발화>"
 /cfh-make 팀 API 에러 처리 규약을 claude가 자동 적용하게
 
 → asset-factory 메타-스킬이
-  Phase 0: 기존 유사 자산 스캔
-  Phase 1: 3 분류 질문 (반복성 / 협업 / 트리거 방식)
+  Phase 1: Intent Capture
+    Step 1a 한 문장 요구사항 ($ARGUMENTS 또는 질문)
+    Step 1b Scoped Pre-scan — 요구사항 토큰과 30%+ 겹치는 기존 자산만 노출
+    Step 1c 3 분류 질문 (반복성 / 협업 / 트리거 방식)
   Phase 2: skill-author / harness-factory / 인라인 커맨드 중 위임
 ```
 
@@ -417,9 +419,11 @@ cfh trace "<이 스킬이 떠야 할 대표 발화>"
 ```
 /cfh-plan legacy 결제 모듈에 쿠폰 검증 로직 추가
 
-→ 4 Phase
-  Phase 0 Pre-scan: CLAUDE.md·git log·대상 파일·package.json 자동 수집
-  Phase 1 Goal Capture: 4 질문 (목표 / 성공 기준 / 제약·out-of-scope / 긴급도)
+→ 3 Phase (목표 먼저, 스캔은 목표 기반으로)
+  Phase 1 Intent Capture
+    Step 1a Q1 목표 한 문장 ($ARGUMENTS 또는 질문)
+    Step 1b Scoped Pre-scan — 목표에 필요한 영역만 (CLAUDE.md·대상 파일·package.json scripts)
+    Step 1c Q2-Q4 (성공 기준 / 제약·out-of-scope / 긴급도)
   Phase 2 Approach Proposal: 태스크 분류 + 접근법 카드 (사용자 승인)
   Phase 3 Execution: /cfh-tdd·/cfh-refactor·/cfh-tc·/cfh-review 중 위임 또는 직접 실행
 ```

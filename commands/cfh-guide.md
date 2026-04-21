@@ -209,13 +209,15 @@ Pipeline·Expert Pool처럼 오케스트레이터가 한 번씩 호출하는 경
 ```
 사용자: /cfh-make 팀 API 응답 규칙을 claude가 자동 적용하게
 Claude: (asset-factory 메타-스킬 활성화)
-        Phase 0: 기존 유사 자산 스캔
-        Phase 1: 3 분류 질문
-          Q1 반복 가능한 워크플로인가?
-          Q2 여러 전문가 협업인가?
-          Q3 트리거 방식?
-        → 분류 결과 공개 (예: "skill로 판단")
-        → 사용자 승인
+        Phase 1 Intent Capture (0.4.0+ goal-first):
+          Step 1a 요구사항 한 문장 확인
+          Step 1b Scoped Pre-scan (요구사항 토큰과 겹치는 기존 자산만 노출)
+          Step 1c 3 분류 질문
+            Q1 반복 가능한 워크플로인가?
+            Q2 여러 전문가 협업인가?
+            Q3 트리거 방식?
+          → 분류 결과 공개 (예: "skill로 판단")
+          → 사용자 승인
         Phase 2: skill-author / harness-factory / 인라인 커맨드 인터뷰로 위임
 ```
 
@@ -249,15 +251,13 @@ Claude: (asset-factory 메타-스킬 활성화)
 
 ```
 사용자: /cfh-plan legacy 결제 모듈에 쿠폰 검증 로직 추가
-Claude: (4 Phase 진행)
-        Phase 0: Pre-scan — CLAUDE.md·git log·대상 파일·package.json 수집
-        Phase 1: Goal Capture — 4 질문
-          Q1 목표 (한 문장)
-          Q2 성공 기준 (완료 판단 기준)
-          Q3 제약·out-of-scope
-          Q4 긴급도
-        Phase 2: Approach Proposal — 태스크 분류 + 접근법 카드 (사용자 승인)
-        Phase 3: Execution — 전용 스킬 위임 또는 직접 실행
+Claude: (3 Phase, 0.4.0+ goal-first)
+        Phase 1 Intent Capture:
+          Step 1a Q1 목표 한 문장 확인 ($ARGUMENTS 또는 질문)
+          Step 1b Scoped Pre-scan — 목표에 필요한 영역만 (대상 디렉터리·CLAUDE.md·package.json scripts)
+          Step 1c Q2~Q4 (성공 기준 / 제약·out-of-scope / 긴급도)
+        Phase 2 Approach Proposal — 태스크 분류 + 접근법 카드 (사용자 승인)
+        Phase 3 Execution — 전용 스킬(/cfh-tdd·/cfh-refactor·/cfh-tc·/cfh-review) 위임 또는 직접 실행
 ```
 
 ### /cfh-make와의 차이

@@ -16,36 +16,61 @@
 
 <workflow>
 
-## Phase 0 — Pre-scan
+## Phase 1 — Intent Capture (요구사항 먼저, 스캔은 그 뒤)
 
-`asset-factory/references/classification-tree.md`의 Pre-scan 프로토콜에 따라:
+**원칙**: 한 문장 요구사항을 먼저 받고, 그 요구사항 토큰을 기준으로 **매칭 가능성 있는 기존 자산만** 스캔합니다.
 
-1. `~/.claude/skills/*/SKILL.md`와 `./.claude/skills/*/SKILL.md` frontmatter 스캔
-2. `~/.claude/commands/*.md`와 `./.claude/commands/*.md` 파일명·요약 수집
-3. `./.claude/agents/*.md` 존재 확인
+### Step 1a — 한 문장 요구사항
 
-사용자 요구사항과 기존 자산 간 토큰 30%+ 겹침 시 "유사 자산 발견" 카드 제시하고 (a) 확장 / (b) 새로 생성 / (c) 보고 결정 중 선택받기.
+- `$ARGUMENTS`에 요구사항이 있으면 그대로 사용 ("이대로 이해했는데 맞으십니까?"로 확인만).
+- 비어있으면 질문: *"무엇을 Claude가 하도록 만들고 싶으신가요? 한 문장으로 설명해 주세요."*
 
-## Phase 1 — Intent Capture (3 질문)
+### Step 1b — Scoped Pre-scan (요구사항 기반 중복 검사)
+
+요구사항의 핵심 토큰(명사·동사)을 추출하여 **매칭될 가능성이 있는 자산만** 스캔합니다 (→ `asset-factory/references/classification-tree.md`의 Pre-scan 프로토콜):
+
+1. `~/.claude/skills/*/SKILL.md`와 `./.claude/skills/*/SKILL.md`의 **frontmatter description만** 추출 (경량)
+2. 요구사항 토큰과 각 description 토큰 매칭
+3. **30% 이상 겹침**이 있는 자산만 사용자에게 노출
+4. `~/.claude/commands/*.md`·`./.claude/commands/*.md`·`./.claude/agents/*.md`도 동일 기준
+
+**스캔 비용**: frontmatter description만 읽으므로 자산 수십 개여도 수백 줄 수준. broad scan이라도 부담 작음.
+
+**중복 없음 시**:
+```
+✅ 유사 자산 없음. Step 1c(3 분류 질문)로 진행합니다.
+```
+
+**중복 발견 시**:
+```
+🔎 유사 자산 발견
+- `<name>` (<kind>): <description 1줄>
+
+(a) 이 자산을 확장·편집 → 새 생성 대신 편집 경로 제안
+(b) 별도로 새 자산 생성 → Step 1c 진행
+(c) 이 자산을 먼저 확인 → 대화 종료, 사용자 검토 후 재개
+```
+
+### Step 1c — 3 분류 질문
 
 `asset-factory/references/classification-tree.md`의 Q1~Q3:
 
-### Q1. 반복 가능한 워크플로인가?
+#### Q1. 반복 가능한 워크플로인가?
 - (a) 반복함 → Q2
 - (b) 한 번만 → **생성 중단**, "그냥 요청하세요" 안내
 - (c) 모르겠음 → 힌트 제시 후 재질문
 
-### Q2. 여러 전문가가 협업해야 하는가?
+#### Q2. 여러 전문가가 협업해야 하는가?
 - (a) 예 → **team 확정**, Q3 skip
 - (b) 아니오 → Q3
 - (c) 모르겠음 → "생성과 검증 분리 필요한가?" 힌트
 
-### Q3. 트리거 방식 (Q2가 b일 때만)
+#### Q3. 트리거 방식 (Q2가 b일 때만)
 - (a) 자동 트리거 → **skill 확정**
 - (b) 명시 호출만 → **command 확정**
 - (c) 둘 다 → **skill 권장 + 짝 커맨드 생성** 옵션
 
-### 분류 결과 공개
+#### 분류 결과 공개
 
 ```
 🎯 분류 결과
@@ -106,12 +131,13 @@ Q3 트리거: <답변 or N/A>
 
 <output_format>
 
-각 Phase 완료 시 사용자에게 보고:
+각 Step·Phase 완료 시 사용자에게 보고:
 
-- **Phase 0 완료 시**: Pre-scan 카드 (유사 자산 발견 여부)
-- **Phase 1 완료 시**: 분류 결과 카드 (Q1~Q3 답변 + 결론 + 근거) — 사용자 승인 대기
-- **Phase 2 시작 시**: "이제 `<대상 스킬>`로 넘어갑니다. 남은 질문 <N>개" 안내
-- **전체 종료 시**: 생성된 자산 경로 + 검증 명령 + 다음 단계 제안
+- **Step 1a 완료**: 요구사항 확인 (한 줄 반복)
+- **Step 1b 완료**: 중복 카드 (유사 자산 있으면 선택지, 없으면 "진행")
+- **Step 1c 완료**: 분류 결과 카드 (Q1~Q3 답변 + 결론 + 근거) — 사용자 승인 대기
+- **Phase 2 시작**: "이제 `<대상 스킬>`로 넘어갑니다. 남은 질문 <N>개" 안내
+- **전체 종료**: 생성된 자산 경로 + 검증 명령 + 다음 단계 제안
 
 </output_format>
 
