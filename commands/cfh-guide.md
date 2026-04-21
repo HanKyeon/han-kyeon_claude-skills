@@ -13,6 +13,7 @@
 - `new` / `author` / `skill` / `작성` → Authoring 섹션
 - `team` / `harness` / `agent` / `팀` → Team 섹션
 - `make` / `dispatcher` / `asset` / `무엇` / `분류` → Make 섹션
+- `plan` / `상의` / `접근` / `계획` → Plan 섹션
 - `commands` / `cheat` / `치트` / `명령` → Cheatsheet 섹션
 - `trigger` / `trace` / `발동` → Trigger 섹션
 - `maintain` / `adopt` / `diff` / `doctor` / `점검` → Maintain 섹션
@@ -31,9 +32,11 @@
 2. **Authoring framework** — `cfh new`로 스킬 스캐폴드, `cfh validate`로 검증. 사용자 작성물은 업데이트에서 자동 보호
 3. **Team-agent factory** — `cfh generate <preset>` 또는 `/cfh-team`으로 `.claude/agents/` + `.claude/skills/` 자동 생성
 
-세부 토픽: `/cfh-guide install`, `/cfh-guide new`, `/cfh-guide team`, `/cfh-guide make`, `/cfh-guide maintain`, `/cfh-guide commands`, `/cfh-guide trigger`.
+세부 토픽: `/cfh-guide install`, `/cfh-guide new`, `/cfh-guide team`, `/cfh-guide make`, `/cfh-guide plan`, `/cfh-guide maintain`, `/cfh-guide commands`, `/cfh-guide trigger`.
 
-**어떤 것을 만들지 모르시겠다면** `/cfh-make`부터 시작하세요 — 요구사항을 받아 skill/command/team/agent 중 어느 것이 맞는지 분류해 적합한 메타-스킬로 위임합니다.
+두 가지 dispatcher를 구분해서 기억하시면 편합니다:
+- **어떤 것을 만들지 모를 때** → `/cfh-make` — 재사용 자산(skill/command/team/agent) 분류·위임
+- **어떤 작업을 어떻게 시작할지 상의하고 싶을 때** → `/cfh-plan` — 목표 캡처·접근법 상의·작업 분류·실행 (명시 호출 전용)
 
 ---
 
@@ -238,6 +241,48 @@ Claude: (asset-factory 메타-스킬 활성화)
 
 ---
 
+## Section: Plan (Task dispatcher)
+
+"뭔가 해야 하는데 어떻게 접근하지" — 복잡·모호한 실제 작업을 시작할 때 쓰는 dispatcher입니다. **명시 호출 전용**이며 자동 트리거되지 않습니다(자연어로 대화하며 진행해도 되는 일에 방해되지 않게 하기 위함).
+
+### 기본 흐름
+
+```
+사용자: /cfh-plan legacy 결제 모듈에 쿠폰 검증 로직 추가
+Claude: (4 Phase 진행)
+        Phase 0: Pre-scan — CLAUDE.md·git log·대상 파일·package.json 수집
+        Phase 1: Goal Capture — 4 질문
+          Q1 목표 (한 문장)
+          Q2 성공 기준 (완료 판단 기준)
+          Q3 제약·out-of-scope
+          Q4 긴급도
+        Phase 2: Approach Proposal — 태스크 분류 + 접근법 카드 (사용자 승인)
+        Phase 3: Execution — 전용 스킬 위임 또는 직접 실행
+```
+
+### /cfh-make와의 차이
+
+| | `/cfh-make` | `/cfh-plan` |
+|---|---|---|
+| 목적 | **재사용 자산 생성** (skill/command/team) | **실제 작업 실행** |
+| 결과물 | `.claude/` 아래 파일 | 코드 수정·기능 구현·리팩터·리뷰 등 |
+| 자동 트리거 | "자동화해줘" 등 일부 발화 | **없음** (명시 호출만) |
+| 후속 위임 | skill-author / harness-factory | tdd-first / refactoring-strategy / /cfh-tc / /cfh-review 등 |
+
+### 언제 쓰나
+
+- 작업 성격이 복합이거나 어느 스킬을 써야 할지 모호할 때
+- 목표·제약을 명확히 전달하고 Claude의 접근법 제안을 받고 싶을 때
+- PR 단위 이상의 작업 시작 시
+
+### 언제 쓰지 말아야 하나
+
+- 작업 종류가 이미 확정 → 해당 슬래시 커맨드 직접 (`/cfh-tdd`, `/cfh-refactor` 등)
+- 가벼운 일회성 요청 → 자연어로 대화
+- 재사용 자산 만들기 → `/cfh-make`
+
+---
+
 ## Section: Maintain (Upkeep)
 
 설치된 스킬·커맨드를 관리·진단하는 0.3.0 신규 도구.
@@ -376,6 +421,7 @@ cfh evolve tdd-first                      # 특정 스킬만
 | `/cfh-new <kind> <name>` | `skill-author` 대화 (무엇을 만들지 확정됐을 때) |
 | `/cfh-team [domain]` | `harness-factory` 대화 |
 | `/cfh-make [requirement]` | `asset-factory` dispatcher (분류부터 시작) |
+| `/cfh-plan [goal]` | 작업 dispatcher (목표 캡처·접근법 상의·실행, 명시 호출 전용) |
 | `/cfh-trace [query]` | 트리거 시뮬레이션 |
 | `/cfh-guide [topic]` | 이 가이드 |
 
@@ -442,7 +488,8 @@ cfh evolve [<skill>]                     # 제안 출력 (자동 수정 없음)
 /cfh-review [parent-branch]              # PR 리뷰
 /cfh-new <kind> <name>                   # 스킬 대화 작성 (자산 종류 확정됐을 때)
 /cfh-team [domain]                       # 팀 대화 설계
-/cfh-make [requirement]                  # dispatcher — 무엇을 만들지부터 분류
+/cfh-make [requirement]                  # 자산 dispatcher — 무엇을 만들지부터 분류
+/cfh-plan [goal]                         # 작업 dispatcher — 목표부터 상의 (명시 호출 전용)
 /cfh-trace [query]                       # 트리거 시뮬레이션
 /cfh-guide [topic]                       # 이 가이드
 ```
@@ -469,7 +516,8 @@ cfh evolve [<skill>]                     # 제안 출력 (자동 수정 없음)
    - Install → "다음: `/cfh-guide new`"
    - New → "다음: `/cfh-guide team`"
    - Team → "다음: `/cfh-guide make`"
-   - Make → "다음: `/cfh-guide maintain`"
+   - Make → "다음: `/cfh-guide plan`"
+   - Plan → "다음: `/cfh-guide maintain`"
    - Maintain → "다음: `/cfh-guide evolve`"
    - Evolve → "다음: `/cfh-guide trigger`"
    - Trigger → "다음: `/cfh-guide commands`"
@@ -477,7 +525,7 @@ cfh evolve [<skill>]                     # 제안 출력 (자동 수정 없음)
 4. 토픽 불명 시:
    ```
    알려진 토픽이 아닙니다: "<인자>"
-   사용 가능: overview, install, new, team, make, maintain, evolve, trigger, commands
+   사용 가능: overview, install, new, team, make, plan, maintain, evolve, trigger, commands
    예: /cfh-guide install
    ```
 

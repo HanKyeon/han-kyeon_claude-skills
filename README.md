@@ -40,7 +40,8 @@ cfh install
 #    (메타)        /cfh-new skill my-auth-flow  (새 스킬 대화형 작성)
 #    (메타)        /cfh-team                (팀 에이전트 자동 생성)
 #    (유틸)        /cfh-trace "리뷰 좀"     (발화가 어느 스킬을 트리거할지 시뮬레이션)
-#    (dispatcher) /cfh-make                (무엇을 만들지 모를 때 — 분류부터)
+#    (dispatcher) /cfh-make                (무엇을 만들지 모를 때 — 자산 분류부터)
+#    (dispatcher) /cfh-plan                (작업 목표를 상의하고 접근법부터 — 명시 호출만)
 ```
 
 ---
@@ -123,10 +124,11 @@ git commit -m "chore: add Claude Code harness"
 
 #### 단계 3 — 데일리 (매 작업)
 
-작업 성격별로 **시나리오 가이드(다음 섹션) 중 하나를 고르는 것**이 기본 동작입니다. 막막하시면 아래 2개 중 하나로 시작:
+작업 성격별로 **시나리오 가이드(다음 섹션) 중 하나를 고르는 것**이 기본 동작입니다. 막막하시면 아래 3개 중 하나로 시작:
 
 - `/cfh-guide overview` — 이 도구의 전체 그림을 대화로 받기
-- `/cfh-make <한 줄 요구사항>` — dispatcher가 분류해서 적절한 메타-스킬로 위임
+- `/cfh-make <한 줄 요구사항>` — **재사용 자산** 만들기(skill/command/team) — dispatcher가 분류해 메타-스킬로 위임
+- `/cfh-plan <작업 목표>` — **실제 작업** 시작 — 목표 캡처·접근법 상의 후 전용 커맨드로 위임 또는 직접 실행 (명시 호출 전용)
 
 **자동 트리거를 신뢰**: "리팩터링해줘", "TDD로 시작", "스킬 만들어줘" 같은 발화만으로도 해당 스킬이 자동 활성화됩니다. 명시적 슬래시 커맨드는 자동 트리거가 안 뜨거나 특정 인자를 넘기고 싶을 때 사용합니다.
 
@@ -407,6 +409,32 @@ cfh trace "<이 스킬이 떠야 할 대표 발화>"
 
 ---
 
+### 9. 복잡한 작업을 어떻게 시작할지 모를 때 (작업 상의)
+
+**상황**: "작업을 해야 하긴 하는데 어느 스킬을 써야 할지, 어디부터 시작할지 정리가 안 된다."
+
+**추천**:
+```
+/cfh-plan legacy 결제 모듈에 쿠폰 검증 로직 추가
+
+→ 4 Phase
+  Phase 0 Pre-scan: CLAUDE.md·git log·대상 파일·package.json 자동 수집
+  Phase 1 Goal Capture: 4 질문 (목표 / 성공 기준 / 제약·out-of-scope / 긴급도)
+  Phase 2 Approach Proposal: 태스크 분류 + 접근법 카드 (사용자 승인)
+  Phase 3 Execution: /cfh-tdd·/cfh-refactor·/cfh-tc·/cfh-review 중 위임 또는 직접 실행
+```
+
+**특징**: **명시 호출 전용**, 자동 트리거 없음. 자연어 대화가 충분한 가벼운 작업을 방해하지 않습니다.
+
+**언제 쓰지 말아야**:
+- 작업 종류 이미 확정 (`/cfh-tdd`·`/cfh-refactor` 등 직접)
+- 가벼운 일회성 요청 (자연어로 대화)
+- 자산을 만드는 게 목적 (`/cfh-make`)
+
+**/cfh-make와의 차이**: `/cfh-make`는 "Claude Code 자체 확장(skill/command/team 생성)", `/cfh-plan`은 "실제 코드·기능 작업 실행"입니다.
+
+---
+
 ## 커맨드·CLI 선택 가이드
 
 ### 슬래시 커맨드 (Claude Code 대화 중)
@@ -419,7 +447,8 @@ cfh trace "<이 스킬이 떠야 할 대표 발화>"
 | PR 리뷰 | `/cfh-review [branch]` | 머지 전 자체 점검 | 외부 코드 리뷰 먼저 받고 보조로 사용 |
 | 새 스킬 만들기 (확정) | `/cfh-new skill <name>` | skill이 필요한 게 확실할 때 | — |
 | 팀 구성 (확정) | `/cfh-team [domain]` | 다축 리뷰·생성-검증 분리가 확정 | `cfh generate <preset>`이 더 빠를 수 있음 |
-| 뭘 만들지 미정 | `/cfh-make [요구사항]` | skill/command/team 구분 안 설 때 | — |
+| 뭘 만들지 미정 | `/cfh-make [요구사항]` | 만들고 싶은데 skill/command/team 구분 안 설 때 | — |
+| 작업 어떻게 시작할지 상의 | `/cfh-plan [목표]` | 복합·모호한 작업의 목표·접근법 정리 후 실행 (명시 호출만) | 확정이면 해당 작업 커맨드 직접 |
 | 트리거 디버깅 | `/cfh-trace "<발화>"` | description 조정 중일 때 | `cfh doctor`로 overlap도 함께 |
 | 가이드 | `/cfh-guide [topic]` | 사용법 확인 | 이 README |
 
@@ -448,11 +477,13 @@ cfh trace "<이 스킬이 떠야 할 대표 발화>"
 
 ### 결정이 어려울 때 순서
 
-1. **아무것도 모르겠다** → `/cfh-make` 또는 `/cfh-guide overview`
-2. **무엇이 어디에 있나** → `cfh list` (전역+프로젝트), `cfh doctor` (문제 진단)
-3. **내 발화가 안 먹힌다** → `cfh trace "<발화>"` → description에 키워드 보충 → `cfh evolve`로 보강 포인트 확인
-4. **번들 스킬을 내 것으로 만들고 싶다** → `cfh diff <name>` → `cfh adopt <name>`
-5. **새 프로젝트 온보딩** → 시나리오 7번 흐름 따라가기
+1. **아무것도 모르겠다** → `/cfh-guide overview`
+2. **작업을 어떻게 시작할지 모르겠다** → `/cfh-plan <목표>`
+3. **자산(skill/command/team)을 만들고 싶은데 뭘 만들지 모르겠다** → `/cfh-make <요구사항>`
+4. **무엇이 어디에 있나** → `cfh list` (전역+프로젝트), `cfh doctor` (문제 진단)
+5. **내 발화가 안 먹힌다** → `cfh trace "<발화>"` → description에 키워드 보충 → `cfh evolve`로 보강 포인트 확인
+6. **번들 스킬을 내 것으로 만들고 싶다** → `cfh diff <name>` → `cfh adopt <name>`
+7. **새 프로젝트 온보딩** → 시나리오 7번 흐름 따라가기
 
 ---
 
@@ -481,6 +512,7 @@ cfh trace "<이 스킬이 떠야 할 대표 발화>"
 | `/cfh-new` | `<kind> <name>` | `skill-author` 활성화 + 인터뷰 기반 자산 작성 (종류 확정됐을 때) |
 | `/cfh-team` | `[domain]` | `harness-factory` 활성화 + 팀 생성 워크플로 |
 | `/cfh-make` | `[requirement]` | `asset-factory` dispatcher — 무엇을 만들지부터 분류 |
+| `/cfh-plan` | `[goal]` | 작업 dispatcher — 목표 캡처·접근법 상의·실행 (명시 호출 전용, 자동 트리거 없음) |
 | `/cfh-trace` | `[query]` | 발화가 어느 스킬을 트리거할지 시뮬레이션 |
 | `/cfh-guide` | `[topic]` | 사용 가이드 |
 
