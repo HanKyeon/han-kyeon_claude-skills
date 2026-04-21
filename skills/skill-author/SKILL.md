@@ -21,6 +21,7 @@ description: |
 4. **Progressive disclosure 원칙.** SKILL.md는 요약·지침, 상세는 `references/`. SKILL.md가 200줄을 넘으면 분리 고려.
 5. **기존 스킬과 중복 점검.** 이미 있는 스킬(`~/.claude/skills/`)과 트리거가 겹치면 사용자에게 병합할지 분리할지 물어볼 것. Sanity check에서 자동 검출.
 6. **생성 후 `cfh validate` 실행 안내.** 프런트매터 누락·이름 불일치를 즉시 검증.
+7. **(z) 모르겠음 fallback.** 모든 Q1~Q6에 `(z) 모르겠음` 옵션 기본 탑재. 선택 시 `~/.claude/skills/asset-factory/references/unknown-answer-playbook.md`의 3단계 처리 — 예시 2~3개 → 안전한 기본값 제안 → y/n.
 
 ## 6 Phase
 

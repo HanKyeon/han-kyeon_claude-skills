@@ -21,6 +21,7 @@ description: |
 4. **프로젝트 로컬에 작성.** 출력은 `.claude/agents/`, `.claude/skills/` (사용자 전역 `~/.claude`가 아님).
 5. **CLI가 있으면 CLI 우선.** `cfh generate <preset>`으로 해결 가능한 경우는 그것을 제안. 커스텀이 필요할 때만 직접 파일 작성.
 6. **생성 후 실험 플래그 안내.** 에이전트 간 메시지 교환이 필요하면 `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` 필요함을 알림. Deep-dive D1에서 이미 확인된 경우 중복 안내 생략.
+7. **(z) 모르겠음 fallback.** 모든 Q1~Q6·Deep-dive D1~D7에 `(z) 모르겠음` 옵션 기본 탑재. 선택 시 `~/.claude/skills/asset-factory/references/unknown-answer-playbook.md`의 3단계 처리 — 예시 2~3개 → 안전한 기본값 제안 → y/n.
 
 ## 7 Phase 워크플로
 
@@ -40,6 +41,16 @@ Phase 5: Scaffold                (cfh generate 또는 직접 Write)
 Phase 6: Validate + Dry Run      (cfh validate + 샘플 태스크로 시운전)
 ```
 
+## Phase 복귀 규칙 (공통)
+
+Phase 2 이후에 초반 답변이 틀렸다고 판단되면 아래 트리거로 이전 Phase 복귀:
+- **"intent 재인터뷰"** → Phase 1 Domain Interview로 복귀
+- **"패턴 재선택"** → Phase 2 Pattern Selection으로 복귀
+- **"roster 수정"** → Phase 3 Agent Roster로 복귀
+- **"skill 재설계"** → Phase 4 Skill Design으로 복귀
+
+복귀 시 이전 답변은 참고용으로 남기고 변경 부분만 갱신. 생성된 `.claude/agents/*`나 `.claude/skills/*`는 git으로 추적·되돌리기 가능.
+
 ## Phase 0 — Pre-scan
 
 `CLAUDE.md`, `package.json`, `./.claude/agents/`, `./.claude/skills/`를 훑어 Phase 1 질문의 답변 초안을 만듭니다 (→ `references/pre-scan.md`). 도메인 경계를 추출해 Q3(전문성 축) 후보를 자동 생성하고, `CLAUDE.md`에 "프로덕션"·"결제" 등이 보이면 Q4(실패 비용)를 (c) 기본값으로 제시합니다.
@@ -48,23 +59,27 @@ Phase 6: Validate + Dry Run      (cfh validate + 샘플 태스크로 시운전)
 
 ## Phase 1 — Domain Interview
 
-기본 5 질문 → (옵션) Deep-dive 7 축 → Sanity check 순 (→ `references/interview-flow.md`).
+기본 6 질문 → (옵션) Deep-dive 7 축 → Sanity check 순 (→ `references/interview-flow.md`).
 
-### 기본 5 질문
+### 기본 6 질문
 
 1. **태스크 성격** — 반복적/선형적 / 병렬 가능 / 검토·비판이 중요 / 계층적 분해 필요 / 탐색적
 2. **입력·출력** — 한 번에 들어오는 입력 단위(파일/PR/요구사항) + 최종 산출물 형태
 3. **전문성 축** — 보안·성능·a11y·타입·도메인 중 몇 축이 독립적으로 평가되어야 하나
 4. **실패 비용** — 틀리면 롤백 쉬운가, 아니면 수정 비용이 큰가 (큰 경우 producer-reviewer 강제)
 5. **규모** — 에이전트 2~3개로 충분한가, 5개 이상이 필요한가 (5개 넘으면 계층 분해 검토)
+6. **관측성** — 실패 시 어떻게 알게 되나 (리턴값 / 로그 / CI / 모니터링 / 없음). Q4=(b)/(c) 와 Q6=(e) 조합은 R8 Sanity check 트리거.
 
-### Deep-dive 옵트인 (선택)
+### Deep-dive 옵트인 (3지 선택 + CLI bypass)
 
-기본 5 질문 완료 후 사용자에게 "더 깊이 설계하시겠습니까? (y/n)" 제시. 자동 추천 규칙:
-- Q4=(c) 또는 Q5=6+ → **(y) 권장**
-- Q5=2~3 AND Q4=(a) → **(n) 권장**
+기본 6 질문 완료 후 사용자에게 **(a)/(b)/(c) 3지 선택** 제시. CLI `--deep`/`--fast` 플래그로 bypass 가능.
 
-(y) 선택 시 아래 **7 축 중 기본 답변과 관련된 것만** 조건부로 질문:
+자동 추천 규칙:
+- Q4=(c) OR Q5=6+ OR Q6=(e) → **(b) 모두 yes 권장**
+- Q1=(e)/(f) → **(a) 조건부 권장**
+- Q5=2~3 AND Q4=(a) AND Q6=(a)/(b)/(c) → **(c) skip 권장**
+
+(b) 선택 시 아래 **7 축 전부** 질문. (a) 선택 시 **관련된 것만** 조건부:
 
 | 축 | 활성 조건 |
 |---|---|
@@ -80,7 +95,7 @@ Phase 6: Validate + Dry Run      (cfh validate + 샘플 태스크로 시운전)
 
 ### Sanity check (요약 카드 직전)
 
-기본 + Deep-dive 답변을 `references/sanity-check.md`의 R1~R7 룰로 검사:
+기본 + Deep-dive 답변을 `references/sanity-check.md`의 R1~R8 룰로 검사:
 - R1 규모 vs 축 수
 - R2 실패 비용 vs 패턴 후보
 - R3 태스크 성격 vs 입출력
@@ -88,6 +103,7 @@ Phase 6: Validate + Dry Run      (cfh validate + 샘플 태스크로 시운전)
 - R5 기존 에이전트 충돌
 - R6 Deep-dive 답변 모순 (옵션 수행 시)
 - R7 통신 vs 실험 플래그 인식 (옵션 수행 시)
+- R8 관측성 공백 vs 실패 비용 (Q6=(e) + Q4=(b)/(c) 시 경고)
 
 모순 발견 시 재확인 → 통과하면 **요약 카드** + 패턴 추천 제시하고 사용자 승인.
 

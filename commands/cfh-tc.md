@@ -380,6 +380,16 @@ TDD Mode 완료 후 사용자에게:
 2. Phase 5에서 발견된 개선 여지 (원본 코드 피드백)
 3. 다음 단계 제안 (추가 테스트, 리팩터링 등)
 
+## 종료 시 다음 단계 권장 (필수 출력)
+
+```
+✅ 테스트 작성 완료
+
+다음 단계:
+- 머지 전 자체 점검 → /cfh-review
+- 이번 워크플로 피드백 → /cfh-feedback tdd-first "<comment>"
+```
+
 </output_format>
 
 <constraints>

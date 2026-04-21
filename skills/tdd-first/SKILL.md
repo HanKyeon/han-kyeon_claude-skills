@@ -11,6 +11,10 @@ description: |
 
 새 기능·버그 수정·리팩터링을 **테스트 먼저 작성**하여 진행하는 5단계 워크플로입니다. AI와 사용자가 **테스트라는 공통 목표**를 공유하여 의도 정렬을 극대화합니다.
 
+## 활성화 시 반드시
+
+1. **(z) 모르겠음 fallback.** Phase 0 Scope Narrowing·Phase 1 Intent Interview의 모든 질문에 `(z) 모르겠음` 옵션 기본 탑재. 선택 시 `~/.claude/skills/asset-factory/references/unknown-answer-playbook.md`의 3단계 처리.
+
 ## 5 Phase (+ Phase 0)
 
 ```
@@ -30,6 +34,16 @@ Phase 5: Refactor + Verify   (리팩터링 + Intent 재확인)
 ### 질문과 결과 포맷 구분
 - **Phase 0·1의 질문**은 개발 판단에 **반드시 필요한 정보**를 얻기 위한 것. 포맷 규칙을 위해 질문 남발 금지.
 - **결과 설명·Test Outline 해설·Intent Preservation 체크**는 Why/What/How/What if 4축으로 (`references/reasoning-format.md`). 출력에만 적용.
+
+## Phase 복귀 규칙 (공통)
+
+Phase 2 이후에 초반 답변이 틀렸다고 판단되면 아래 트리거로 이전 Phase 복귀:
+- **"scope 재조정"** → Phase 0 Scope Narrowing으로 복귀
+- **"intent 재인터뷰"** → Phase 1 Intent Interview로 복귀
+- **"outline 수정"** → Phase 2 Test Outline으로 복귀
+- **"실패 테스트 재작성"** → Phase 3 재작업
+
+복귀 시 이전 답변은 참고용으로 남기고, 변경된 부분만 갱신합니다. git이 각 Phase의 커밋을 분리 기록하므로 필요 시 `git reset`·`git revert`로 코드 레벨 되돌리기도 병행 가능.
 
 ## Phase 1 — Intent Interview
 

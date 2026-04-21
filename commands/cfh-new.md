@@ -75,6 +75,18 @@ git commit -m "feat(skill): add <name> for <purpose>"
 - 생성된 파일 경로
 - description 최종본
 - 시험 트리거 결과 (3개 샘플 발화 각각의 발동 여부)
-- 다음 단계 제안 (references/ 채우기, 커밋, 공유)
+
+## 종료 시 다음 단계 권장 (필수 출력)
+
+```
+✅ 자산 생성 완료
+
+다음 단계:
+- 검증 → cfh validate
+- 추가 트리거 시뮬레이션 → cfh trace "<다른 발화>"
+- 설치 확인 → cfh list
+- references/ 채우기 / 커밋 / 팀 공유
+- 이번 작성 흐름 피드백 → /cfh-feedback skill-author "<comment>"
+```
 
 </output_format>

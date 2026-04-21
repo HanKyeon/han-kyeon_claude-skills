@@ -1,0 +1,56 @@
+{
+  "name": "reviewer-team-backend",
+  "pattern": "expert-pool",
+  "description": "Parallel expert reviewers for backend/server code: security, performance, types, data-integrity. No a11y axis. Orchestrator merges findings.",
+  "files": [
+    {
+      "path": ".claude/agents/security-reviewer.md",
+      "template": "agent.md",
+      "replace": {
+        "__AGENT_NAME__": "security-reviewer",
+        "__AGENT_TITLE__": "Security Reviewer (Backend)",
+        "TODO: One-sentence purpose. When the orchestrator should delegate to this agent.": "Reviews a diff for backend security: SQL injection, command injection, SSRF, auth/session bugs, secret leakage, insecure deserialization.",
+        "TODO: Two-sentence charter. What is this agent accountable for, and what is\nexplicitly out of scope.": "Accountable for flagging concrete server-side security risks with file:line citations and OWASP/CWE references. Out of scope: client-side XSS, frontend a11y, style."
+      }
+    },
+    {
+      "path": ".claude/agents/perf-reviewer.md",
+      "template": "agent.md",
+      "replace": {
+        "__AGENT_NAME__": "perf-reviewer",
+        "__AGENT_TITLE__": "Performance Reviewer (Backend)",
+        "TODO: One-sentence purpose. When the orchestrator should delegate to this agent.": "Reviews a diff for server-side perf: N+1 queries, missing indexes, unbounded result sets, blocking IO in hot paths, unnecessary allocations, cache miss patterns.",
+        "TODO: Two-sentence charter. What is this agent accountable for, and what is\nexplicitly out of scope.": "Accountable for flagging server perf anti-patterns with measurement suggestions (EXPLAIN, profilers, load test). Out of scope: client render perf, security."
+      }
+    },
+    {
+      "path": ".claude/agents/types-reviewer.md",
+      "template": "agent.md",
+      "replace": {
+        "__AGENT_NAME__": "types-reviewer",
+        "__AGENT_TITLE__": "Types Reviewer",
+        "TODO: One-sentence purpose. When the orchestrator should delegate to this agent.": "Reviews static types and contracts: any leakage, unsound assertions, schema/DB type drift, request/response payload mismatches.",
+        "TODO: Two-sentence charter. What is this agent accountable for, and what is\nexplicitly out of scope.": "Accountable for flagging type-safety regressions and contract drift with suggested corrections. Out of scope: runtime behavior, performance."
+      }
+    },
+    {
+      "path": ".claude/agents/data-integrity-reviewer.md",
+      "template": "agent.md",
+      "replace": {
+        "__AGENT_NAME__": "data-integrity-reviewer",
+        "__AGENT_TITLE__": "Data Integrity Reviewer",
+        "TODO: One-sentence purpose. When the orchestrator should delegate to this agent.": "Reviews persistence and data flow for integrity risks: missing transactions, race conditions, weak constraints, idempotency gaps, migration safety, data loss vectors.",
+        "TODO: Two-sentence charter. What is this agent accountable for, and what is\nexplicitly out of scope.": "Accountable for flagging concrete data integrity risks with reproduction scenarios and remediation. Out of scope: presentation, a11y."
+      }
+    },
+    {
+      "path": ".claude/skills/expert-review-pool-backend/SKILL.md",
+      "template": "skill/SKILL.md",
+      "replace": {
+        "__SKILL_NAME__": "expert-review-pool-backend",
+        "__SKILL_TITLE__": "Expert Review Pool (Backend)",
+        "TODO: Describe in 2-4 sentences.\n  (1) WHEN this skill should trigger (keywords, user intents, file patterns)\n  (2) WHAT it does (the workflow or knowledge it injects)\n  (3) When it should NOT trigger (to avoid over-matching)": "Use on PR review for backend/server changes (API handlers, services, DB migrations, infra). Runs security, perf, types, and data-integrity reviewers in parallel and merges findings. Do NOT trigger for frontend-only diffs (use expert-review-pool for that) or docs-only changes."
+      }
+    }
+  ]
+}

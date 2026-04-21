@@ -110,6 +110,16 @@ PR 설명에 "Found but not fixed" 섹션 자동 생성.
 - **다음 단계 후보**: ...
 ```
 
+### 다음 단계 권장 (필수 출력)
+
+```
+✅ 리팩터링 완료
+
+다음 단계:
+- 머지 전 자체 점검 → /cfh-review (각 PR 단위로)
+- 이번 워크플로 피드백 → /cfh-feedback refactoring-strategy "<comment>"
+```
+
 ### 주요 결정 해설 (4축 포맷)
 
 Scope 분해·PR 분리·라이브러리 안티패턴 지적·대안 비교 등 **중요한 결정**은 `references/reasoning-format.md`의 Why/What/How/What if 포맷으로 설명. 단순 사실 보고(파일 목록, 실행 결과)에는 불필요.

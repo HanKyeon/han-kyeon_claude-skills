@@ -20,6 +20,10 @@ description: |
 4. **Legacy 허용** — 이번 PR 범위 밖의 문제는 고치지 않는다. 발견만 하고 Issue/TODO로 분리.
 5. **라이브러리 공식 기준** — 취향이 아니라 **해당 라이브러리가 공식 문서로 지정한 규칙/안티패턴**을 기준으로 판단.
 
+## 활성화 시 반드시
+
+- **(z) 모르겠음 fallback.** Scope Narrowing의 모든 질문에 `(z) 모르겠음` 옵션 기본 탑재. 선택 시 `~/.claude/skills/asset-factory/references/unknown-answer-playbook.md`의 3단계 처리.
+
 ## 워크플로 (시작 전 순서)
 
 ```

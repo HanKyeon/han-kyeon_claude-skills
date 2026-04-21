@@ -6,3 +6,7 @@ coverage/
 .vscode/
 .idea/
 .claude/settings.local.json
+
+DESC_CFL.md
+question.md
+preview.md

@@ -1,7 +1,12 @@
 <s>
+**🔀 잘못 진입하셨다면**:
+- **실제 코드 작업**(TDD·리팩터·테스트·리뷰)을 시작하려면 → `/cfh-plan`이나 해당 작업 커맨드(`/cfh-tdd`·`/cfh-refactor`·`/cfh-tc`·`/cfh-review`).
+- 만들 자산 종류가 **이미 확정**(skill 만들거라고 알고 있음)이라면 → `/cfh-new <kind> <name>` 직접.
+- 위 둘 다 아니고, **"무언가 자동화하고 싶은데 skill인지 command인지 team인지 모르겠다"**면 — 이 커맨드(`/cfh-make`)가 맞습니다.
+
 이 커맨드는 `asset-factory` 메타-스킬을 활성화하여 **무엇을 만들지(skill/command/team/agent) 분류한 뒤 올바른 생성 경로로 위임**합니다.
 사용자가 Claude Code 자산 종류를 구분하지 못해도 요구사항에서 시작해 적합한 메타-스킬로 연결됩니다.
-스킬이 자동 트리거되지 않은 상태라면 지금 `~/.claude/skills/asset-factory/SKILL.md`를 읽고 3 Phase에 따라 진행하세요.
+스킬이 자동 트리거되지 않은 상태라면 지금 `~/.claude/skills/asset-factory/SKILL.md`를 읽고 2 Phase에 따라 진행하세요.
 </s>
 
 <invocation>
@@ -119,12 +124,14 @@ Q3 트리거: <답변 or N/A>
 분류 결과: <kind>
 생성된 자산: <path 목록>
 
-확인 명령:
-  cfh list
-  cfh validate
-  cfh trace "..."   (skill인 경우)
+다음 단계:
+- 검증 → cfh validate
+- 트리거 시뮬레이션 (skill인 경우) → cfh trace "<예상 발화>"
+- 설치 확인 → cfh list
+- 이번 dispatcher·메타-스킬 사용 피드백 → /cfh-feedback asset-factory "<comment>"
 
-다음 제안: <references 채우기 / 커밋 / 시운전>
+후속 작업:
+- references 채우기 / 커밋 / 팀 공유
 ```
 
 </workflow>

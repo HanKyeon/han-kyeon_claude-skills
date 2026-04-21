@@ -153,6 +153,18 @@ it('property: ...', () => {
 
 질문(Phase 0·1)에는 이 포맷을 적용하지 말 것. 질문은 자연스러운 형태로.
 
+## Phase 5 종료 시 다음 단계 권장 (필수 출력)
+
+```
+✅ TDD 5 Phase 완료
+
+다음 단계:
+- 머지 전 자체 점검 → /cfh-review
+- 이번 워크플로 피드백 → /cfh-feedback tdd-first "<comment>"
+```
+
+`/cfh-review`는 작성한 테스트 + 구현을 PR 단위로 다축 점검. `/cfh-feedback`은 Intent Interview·Test Outline·구현 흐름 등에서 마찰 있었던 부분을 기록 → 추후 `cfh evolve`가 description·원칙 개선에 활용.
+
 </output_format>
 
 <constraints>

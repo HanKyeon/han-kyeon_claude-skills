@@ -44,6 +44,9 @@ const flags = {
   note: getFlagValue(args, '--note'),
   helpful: getFlagValue(args, '--helpful'),
   utterance: getFlagValue(args, '--utterance'),
+  deep: args.includes('--deep'),
+  fast: args.includes('--fast'),
+  usage: args.includes('--usage'),
 };
 
 const positional = [];
@@ -82,7 +85,7 @@ function printHelp() {
     'Maintenance commands (0.3.0):',
     '  adopt <name>                  Convert managed item to user-authored (drops manifest)',
     '  diff <name>                   Show what you changed since install (summary)',
-    '  doctor                        Run 6-point health check on installed items',
+    '  doctor                        Run health checks on installed items (--usage adds 30-day usage summary)',
     '  trace "<query>"               Simulate which skill would be triggered by an utterance',
     '',
     'Evolution commands (0.3.0, opt-in):',
@@ -98,6 +101,8 @@ function printHelp() {
     '  --dry-run                     Show actions without writing',
     '  --full                        For "diff": show unified diff instead of summary',
     '  --warn-only                   For "doctor": exit 0 even on issues',
+    '  --usage                       For "doctor": append 30-day usage summary from cfh log data',
+    '  --deep / --fast               For "/cfh-team": bypass Deep-dive gate ((b) all yes / (c) skip)',
     '  --top <N>                     For "trace": number of top matches to show (default 5)',
     '  --target <path>               Override target root (default: ~/.claude for install,',
     '                                cwd for generate)',
@@ -202,6 +207,7 @@ async function main() {
         await doctor({
           target: flags.target,
           warnOnly: flags.warnOnly,
+          usage: flags.usage,
         });
         break;
       case 'trace':
