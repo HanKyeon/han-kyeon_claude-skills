@@ -1,13 +1,13 @@
 {
-  "name": "@hankyeon/claude-skills",
-  "version": "0.2.0",
+  "name": "@han-kyeon/claude-skills",
+  "version": "0.3.0",
   "description": "Portable Claude Code skills, commands, and team-agent factory for frontend workflows",
   "publishConfig": {
     "access": "public"
   },
   "bin": {
-    "claude-skills": "./bin/cli.js",
-    "cfh": "./bin/cli.js"
+    "claude-skills": "bin/cli.js",
+    "cfh": "bin/cli.js"
   },
   "files": [
     "bin",

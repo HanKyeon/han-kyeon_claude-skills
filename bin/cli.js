@@ -8,6 +8,11 @@ const { update } = require('../lib/update');
 const { validate } = require('../lib/validate');
 const { newCmd } = require('../lib/new');
 const { generate } = require('../lib/generate');
+const { adopt } = require('../lib/adopt');
+const { diff } = require('../lib/diff');
+const { doctor } = require('../lib/doctor');
+const { trace } = require('../lib/trace');
+const { logEvent, evolve } = require('../lib/evolve');
 
 const [, , command, ...args] = process.argv;
 
@@ -16,7 +21,7 @@ function getFlagValue(list, name) {
   return i >= 0 && list[i + 1] !== undefined ? list[i + 1] : null;
 }
 
-const FLAGS_WITH_VALUE = new Set(['--target', '--only']);
+const FLAGS_WITH_VALUE = new Set(['--target', '--only', '--top', '--event', '--note', '--helpful', '--utterance']);
 
 const flags = {
   link: args.includes('--link'),
@@ -25,7 +30,19 @@ const flags = {
   target: getFlagValue(args, '--target'),
   only: getFlagValue(args, '--only'),
   project: args.includes('--project'),
+  globalOnly: args.includes('--global'),
+  yes: args.includes('--yes') || args.includes('-y'),
+  full: args.includes('--full'),
+  warnOnly: args.includes('--warn-only'),
+  top: getFlagValue(args, '--top'),
   listFlag: args.includes('--list'),
+  enable: args.includes('--enable'),
+  disable: args.includes('--disable'),
+  statusFlag: args.includes('--status'),
+  event: getFlagValue(args, '--event'),
+  note: getFlagValue(args, '--note'),
+  helpful: getFlagValue(args, '--helpful'),
+  utterance: getFlagValue(args, '--utterance'),
 };
 
 const positional = [];
@@ -41,7 +58,7 @@ for (let i = 0; i < args.length; i++) {
 function printHelp() {
   const help = [
     '',
-    '@hankyeon/claude-skills — Portable Claude Code skills, commands, and team-agent factory',
+    '@han-kyeon/claude-skills — Portable Claude Code skills, commands, and team-agent factory',
     '',
     'Usage:',
     '  claude-skills <command> [options] [args...]',
@@ -60,27 +77,53 @@ function printHelp() {
     '  generate <preset>             Generate a team (agents + skills) in .claude/ from a preset',
     '  generate --list               List available presets',
     '',
+    'Maintenance commands (0.3.0):',
+    '  adopt <name>                  Convert managed item to user-authored (drops manifest)',
+    '  diff <name>                   Show what you changed since install (summary)',
+    '  doctor                        Run 6-point health check on installed items',
+    '  trace "<query>"               Simulate which skill would be triggered by an utterance',
+    '',
+    'Evolution commands (0.3.0, opt-in):',
+    '  log <skill>                   Record a usage event to ~/.claude/.cfh-logs/<skill>.jsonl',
+    '  log --enable | --disable      Turn telemetry on/off (opt-in, local only)',
+    '  log --status                  Show telemetry state and log file summary',
+    '  evolve [<skill>]              Analyze description + logs, print suggestions (no auto-apply)',
+    '',
     'Options:',
     '  --link                        Use symbolic links instead of copying (install only)',
     '  --force, -f                   Overwrite existing / bypass safety refusals',
+    '  --yes, -y                     Skip confirmation prompts (adopt)',
     '  --dry-run                     Show actions without writing',
+    '  --full                        For "diff": show unified diff instead of summary',
+    '  --warn-only                   For "doctor": exit 0 even on issues',
+    '  --top <N>                     For "trace": number of top matches to show (default 5)',
     '  --target <path>               Override target root (default: ~/.claude for install,',
     '                                cwd for generate)',
     '  --only skills|commands        Install/update only one kind',
     '  --project                     For "new": scaffold into ./.claude/ instead of ~/.claude/',
+    '                                For "list": show only project-local',
+    '  --global                      For "list": show only ~/.claude',
     '',
     'Examples:',
     '  cfh install                   Install all packaged skills + commands',
     '  cfh install --link            Use symlinks (auto-update on npm update)',
     '  cfh install refactoring-strategy    Only a specific item',
     '  cfh update --only skills      Refresh only skills, never commands',
-    '  cfh list                      Show installed with managed/user-authored status',
+    '  cfh list                      Global + project (if ./.claude exists)',
+    '  cfh list --project            Only project-local ./.claude',
     '  cfh new skill my-auth-flow    Create a blank skill at ~/.claude/skills/my-auth-flow/',
     '  cfh new skill my-flow --project   Create at ./.claude/skills/my-flow/ instead',
-    '  cfh new agent code-reviewer --project',
     '  cfh validate                  Check all skills + commands',
     '  cfh generate --list           See available team presets',
     '  cfh generate producer-reviewer    Write producer/reviewer agents + skill to ./.claude/',
+    '  cfh adopt refactoring-strategy    Drop manifest so cfh update leaves it alone',
+    '  cfh diff tdd-first            See what I changed after install',
+    '  cfh doctor                    Check for broken manifests, trigger clashes, etc.',
+    '  cfh trace "리뷰해줘"          See which skill would trigger',
+    '  cfh log --enable              Opt-in to local usage logging',
+    '  cfh log tdd-first --event trigger --utterance "TDD로 시작" --helpful y',
+    '  cfh evolve                    Print suggestions for all installed skills',
+    '  cfh evolve tdd-first          Focus on a specific skill',
     '  cfh remove tdd-first          Remove installed skill',
     '',
     'Default paths:',
@@ -102,7 +145,11 @@ async function main() {
         break;
       case 'list':
       case 'ls':
-        await list(flags);
+        await list({
+          target: flags.target,
+          globalOnly: flags.globalOnly,
+          projectOnly: flags.project,
+        });
         break;
       case 'remove':
       case 'rm':
@@ -132,6 +179,51 @@ async function main() {
           force: flags.force,
           target: flags.target,
           list: flags.listFlag,
+        });
+        break;
+      case 'adopt':
+        await adopt({
+          name: positional[0],
+          target: flags.target,
+          dryRun: flags.dryRun,
+          yes: flags.yes,
+        });
+        break;
+      case 'diff':
+        await diff({
+          name: positional[0],
+          target: flags.target,
+          full: flags.full,
+        });
+        break;
+      case 'doctor':
+        await doctor({
+          target: flags.target,
+          warnOnly: flags.warnOnly,
+        });
+        break;
+      case 'trace':
+        await trace({
+          query: positional.join(' '),
+          target: flags.target,
+          top: flags.top ? Number(flags.top) : 5,
+        });
+        break;
+      case 'log':
+        await logEvent({
+          skill: positional[0],
+          event: flags.event,
+          note: flags.note,
+          helpful: flags.helpful,
+          utterance: flags.utterance,
+          enable: flags.enable,
+          disable: flags.disable,
+          status: flags.statusFlag,
+        });
+        break;
+      case 'evolve':
+        await evolve({
+          name: positional[0],
         });
         break;
       case undefined:

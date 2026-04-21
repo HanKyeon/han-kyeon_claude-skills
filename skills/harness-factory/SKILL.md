@@ -15,16 +15,19 @@ description: |
 
 ## 활성화 시 반드시
 
-1. **도메인 인터뷰를 먼저.** 사용자의 작업 특성을 듣지 않고 패턴부터 고르지 말 것.
-2. **6 패턴 중 1개만 선택.** 혼합은 실패 원인. 필요하면 2개 팀으로 분리.
-3. **프로젝트 로컬에 작성.** 출력은 `.claude/agents/`, `.claude/skills/` (사용자 전역 `~/.claude`가 아님).
-4. **CLI가 있으면 CLI 우선.** `cfh generate <preset>`으로 해결 가능한 경우는 그것을 제안. 커스텀이 필요할 때만 직접 파일 작성.
-5. **생성 후 실험 플래그 안내.** 에이전트 간 메시지 교환이 필요하면 `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` 필요함을 알림.
+1. **Pre-scan 먼저.** Phase 0에서 프로젝트 구조·기존 에이전트·CLAUDE.md를 훑어 Phase 1 답변 초안을 만든 뒤 진입.
+2. **도메인 인터뷰 다음, 패턴은 그 후에.** Q1~Q5 + 옵션 Deep-dive + Sanity check 순. 작업 특성 답변 전 패턴 확정 금지.
+3. **6 패턴 중 1개만 선택.** 혼합은 실패 원인. 필요하면 2개 팀으로 분리.
+4. **프로젝트 로컬에 작성.** 출력은 `.claude/agents/`, `.claude/skills/` (사용자 전역 `~/.claude`가 아님).
+5. **CLI가 있으면 CLI 우선.** `cfh generate <preset>`으로 해결 가능한 경우는 그것을 제안. 커스텀이 필요할 때만 직접 파일 작성.
+6. **생성 후 실험 플래그 안내.** 에이전트 간 메시지 교환이 필요하면 `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` 필요함을 알림. Deep-dive D1에서 이미 확인된 경우 중복 안내 생략.
 
-## 6 Phase 워크플로
+## 7 Phase 워크플로
 
 ```
-Phase 1: Domain Interview        (작업 특성 5 질문)
+Phase 0: Pre-scan                (프로젝트 스캔 → Phase 1 답변 초안)
+   ↓
+Phase 1: Domain Interview        (기본 5 질문 + 옵션 Deep-dive 7 축 + Sanity check)
    ↓
 Phase 2: Pattern Selection       (6 패턴 중 1개 추천 + 사용자 확인)
    ↓
@@ -37,15 +40,56 @@ Phase 5: Scaffold                (cfh generate 또는 직접 Write)
 Phase 6: Validate + Dry Run      (cfh validate + 샘플 태스크로 시운전)
 ```
 
+## Phase 0 — Pre-scan
+
+`CLAUDE.md`, `package.json`, `./.claude/agents/`, `./.claude/skills/`를 훑어 Phase 1 질문의 답변 초안을 만듭니다 (→ `references/pre-scan.md`). 도메인 경계를 추출해 Q3(전문성 축) 후보를 자동 생성하고, `CLAUDE.md`에 "프로덕션"·"결제" 등이 보이면 Q4(실패 비용)를 (c) 기본값으로 제시합니다.
+
+빈 프로젝트 또는 스캔할 것이 없으면 "Phase 1 정상 진행"으로 종료.
+
 ## Phase 1 — Domain Interview
 
-아래 5개 질문 (→ `references/interview-flow.md`):
+기본 5 질문 → (옵션) Deep-dive 7 축 → Sanity check 순 (→ `references/interview-flow.md`).
+
+### 기본 5 질문
 
 1. **태스크 성격** — 반복적/선형적 / 병렬 가능 / 검토·비판이 중요 / 계층적 분해 필요 / 탐색적
 2. **입력·출력** — 한 번에 들어오는 입력 단위(파일/PR/요구사항) + 최종 산출물 형태
 3. **전문성 축** — 보안·성능·a11y·타입·도메인 중 몇 축이 독립적으로 평가되어야 하나
 4. **실패 비용** — 틀리면 롤백 쉬운가, 아니면 수정 비용이 큰가 (큰 경우 producer-reviewer 강제)
 5. **규모** — 에이전트 2~3개로 충분한가, 5개 이상이 필요한가 (5개 넘으면 계층 분해 검토)
+
+### Deep-dive 옵트인 (선택)
+
+기본 5 질문 완료 후 사용자에게 "더 깊이 설계하시겠습니까? (y/n)" 제시. 자동 추천 규칙:
+- Q4=(c) 또는 Q5=6+ → **(y) 권장**
+- Q5=2~3 AND Q4=(a) → **(n) 권장**
+
+(y) 선택 시 아래 **7 축 중 기본 답변과 관련된 것만** 조건부로 질문:
+
+| 축 | 활성 조건 |
+|---|---|
+| D1 통신 대역폭 | Q1=(a)/(b)/(f) OR Q5=4+ |
+| D2 상태성 | Q1=(e) OR (f) |
+| D3 인간 개입 지점 | Q4=(b) OR (c) |
+| D4 반복 한계 | Q1=(e) OR 피드백 루프 |
+| D5 권한·도구 | 항상 |
+| D6 실패 처리 | Q4=(b) OR (c) |
+| D7 관측성 | Q4=(c) OR Pre-scan에 CI 발견 |
+
+일반적으로 2~4개 축이 활성화됩니다. 7개 전부 묻는 일은 드묾.
+
+### Sanity check (요약 카드 직전)
+
+기본 + Deep-dive 답변을 `references/sanity-check.md`의 R1~R7 룰로 검사:
+- R1 규모 vs 축 수
+- R2 실패 비용 vs 패턴 후보
+- R3 태스크 성격 vs 입출력
+- R4 축 겹침
+- R5 기존 에이전트 충돌
+- R6 Deep-dive 답변 모순 (옵션 수행 시)
+- R7 통신 vs 실험 플래그 인식 (옵션 수행 시)
+
+모순 발견 시 재확인 → 통과하면 **요약 카드** + 패턴 추천 제시하고 사용자 승인.
 
 ## Phase 2 — Pattern Selection
 
@@ -122,12 +166,14 @@ cfh generate reviewer-team
 
 ## references/
 
+- `pre-scan.md` — Phase 0 스캔 프로토콜 + Phase 1 초안 매핑
+- `interview-flow.md` — Phase 1 기본 5 질문 + Deep-dive 7 축 + 옵트인 게이트
+- `sanity-check.md` — Phase 1 요약 직전 모순 감지 룰 (R1~R7)
 - `patterns/pipeline.md` — 선형 파이프라인
 - `patterns/fan-out-fan-in.md` — 병렬 분해 + 병합
 - `patterns/expert-pool.md` — 병렬 전문가 풀
 - `patterns/producer-reviewer.md` — 생성-검증 분리
 - `patterns/supervisor.md` — 중앙 배정자
 - `patterns/hierarchical-delegation.md` — 트리 분해
-- `interview-flow.md` — Phase 1 질문 상세
 - `agent-contract.md` — 에이전트 정의 프런트매터·입출력 계약
 - `output-contract.md` — `.claude/` 파일 구조와 Claude Code 등록 규칙

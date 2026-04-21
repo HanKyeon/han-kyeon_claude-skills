@@ -139,7 +139,7 @@
 
 ### 방식 B — Slash Command로 워크플로 자동화
 
-`.claude/commands/tdd.md`:
+`.claude/commands/cfh-tdd.md`:
 
 ```markdown
 ---
