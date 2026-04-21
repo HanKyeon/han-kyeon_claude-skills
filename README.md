@@ -45,6 +45,177 @@ cfh install
 
 ---
 
+## 표준 사용법
+
+`@han-kyeon/claude-skills`의 공식 "이렇게 쓰세요" 플로우입니다. 다음 섹션의 시나리오 가이드와 커맨드 선택 가이드는 이 표준 안에서 움직입니다. 처음이시면 이 섹션만 먼저 훑고 시작하셔도 됩니다.
+
+### 3 원칙
+
+#### 원칙 1 — 프로젝트 로컬 우선
+
+팀·프로젝트 고유 규약은 **항상 `./.claude/`에 작성**하고 git에 커밋합니다. 개인 취향(네이밍·테스트 스타일)만 `~/.claude/` 전역에 둡니다. 런타임에서도 프로젝트 로컬이 전역을 이깁니다.
+
+- ✅ `cfh new skill payment-rules --project`
+- ✅ `cfh generate reviewer-team` (기본이 프로젝트 로컬)
+- ❌ 팀 규약을 전역(`~/.claude/`)에만 두기 — 팀원이 못 봄, git 추적 안 됨
+
+#### 원칙 2 — 자산 작성 전에 분류
+
+무엇을 만들지 확정되지 않은 상태로 `cfh new` 스캐폴드부터 찍지 않습니다. 다음 우선순위로 진입하세요.
+
+1. 확정됨(skill / command / team) → `/cfh-new`, `/cfh-team`, `cfh generate` 직접
+2. 모호함 → `/cfh-make`로 3 분류 질문 먼저
+3. 일회성 작업 → 스킬 만들지 말고 Claude에게 바로 요청
+
+#### 원칙 3 — 보호는 명시적으로
+
+번들 스킬을 편집하셨다면 반드시 `cfh adopt`로 **user-authored 전환을 명시**하세요. 그렇지 않으면 `cfh update`가 덮어쓸 수 있습니다.
+
+- `cfh diff <name>` — 내가 뭘 바꿨는지 먼저 확인
+- `cfh adopt <name>` — 보호 확정 (y/N 확인 있음)
+- `cfh doctor` — 주기적으로 고아 manifest·트리거 충돌 점검
+
+---
+
+### 생명주기 5 단계
+
+#### 단계 1 — 셋업 (설치 직후 1회)
+
+```bash
+npm install -g @han-kyeon/claude-skills
+cfh install                      # 번들 4 스킬 + 8 커맨드 설치
+cfh doctor                       # 초기 상태 점검
+cfh list                         # 설치 확인
+```
+
+**확인 기준**: `cfh doctor` 결과에 error가 없을 것. warning은 이 단계에서 모두 허용.
+
+**선택**: 심볼릭 링크 방식이면 `cfh install --link` — npm update 시 자동 반영. 단, 커스터마이징은 불가.
+
+---
+
+#### 단계 2 — 프로젝트 온보딩 (새 프로젝트 진입 시 1회)
+
+```bash
+cd <project>
+cfh list --project               # 프로젝트 로컬 기존 자산 확인
+```
+
+**선택지 분기**:
+
+- 프로젝트에 이미 `.claude/`가 있음 → 기존 자산을 **편집·확장** (새로 만들지 않음). `cfh doctor`로 상태 확인.
+- 프로젝트에 `.claude/`가 없음 → 아래 중 **필요한 것만** 생성:
+  - 팀 규약·도메인 규칙을 Claude가 자동 적용해야 함 → `/cfh-new skill our-conventions --project`
+  - PR 리뷰를 다축(보안·성능·a11y·타입)으로 하고 싶음 → `cfh generate reviewer-team`
+  - 실패 비용 크고 TDD 오버핏 우려 → `cfh generate producer-reviewer`
+  - 뭘 만들지 모름 → `/cfh-make`로 분류부터
+
+**마무리**:
+```bash
+cfh validate                     # 생성된 자산 검증
+git add .claude
+git commit -m "chore: add Claude Code harness"
+```
+
+이 단계 이후 팀원들은 `git pull` + Claude Code 재시작만 하면 됩니다.
+
+---
+
+#### 단계 3 — 데일리 (매 작업)
+
+작업 성격별로 **시나리오 가이드(다음 섹션) 중 하나를 고르는 것**이 기본 동작입니다. 막막하시면 아래 2개 중 하나로 시작:
+
+- `/cfh-guide overview` — 이 도구의 전체 그림을 대화로 받기
+- `/cfh-make <한 줄 요구사항>` — dispatcher가 분류해서 적절한 메타-스킬로 위임
+
+**자동 트리거를 신뢰**: "리팩터링해줘", "TDD로 시작", "스킬 만들어줘" 같은 발화만으로도 해당 스킬이 자동 활성화됩니다. 명시적 슬래시 커맨드는 자동 트리거가 안 뜨거나 특정 인자를 넘기고 싶을 때 사용합니다.
+
+**하지 말아야 할 것**:
+- 매번 `cfh install`·`cfh update` 실행 — 설치는 1회, 갱신은 단계 4에서.
+- Claude 대화 밖에서 SKILL.md 직접 열어 편집 — 대신 `/cfh-new` 또는 `/cfh-make`로 인터뷰 통해 설계.
+
+---
+
+#### 단계 4 — 주기 점검 (주 1회 또는 패키지 업데이트 후)
+
+```bash
+npm update -g @han-kyeon/claude-skills
+cfh update                       # managed 항목만 갱신 (user-authored는 자동 보호)
+cfh doctor                       # 새 오류·trigger 충돌 감지
+```
+
+**옵트인 하신 경우 추가**:
+```bash
+cfh evolve                       # 사용 로그 + 정적 분석 기반 개선 제안
+```
+
+**확인 기준**:
+- `cfh update` 후 "skipped N user-authored" 메시지 — 내 스킬이 그대로인지 확인
+- `cfh doctor`에서 새로 생긴 warning이 있다면 원인 추적 (업스트림 변경 때문인지)
+- `cfh evolve` 제안 중 공감되는 것만 골라 SKILL.md 수동 편집
+
+---
+
+#### 단계 5 — 장기 관리 (분기·반기)
+
+이 시점에는 사용자 편집·생성 자산이 쌓여 있습니다. 정리 타이밍입니다.
+
+```bash
+cfh list                         # 전체 현황 — managed/user-authored/user-modified 분포 확인
+cfh diff <편집한 번들 스킬>       # 어떤 파일을 바꿨는지
+cfh adopt <편집한 번들 스킬>      # user-authored로 영구 전환 (update에서 제외)
+cfh remove <안 쓰는 스킬>         # 정리
+```
+
+**팀 공유·아카이빙**:
+- 프로젝트 로컬 `.claude/`에 팀 공유 가치가 있다면 git commit + PR
+- 개인 전역 `~/.claude/`에서 팀 공유 가치 있는 것은 `cfh new skill <name> --project`로 **재작성**하여 프로젝트로 이동 (카피만 이동해도 되지만, 원칙 1에 따라 프로젝트 컨텍스트로 새로 설계하는 것이 더 나음)
+
+---
+
+### 핵심 체크포인트 — 멈추고 확인해야 할 순간
+
+**① 새 스킬 작성 직전**
+```bash
+cfh trace "<이 스킬이 떠야 할 대표 발화>"
+```
+- 기존 스킬이 먼저 떠오르면 description이 겹치는 것 — 새로 만들지 말고 기존 확장 검토.
+- 아무것도 안 뜨면 정상. 새 스킬 작성 진행.
+
+**② PR 올리기 직전**
+```bash
+/cfh-review develop
+```
+- Critical·High 지적 해소하지 않으면 머지 금지 (내부 가이드).
+- `Questions to Resolve`가 있으면 모호한 의도 — 리뷰어에게 묻기 전에 본인이 먼저 답해두기.
+
+**③ 대규모 리팩터 직전**
+- `Safety net(테스트)` 존재 여부 확인. 없으면 **Step 5 진행 전 반드시 Characterization Test 작성** (`/cfh-refactor`가 자동으로 안내합니다).
+- 작은 PR로 쪼갤 수 없는 변경이면 범위가 잘못됐다는 신호 — Scope 재질문.
+
+**④ 팀(에이전트 팀) 도입 직전**
+- Q4 실패 비용이 (c) 운영 장애/데이터 손실이면 **Producer-Reviewer 강제** (단일 팀이 생성·검증을 겸하면 오버핏 위험).
+- 에이전트 5개 넘으면 Hierarchical 재편 검토 — 1 레벨로 나열하면 관리 비용이 작업 비용 초과.
+
+---
+
+### 한 장 요약
+
+```
+설치 (1회)          → cfh install → cfh doctor → cfh list
+프로젝트 진입 (1회)  → cd <proj> → cfh list --project → 필요 자산 생성 → git commit
+매 작업             → 시나리오 가이드 또는 /cfh-make → /cfh-* 실행
+주 1회              → cfh update → cfh doctor → (옵션) cfh evolve
+분기·반기           → cfh diff → cfh adopt → cfh remove → 팀 공유 정리
+
+원칙:
+  1. 프로젝트 로컬 우선 (팀 공유는 ./.claude/ + git)
+  2. 자산 작성 전에 분류 (/cfh-make 또는 확정된 엔트리로)
+  3. 보호는 명시적으로 (cfh adopt로 user-authored 전환)
+```
+
+---
+
 ## 언제 무엇을 쓰나 — 시나리오 가이드
 
 본인의 상황에 맞는 시작점을 찾으실 수 있도록 전형적인 8가지 시나리오를 정리했습니다. 상황이 복합적이거나 어느 것도 맞지 않으시면 `/cfh-make`로 시작하시면 Claude가 분류해드립니다.
