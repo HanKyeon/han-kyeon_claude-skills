@@ -14,6 +14,7 @@
 - `team` / `harness` / `agent` / `팀` → Team 섹션
 - `make` / `dispatcher` / `asset` / `무엇` / `분류` → Make 섹션
 - `plan` / `상의` / `접근` / `계획` → Plan 섹션
+- `debug` / `조사` / `버그` / `장애` / `원인` → Debug 섹션
 - `commands` / `cheat` / `치트` / `명령` → Cheatsheet 섹션
 - `trigger` / `trace` / `발동` → Trigger 섹션
 - `maintain` / `adopt` / `diff` / `doctor` / `점검` → Maintain 섹션
@@ -409,6 +410,7 @@ cfh evolve tdd-first                      # 특정 스킬만
 | "스킬 만들", "create a skill" | `skill-author` |
 | "팀 에이전트", "agent team", "build a harness" | `harness-factory` |
 | "자동화해줘", "뭔가 만들고 싶은데", "automate this" | `asset-factory` (dispatcher) |
+| "원인 모르겠다", "stack trace", "production 500", "장애 났다" | `debug-investigator` (→ /cfh-debug) |
 
 ### 명시 호출 (슬래시 커맨드)
 

@@ -85,6 +85,7 @@ cfh install
 #    (유틸)        /cfh-trace "리뷰 좀"     (발화가 어느 스킬을 트리거할지 시뮬레이션)
 #    (dispatcher) /cfh-make                (무엇을 만들지 모를 때 — 자산 분류부터)
 #    (dispatcher) /cfh-plan                (작업 목표를 상의하고 접근법부터 — 명시 호출만)
+#    (dispatcher) /cfh-debug               (버그·장애·성능·회귀 조사 — 증거 주도)
 ```
 
 ---
@@ -517,6 +518,38 @@ cfh trace "<이 스킬이 떠야 할 대표 발화>"
 
 ---
 
+### 10. 버그·장애·성능·회귀 조사 *(0.8.0)*
+
+**상황**: 증상은 보이는데 **원인이 불분명**. 수정부터 시작하면 위험.
+
+**추천 흐름**:
+```
+/cfh-debug 프로덕션에서 쿠폰 적용 시 간헐 500 에러
+
+→ 5 Phase 조사
+  Phase 0 증거 수집: 증상·재현·영향·시점·환경 + 유형 분류(버그/장애/성능/회귀)
+  Phase 1 Context Scan: git log·blame·관련 PR·스택 파일 scoped 스캔
+  Phase 2 가설 나열: 최소 3개 가설 + 각 확인 방법
+  Phase 3 체계적 검증: 재현 테스트·git bisect·profiler
+  Phase 4 근본 원인 + 수정 계획: hotfix vs proper fix 선택
+       → /cfh-plan 또는 /cfh-tdd로 위임
+```
+
+**언제 쓰지 말아야**:
+- 이미 원인을 아는 경우 → `/cfh-plan`으로 바로
+- 단순 오타·간단 수정 → 자연어로 바로
+
+**`/cfh-plan`과 차이**: `/cfh-plan`은 **목표 주도**(뭘 할지 안다), `/cfh-debug`는 **증거 주도**(뭐가 잘못됐는지 찾아야 한다).
+
+**특징**:
+- 4 유형 지원: 기능 버그 / 장애·인시던트 / 성능 이슈 / 회귀
+- 장애 유형에서 rollback 가능 + 고심각도면 **조사 전에 rollback 먼저** 권고
+- 최소 3개 가설 강제 (확증 편향 방지)
+- Phase 4 수정 계획은 **계획만** — 실제 수정은 `/cfh-plan` 등에 위임
+- 조사 내역 `DEBUG-LOG.md` 또는 Issue에 기록 권장
+
+---
+
 ## 커맨드·CLI 선택 가이드
 
 ### 슬래시 커맨드 (Claude Code 대화 중)
@@ -534,6 +567,7 @@ cfh trace "<이 스킬이 떠야 할 대표 발화>"
 | 팀 구성 (확정) | `/cfh-team [domain]` | 다축 리뷰·생성-검증 분리가 확정 | `cfh generate <preset>`이 더 빠를 수 있음 |
 | 뭘 만들지 미정 | `/cfh-make [요구사항]` | 만들고 싶은데 skill/command/team 구분 안 설 때 | — |
 | 작업 어떻게 시작할지 상의 | `/cfh-plan [목표]` | 복합·모호한 작업의 목표·접근법 정리 후 실행 (명시 호출만) | 확정이면 해당 작업 커맨드 직접 |
+| 원인 불명 이슈 조사 | `/cfh-debug [증상]` *(0.8.0)* | 버그·장애·성능·회귀의 증거 주도 조사 (명시 호출만) | 원인 이미 알면 `/cfh-plan` |
 | 트리거 디버깅 | `/cfh-trace "<발화>"` | description 조정 중일 때 | `cfh doctor`로 overlap도 함께 |
 | 가이드 | `/cfh-guide [topic]` | 사용법 확인 | 이 README |
 
@@ -588,6 +622,7 @@ cfh trace "<이 스킬이 떠야 할 대표 발화>"
 | `skill-author` | "스킬 만들", "create a skill", "write a skill" | 인터뷰 기반 SKILL.md 작성 메타-스킬 (6 Phase: Pre-scan + 조건부 follow-up + Sanity check + (z) 모르겠음 fallback) |
 | `harness-factory` | "팀 에이전트", "agent team", "build a harness" | 6 패턴 중 선택해 `.claude/agents/` + `.claude/skills/` 생성 (7 Phase: Pre-scan + 기본 6 질문 + Deep-dive 3지선 + Sanity check R1~R8) |
 | `asset-factory` | "자동화해줘", "뭔가 만들고 싶은데", "automate this" | **자산 Dispatcher** — 3 분류 질문으로 skill/command/team/agent 판단 후 적합한 메타-스킬로 위임 (0.5.0 goal-first) |
+| `debug-investigator` *(0.8.0)* | "원인 모르겠다", "stack trace", "production 500", "배포 후 깨짐", "장애 났다" | **이슈 조사 Dispatcher** — 증거 주도 5 Phase. `/cfh-debug` 커맨드와 동일 워크플로 자동 진입 |
 
 ### Slash commands (`commands/`)
 
@@ -595,7 +630,8 @@ cfh trace "<이 스킬이 떠야 할 대표 발화>"
 
 | 커맨드 | 인자 | 역할 |
 |---|---|---|
-| `/cfh-review` | `[parent-branch]` | 적응형 AI 코드 리뷰 — diff 규모별 서브에이전트 수 조정 |
+| `/cfh-review` | `[parent-branch]` | 적응형 AI 코드 리뷰 — diff 규모별 서브에이전트 수 조정. **0.8.0부터 Project Health·Product Impact 추가 (Medium+에서 7 에이전트)** |
+| `/cfh-debug` *(0.8.0)* | `[증상 설명]` | 증거 주도 조사 워크플로 — 버그·장애·성능·회귀. 5 Phase (증거 → 컨텍스트 → 가설 3+ → 검증 → 원인+수정 계획). `debug-investigator` 스킬로 자동 트리거도 가능 |
 | `/cfh-tc` | `[path]` | 테스트 작성 — TDD Mode / Test-Fill Mode 자동 감지 (FE: RTL 관용구) |
 | `/cfh-tc-gen` | `[path]` | 테스트 작성 — BE·라이브러리·CLI 친화적 (DI·supertest·격리된 통합 테스트) |
 | `/cfh-feedback` | `<skill> "<comment>"` | 스킬 사용 피드백 기록 (cfh evolve 분석 반영, 옵트인) |
@@ -605,7 +641,7 @@ cfh trace "<이 스킬이 떠야 할 대표 발화>"
 | `/cfh-new` | `<kind> <name>` | `skill-author` 활성화 + 인터뷰 기반 자산 작성 (종류 확정됐을 때) |
 | `/cfh-team` | `[domain]` | `harness-factory` 활성화 + 팀 생성 워크플로 |
 | `/cfh-make` | `[requirement]` | `asset-factory` dispatcher — 무엇을 만들지부터 분류 |
-| `/cfh-plan` | `[goal]` | 작업 dispatcher — 목표 캡처·접근법 상의·실행 (명시 호출 전용, 자동 트리거 없음) |
+| `/cfh-plan` | `[goal]` | 작업 dispatcher — 목표 캡처·접근법 상의·실행 (명시 호출 전용, 자동 트리거 없음). **0.8.0부터 Phase 2 접근법 카드에 Project Alignment + Product Impact 자동 검증 섹션 포함** |
 | `/cfh-trace` | `[query]` | 발화가 어느 스킬을 트리거할지 시뮬레이션 |
 | `/cfh-guide` | `[topic]` | 사용 가이드 |
 
@@ -838,6 +874,48 @@ cfh import my-bundle.json --yes          # 일괄 승인
 번들 포맷 (`cfh-bundle-v1`): JSON 하나에 파일 내용 전체 포함. zero-dep이라 별도 압축 라이브러리 없음. 작은 스킬 10~20개면 수십 KB 수준.
 
 **Import된 자산은 user-authored로 취급**(manifest 없음) — `cfh update`에서 자동 보호됨.
+
+---
+
+## 프로젝트·프로덕트 축 평가 (0.8.0)
+
+0.8.0부터 `/cfh-review`와 `/cfh-plan`이 **코드 품질 축을 넘어서 프로젝트 건강성·프로덕트 임팩트 축**도 평가합니다. "더 좋은 코드"가 아닌 "더 좋은 프로젝트·더 좋은 프로덕트"를 위한 관점입니다.
+
+### 두 새 축
+
+| 축 | 의미 | 예시 질문 |
+|---|---|---|
+| **Project Health** | 코드베이스 장기 건강성 | 기술 부채 방향·모듈 경계 침식·의존성 정당성·migration 정렬 |
+| **Product Impact** | 사용자·비즈니스 가치 | 사용자 체감·실패 UX·메트릭·롤백 안전성·80% 대안 |
+
+### `/cfh-review`에서 (Medium+ diff)
+
+기본 5개 서브에이전트(Convention·Logic·Test·Performance·Security)에 **Project Health (F)·Product Impact (G)** 2개 추가 → 총 7개.
+
+**Step 2.5에 제외 인터뷰 추가**: "7개 기본 포함됩니다. 제외할 에이전트가 있나요? (예: 'E 제외' / 'F,G 제외')"
+
+출력 `REVIEW.md`에 🏗️ Project Health·🎯 Product Impact 섹션이 Summary 표에 포함되어 생성.
+
+### `/cfh-plan`에서 (모든 작업)
+
+Phase 2 Approach Proposal 카드에 **자동 추론 섹션**이 추가됩니다 (새 질문은 없음):
+
+```
+📦 Project Alignment Check
+  - 기술 부채 영향: 중립 — 신규 의존성 없음, any 사용 없음
+  - 모듈 경계: 기존 payments/·orders/ 경계 유지
+  - Migration 정렬: TypeScript strict 전환과 일치 ✅
+
+🎯 Product Impact Check
+  - 사용자 체감: 쿠폰 입력 시 즉시 할인액 표시
+  - 실패 UX: 코드 무효·네트워크 실패·서버 오류 3가지 메시지 명시 필요
+  - 롤백: feature flag 권장 (coupons.validation.enabled)
+  - 80% 대안: 클라이언트 whitelist는 보안 이슈로 기각
+```
+
+### 컨텍스트 부족 시
+
+`CLAUDE.md`에 제품 맥락(사용자 segment·핵심 메트릭)이나 migration 정보가 없으면 두 축 분석이 얕아집니다. 이때 "ℹ 추론 기반 분석" 명시. 보완 권장은 프로젝트 로컬 `CLAUDE.md`에 맥락 추가 (본 패키지가 표준 포맷을 강요하진 않음 — 자유 서술).
 
 ---
 

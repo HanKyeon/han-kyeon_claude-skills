@@ -141,7 +141,7 @@ Phase 1의 정보(목표 + scoped 스캔 결과 + Q2~Q4)를 근거로 Claude가 
 | **탐색·분석** | 코드 이해 / 의사결정 근거 수집 | 직접 조사 + 리포트 |
 | **복합** | 위 중 2개+ 섞임 | 순서 제시 후 단계별 위임 |
 
-### 접근법 카드 템플릿
+### 접근법 카드 템플릿 (0.8.0 확장)
 
 ```
 📋 접근법 제안
@@ -159,20 +159,62 @@ Phase 1의 정보(목표 + scoped 스캔 결과 + Q2~Q4)를 근거로 Claude가 
   2. <두 번째>
   3. <마지막 — 검증 방법>
 
-예상 위험:
+예상 위험 (코드):
   - <있다면 — 예: Blast Radius 큰 import 포함, 테스트 없는 영역 등>
+
+📦 Project Alignment Check (0.8.0)
+  - 기술 부채 영향: <증가/감소/중립 — 근거 1줄>
+  - 모듈 경계: <강화/유지/침식 — 영향 받는 경계 명시>
+  - 의존성 변화: <신규 라이브러리 X | 없음 | 기존 버전 업>
+  - Migration 정렬: <진행 중 migration과 일치/역행/무관 — 근거>
+  - ⚠️ 예상 Project 리스크: <있다면 — 없으면 생략>
+
+🎯 Product Impact Check (0.8.0)
+  - 사용자 체감 변화: <무엇을 보게 되나 | 내부 개선이라 체감 없음>
+  - 실패 UX: <에러 메시지·fallback 계획 | 기존 에러 처리 의존>
+  - 메트릭 후보: <수집할 지표 | 없음 — 내부 작업이라 불필요>
+  - 80% 대안: <더 단순한 방법 검토 및 기각 이유 | 이미 최소 범위>
+  - 롤백: <feature flag·canary | 단방향 — 리스크 명시>
+  - ⚠️ 예상 Product 리스크: <있다면 — 없으면 생략>
 
 위임할 스킬: </cfh-tdd | /cfh-refactor | /cfh-tc | /cfh-review | (직접)>
 위임 시 전달할 컨텍스트:
   - 목표: <Q1 요약>
   - 제약: <Q3>
   - 긴급도: <Q4>
+  - Project·Product 검증 결과 요약 (위 두 섹션)
 
 이대로 진행하시겠습니까?
 - (yes) Phase 3 실행
 - (adjust) 특정 단계만 수정
 - (reclassify) 태스크 분류 재논의
+- (revise-checks) Project·Product 검증 결과 재검토
 ```
+
+### Project·Product 검증 추론 원칙
+
+두 섹션은 **사용자에게 새 질문을 하지 않고** Claude가 Phase 1 답변 + Scoped Pre-scan 결과로 자동 추론합니다:
+
+**추론 근거**:
+- Q1 목표·Q2 성공 기준에서 "사용자 체감" 여부 판단
+- Q3 제약에서 out-of-scope 힌트
+- Pre-scan의 `CLAUDE.md`·`package.json`·대상 디렉터리 구조에서 모듈 경계·의존성·migration 정보 추출
+
+**컨텍스트 부족 시 명시**:
+
+```
+📦 Project Alignment Check
+  ℹ CLAUDE.md에 migration 계획·모듈 경계 정의가 없어 **추론 기반** 분석입니다.
+  ...
+```
+
+```
+🎯 Product Impact Check
+  ℹ CLAUDE.md에 제품 컨텍스트(사용자 segment·핵심 메트릭)가 없어 **추론 기반** 분석입니다.
+  ...
+```
+
+사용자가 `(revise-checks)` 선택 시 해당 섹션만 재논의 (다른 Phase 답변은 유지).
 
 ### 복합 태스크 처리
 

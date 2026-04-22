@@ -166,17 +166,52 @@ project_profile:
   git diff HEAD --name-only | wc -l
   ```
 
-### 적응형 전략 매트릭스
+### 적응형 전략 매트릭스 (0.8.0)
 
-| Diff 규모 | 파일 수 | 에이전트 전략 |
+| Diff 규모 | 파일 수 | 기본 에이전트 전략 |
 |---|---|---|
-| Tiny | 1~3 | **단일 에이전트** (Convention + Logic 통합) |
-| Small | 4~15 | **3개 에이전트** (Convention, Logic, Test) |
-| Medium | 16~50 | **5개 에이전트** (Security, Performance 추가) |
-| Large | 51~200 | **5개 에이전트 + 도메인별 청크** |
+| Tiny | 1~3 | **단일 에이전트** (Convention + Logic 통합, Project 1줄 체크 포함) |
+| Small | 4~15 | **3개 에이전트** (Convention, Logic, Test) + Project health 간략 |
+| Medium | 16~50 | **7개 에이전트** (+ Performance, Security, **Project Health**, **Product Impact**) |
+| Large | 51~200 | **7개 에이전트 + 도메인별 청크** |
 | Huge | 200+ | 사용자에게 **리뷰 범위 축소 제안** 먼저 (예: "모드 (b) 최근 5개 커밋으로 좁히시겠습니까?") |
 
 Huge인 경우 바로 진행하지 말고 **사용자 확인**부터. 0단계로 돌아가 (b) 또는 (c)로 재선택 가능.
+
+## Step 2.5: 서브에이전트 제외 인터뷰 (0.8.0)
+
+Medium+ 이상이면 기본 7개 에이전트가 실행됩니다. 사용자가 **특정 축을 건너뛰고 싶은지** 확인:
+
+```
+🧑‍⚖️ 서브에이전트 선정 (Medium diff, 7개 후보)
+
+기본 포함:
+  [A] Convention      — 프로젝트 규칙 준수
+  [B] Logic           — 비즈니스 로직·엣지 케이스
+  [C] Test            — 테스트 커버리지
+  [D] Performance     — 런타임·번들·DB 쿼리 (stack-aware)
+  [E] Security        — 인증·injection·민감 데이터
+  [F] Project Health  — 기술 부채·모듈 경계·의존성·migration (0.8.0)
+  [G] Product Impact  — UX·메트릭·롤백·과잉 엔지니어링 (0.8.0)
+
+제외할 에이전트가 있으시면 알려 주세요 (복수 가능):
+  예: "E 제외" / "F,G 제외" / "F만 실행" / "전부 실행"
+
+Enter 또는 "전부 실행" → 기본값으로 진행.
+```
+
+**입력 해석 규칙**:
+- `"전부 실행"` / Enter → 모두 포함
+- `"X 제외"` (단/복수) → 해당 항목 빼고 나머지
+- `"X만 실행"` (단/복수) → 해당 항목만
+- 모호하면 재질문
+
+제외 결과를 한 줄로 보고하고 Step 3 진입:
+```
+✅ 실행 에이전트: A·B·C·D·F (E, G 제외)
+```
+
+**Tiny/Small**: 제외 인터뷰 건너뜀 (에이전트 수 적으므로).
 
 ## Step 3: Subagent 생성 (채택된 전략에 따라)
 
@@ -390,6 +425,108 @@ Huge인 경우 바로 진행하지 말고 **사용자 확인**부터. 0단계로
 {project_profile, 변경 파일, diff}
 ```
 
+---
+
+### Subagent F: 🏗️ Project Health Review (0.8.0, Medium+ 에서)
+
+```
+당신은 코드베이스 장기 건강성을 평가하는 리뷰어입니다. 개별 줄 단위 버그가 아니라 **프로젝트 수준의 방향성**을 봅니다.
+
+**분석 영역**:
+
+1. 기술 부채 방향
+   - `any` / `unknown` / 타입 단언 증가·감소
+   - TODO·FIXME·HACK 주석 증감
+   - 복잡도 지표 (중첩 깊이·함수 길이) 방향
+   - 테스트 커버리지·타입 strict mode 약화 여부
+
+2. 모듈 경계·계층 구조
+   - 이 변경이 기존 계층 (domain → services → controllers 등)을 강화/침식하는가?
+   - private 함수·내부 state 외부 노출 여부
+   - Cross-module import 신규 발생 (도메인 경계 침범)
+   - 순환 참조 가능성
+
+3. 의존성 변화
+   - 신규 `package.json` 의존성 추가: 정당성·대안·유지보수 상태·라이선스
+   - 번들 사이즈 영향 (tree-shaking 가능성)
+   - 메이저 버전 업그레이드 포함 시 breaking change 감지
+   - Lock-in 우려 (특수 라이브러리 의존 심화)
+
+4. Migration 방향 정렬
+   - CLAUDE.md·README에 명시된 진행 중 migration(예: class→functional, JS→TS, REST→gRPC)과 일치/역행?
+   - Deprecated API·legacy pattern 신규 사용 감지
+
+5. Dead code·Orphan
+   - 제거된 export가 실제로 unused인가?
+   - 추가된 파일이 다른 곳에서 import 되나?
+
+**필요 컨텍스트 확인**:
+- project_profile의 `stack_kind`, migration 진행 정보, 의존성 diff
+- CLAUDE.md에 아키텍처·migration 정보 없으면 "컨텍스트 제한으로 얕은 분석" 경고 후 추론 기반 분석
+
+**출력 규칙**:
+- 각 지적에 "어떤 원칙을 위반하나 / 누적되면 어떤 부채가 되나" 명시
+- 심각도: Critical (머지 시 즉각 문제) / High (3개월 내 부담) / Medium (장기 부담) / Low (관찰)
+- 개선 방향 제시 (즉시 수정 / 별도 PR로 분리 / Issue로 기록)
+- 한국어, 기술 용어 영어 병기
+
+{project_profile, 변경 파일, diff, package.json diff}
+```
+
+---
+
+### Subagent G: 🎯 Product Impact Review (0.8.0, Medium+ 에서)
+
+```
+당신은 제품 매니저 관점의 리뷰어입니다. 코드 품질이 아니라 **사용자가 얻는 가치·UX·비즈니스 임팩트**를 봅니다.
+
+**분석 영역**:
+
+1. 사용자 체감 변화
+   - 이 PR이 end user에게 **보이는** 변화인가? 보이면 무엇인가?
+   - 백오피스·내부 도구면 누가 쓰나·어떤 권한 필요한가?
+   - 체감 안 되는 순수 내부 리팩터면 "사용자 체감 없음 (내부 개선)"으로 명시
+
+2. 실패·에러 UX
+   - 서버 실패·네트워크 실패 시 사용자가 보는 메시지: 명확한가? 복구 경로가 있나?
+   - fallback·retry·graceful degradation 여부
+   - 에러 토스트·대체 UI·오프라인 동작
+
+3. 메트릭 영향
+   - 이 변경이 측정 가능한 성과를 낳나? (전환율·체류·성능·오류율 등)
+   - 관련 이벤트·로그·지표 수집 계획이 있나?
+   - 있다면 대시보드·알람 연동 상태
+
+4. 접근성·국제화
+   - 신규 UI면 a11y 레벨 유지? (WCAG·keyboard·screen reader)
+   - 문자열 하드코딩 vs i18n 키 사용
+   - 방향성(RTL)·locale별 포맷(날짜·통화)
+
+5. 롤백 안전성
+   - Feature flag 적용 여부: 배포 후 문제 시 즉시 off 가능한가?
+   - 데이터 마이그레이션 포함 시 되돌리기 가능한가? 단방향 마이그레이션 플래그
+   - 점진 rollout 가능한가? (canary·percent-based)
+
+6. 과잉 엔지니어링 체크
+   - 이 해법이 주는 가치가 실제로 필요한 수준인가?
+   - 80% 가치를 얻는 **더 단순한 대안**이 있나? (기각된 이유 명시 권장)
+   - YAGNI 위반 여부 (미래의 요구를 지금 만들고 있나?)
+
+**필요 컨텍스트 확인**:
+- CLAUDE.md의 제품 맥락 (사용자 segment·핵심 메트릭·핵심 기능)
+- `src/components/`·`app/` 디렉터리의 UX·에러 처리 패턴 샘플
+- `feature-flags` 파일 또는 env 변수 사용 여부
+
+**출력 규칙**:
+- 각 지적에 "사용자 관점에서 왜 문제인가" 명시
+- 심각도: Critical (출시 막아야 함) / High (사용자 혼란·데이터 손실 위험) / Medium (개선 기회) / Low (관찰)
+- 측정 가능한 제안 (예: "쿠폰 적용률 지표를 add_coupon 이벤트로 수집")
+- 제품 컨텍스트 부족 시 "추론 기반" 명시
+- 한국어, 기술 용어 영어 병기
+
+{project_profile, 변경 파일, diff}
+```
+
 ## Step 4: 결과 통합 + 질문 분리
 
 5개(또는 3개/1개) 결과를 받은 뒤:
@@ -454,8 +591,10 @@ REVIEW.md에서 **각 지적(Critical·High 수준)** 은 Why/What/How/What if 4
 | Test Coverage | 0 | 0 | 0 | 0 |
 | Performance | 0 | 0 | 0 | 0 |
 | Security | 0 | 0 | 0 | 0 |
+| **Project Health** (0.8.0) | 0 | 0 | 0 | 0 |
+| **Product Impact** (0.8.0) | 0 | 0 | 0 | 0 |
 
-**종합 평가**: (2~3줄 요약)
+**종합 평가**: (2~3줄 요약 — 코드 축·프로젝트 축·제품 축 각각 한 줄씩)
 
 ---
 
@@ -486,6 +625,35 @@ REVIEW.md에서 **각 지적(Critical·High 수준)** 은 Why/What/How/What if 4
 ## 🔒 Security Review
 
 (Medium+ 에서만)
+
+---
+
+## 🏗️ Project Health Review (0.8.0, Medium+ 에서만)
+
+(Subagent F 결과 — 기술 부채·모듈 경계·의존성·migration 관점)
+
+### 🧩 예시 섹션 구조
+
+- **기술 부채 방향**: any 증가 N, TODO 증가 N, 복잡도 ↑
+- **모듈 경계**: 침범 건수 N
+- **의존성 변화**: 추가 N, 업그레이드 N
+- **Migration 정렬**: 일치 ✅ / 역행 ⚠️
+- **Dead code**: 제거 건·추가 건
+
+---
+
+## 🎯 Product Impact Review (0.8.0, Medium+ 에서만)
+
+(Subagent G 결과 — 사용자 체감·UX·메트릭·롤백 관점)
+
+### 🧩 예시 섹션 구조
+
+- **사용자 체감 변화**: 무엇을 보게 되나
+- **실패 UX**: 에러 시 어떻게 복구
+- **메트릭 영향**: 어떤 지표로 측정
+- **접근성·i18n**: 유지 여부
+- **롤백 안전성**: feature flag·canary 여부
+- **과잉 엔지니어링 체크**: 80% 대안 검토
 
 ---
 
