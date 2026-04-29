@@ -374,6 +374,21 @@ git은 조사 과정을 되돌릴 수 있게 해주지 않으므로, **Phase별 
 근본 원인: <요약>
 긴급도 권장: <hotfix / proper / 둘 다>
 
+🔄 Retro
+  효과 있었음: <bullet 1~3 — 어떤 가설·증거·도구가 빠르게 좁혔는지>
+  실패·삽질: <bullet 1~3 — 잘못된 가설·헛수고·확증편향 신호 등>
+  다음엔 바꿀 것: <bullet 1~3 — 관찰성 보강 위치·테스트 공백 등 후속 과제와 구분 시스템적 개선>
+  저장: /cfh-retro로 영구 기록 가능
+
+📝 제안 커밋
+  (조사 단계에서 코드 수정 없음 — Phase 4 수정은 /cfh-plan·/cfh-tdd로 위임됨)
+  
+  단, 조사 과정에서 DEBUG-LOG.md·POSTMORTEM.md 초안을 추가했다면:
+    메시지 초안: docs: add DEBUG-LOG for <issue>
+    스테이지 범위: <DEBUG-LOG.md 또는 POSTMORTEM.md만>
+    분할: 단일 (문서 추가)
+    진행: yes / edit-msg / no-commit
+
 다음 단계:
 - 수정 작업 시작 → /cfh-plan "<수정 목표>"
 - 회귀 테스트부터 → /cfh-tdd 또는 /cfh-tc-gen <파일>
@@ -381,6 +396,8 @@ git은 조사 과정을 되돌릴 수 있게 해주지 않으므로, **Phase별 
 - 조사 과정 공유 → DEBUG-LOG.md 또는 Issue 업데이트
 - 이번 조사 흐름 피드백 → /cfh-feedback debug-investigation "<comment>"
 ```
+
+**Retro·Commit 블록 형식**: `commands/references/retro-and-commit.md` 단일 출처. **/cfh-debug는 조사 중심**이라 본격 코드 수정 커밋 제안은 보통 없음. 위임받은 `/cfh-plan`·`/cfh-tdd`가 자기 종료 시 커밋 블록을 출력. 조사 단계에서 발생한 문서 추가만 여기서 제안.
 
 </output_format>
 
@@ -394,5 +411,7 @@ git은 조사 과정을 되돌릴 수 있게 해주지 않으므로, **Phase별 
 - 장애 유형 (b)에서 **rollback 가능 + 심각도 높음**이면 조사 전에 먼저 rollback 권장.
 - 조사 과정 기록 (`DEBUG-LOG.md` 또는 Issue) 권장.
 - 한국어 설명, 코드·로그·메트릭 명은 영어 원문.
+- Phase 4 종료 보고에서 **Retro 블록 생략 금지**. 형식은 `commands/references/retro-and-commit.md`.
+- 코드 수정이 없으면 **제안 커밋 블록은 "코드 수정 없음 — 위임된 커맨드에서 처리" 한 줄로 대체** OK. 단, DEBUG-LOG·POSTMORTEM 등 문서 추가만이라도 있으면 그 범위로 제안.
 
 </constraints>

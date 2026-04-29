@@ -158,12 +158,31 @@ it('property: ...', () => {
 ```
 ✅ TDD 5 Phase 완료
 
+검증 수행: <테스트 결과·타입체크·lint>
+생성·수정 파일: <목록>
+
+🔄 Retro
+  효과 있었음: <bullet 1~3>
+  실패·삽질: <bullet 1~3 또는 "해당 없음">
+  다음엔 바꿀 것: <bullet 1~3 또는 "해당 없음">
+  저장: /cfh-retro로 영구 기록 가능
+
+📝 제안 커밋
+  메시지 초안: <subject + body — 컨벤션은 git log로 추정>
+  스테이지 범위: <테스트·구현·리팩터 파일 목록>
+  분할 추천:
+    - 권장: 3개 분할 (test → feat → refactor) — Phase 3·4·5 경계
+    - 또는: 단일 (작은 변경)
+  진행: yes / edit-msg / split-differently / no-commit
+
 다음 단계:
 - 머지 전 자체 점검 → /cfh-review
 - 이번 워크플로 피드백 → /cfh-feedback tdd-first "<comment>"
 ```
 
 `/cfh-review`는 작성한 테스트 + 구현을 PR 단위로 다축 점검. `/cfh-feedback`은 Intent Interview·Test Outline·구현 흐름 등에서 마찰 있었던 부분을 기록 → 추후 `cfh evolve`가 description·원칙 개선에 활용.
+
+**Retro·Commit 블록 형식**: `commands/references/retro-and-commit.md` 단일 출처. **TDD 특성상 분할 추천이 기본** — Phase 3(test) → 4(feat) → 5(refactor) 경계가 자연스러운 분할 지점이라 단일 커밋보다 3개 분할을 우선 제안.
 
 </output_format>
 
@@ -173,4 +192,6 @@ it('property: ...', () => {
 - 프로젝트의 기존 테스트 컨벤션을 준수. 새 패턴 도입 금지.
 - 한국어 설명, describe/it과 코드는 영어.
 - 각 Phase 완료 시 사용자에게 확인 받고 다음 Phase 진입.
+- Phase 5 종료 보고에서 **Retro·제안 커밋 블록 생략 금지**. 형식은 `commands/references/retro-and-commit.md`.
+- 자동 commit 금지. 제안만 하고 사용자 명시 yes 후 진행.
 </constraints>

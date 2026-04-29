@@ -115,10 +115,27 @@ PR 설명에 "Found but not fixed" 섹션 자동 생성.
 ```
 ✅ 리팩터링 완료
 
+🔄 Retro
+  효과 있었음: <bullet 1~3 — 분해 전략·Safety Net·Blast Radius 판단 등>
+  실패·삽질: <bullet 1~3 또는 "해당 없음">
+  다음엔 바꿀 것: <bullet 1~3 — Found but not fixed와 구분, 작업 방식 개선만>
+  저장: /cfh-retro로 영구 기록 가능
+
+📝 제안 커밋  (이미 PR 단위로 분할됐으므로 PR별 커밋 메시지 모음)
+  PR 1: <subject + body>
+    스테이지: <파일 목록>
+  PR 2: <subject + body>
+    스테이지: <파일 목록>
+  ...
+  근거: Step 5 Small PR 분해 + Step 8 보고
+  진행: yes / edit-msg / merge-into-fewer / no-commit
+
 다음 단계:
 - 머지 전 자체 점검 → /cfh-review (각 PR 단위로)
 - 이번 워크플로 피드백 → /cfh-feedback refactoring-strategy "<comment>"
 ```
+
+**Retro·Commit 블록 형식**: `commands/references/retro-and-commit.md` 단일 출처. **리팩터 특성상 분할이 이미 Step 5에서 결정**돼있으므로 제안 커밋은 PR별로 메시지를 정렬하는 형태로 출력 (단일 통합 커밋 권장 신호 약함).
 
 ### 주요 결정 해설 (4축 포맷)
 
@@ -135,4 +152,6 @@ Scope 분해·PR 분리·라이브러리 안티패턴 지적·대안 비교 등 
 - 행동 보존 안전망(테스트) 없이 대규모 변환 금지.
 - 매 Step 진행 전 사용자 승인. 조용히 많은 일을 하지 말 것.
 - 한국어로 설명, 코드와 커밋 메시지의 기술어는 영어.
+- Step 8 보고에서 **Retro·제안 커밋 블록 생략 금지**. 형식은 `commands/references/retro-and-commit.md`.
+- 자동 commit 금지. PR별 커밋 메시지를 제안만 하고 사용자 명시 yes 후 진행.
 </constraints>

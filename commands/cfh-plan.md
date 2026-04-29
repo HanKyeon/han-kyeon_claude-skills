@@ -267,6 +267,18 @@ Phase 1의 정보(목표 + scoped 스캔 결과 + Q2~Q4)를 근거로 Claude가 
 미처리 (Q3 Scope 외에서 발견): <있다면 Issue 후보로 나열, TODO 주석 금지>
 검증 수행: <타입체크·테스트·lint 결과>
 
+🔄 Retro
+  효과 있었음: <bullet 1~3>
+  실패·삽질: <bullet 1~3 또는 "해당 없음">
+  다음엔 바꿀 것: <bullet 1~3 또는 "해당 없음">
+  저장: /cfh-retro로 영구 기록 가능
+
+📝 제안 커밋  (코드 수정이 있었을 때만)
+  메시지 초안: <subject + body>
+  스테이지 범위: <파일 목록, .env 등 자동 제외>
+  분할 추천: <단일 / 2개+ 분할 + 근거>
+  진행: yes / edit-msg / split-differently / no-commit
+
 다음 단계:
 - 머지 전 자체 점검 → /cfh-review        (Phase 3에서 직접 실행했고 코드 수정이 있었던 경우)
 - 이번 워크플로 피드백 → /cfh-feedback <기여 스킬> "<comment>"
@@ -275,7 +287,9 @@ Phase 1의 정보(목표 + scoped 스캔 결과 + Q2~Q4)를 근거로 Claude가 
 - <목록>
 ```
 
-**조건부 적용**: Phase 3가 위임 경로(`/cfh-tdd`·`/cfh-refactor` 등)였다면 위임받은 커맨드가 자체적으로 `/cfh-review`를 권장하므로 중복 권유 생략. 직접 실행 경로였을 때만 위 블록 출력.
+**Retro·제안 커밋 블록 형식**: `commands/references/retro-and-commit.md`를 단일 출처로 따른다. 생략 금지 (코드 수정이 없는 탐색·분석 경로면 "📝 제안 커밋: 코드 수정 없음 — 생략" 한 줄로 대체).
+
+**조건부 적용**: Phase 3가 위임 경로(`/cfh-tdd`·`/cfh-refactor` 등)였다면 위임받은 커맨드가 자체 완료 보고에서 Retro·Commit 블록을 출력하므로 `/cfh-plan`은 중복 출력하지 않음. 직접 실행 경로였을 때만 위 블록 출력.
 
 </workflow>
 
@@ -303,5 +317,7 @@ Phase 1의 정보(목표 + scoped 스캔 결과 + Q2~Q4)를 근거로 Claude가 
 - 전용 스킬·커맨드 있으면 **위임 우선**. Phase 1~2 답변을 컨텍스트로 이관.
 - 자산(skill/command/team) 생성 의도가 드러나면 `/cfh-make`로 전환 안내.
 - Scope 외 이슈 발견 시 TODO 주석 금지 — Issue 후보로 별도 보고.
+- 직접 실행 경로의 완료 보고는 **Retro·제안 커밋 블록 생략 금지**. 형식은 `commands/references/retro-and-commit.md`.
+- 자동 commit 금지. 제안 커밋 블록은 사용자가 명시 yes 해야 진행.
 
 </constraints>

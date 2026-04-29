@@ -669,4 +669,52 @@ REVIEW.md에서 **각 지적(Critical·High 수준)** 은 Why/What/How/What if 4
 > 외부 규칙 강요를 피하기 위해 프로젝트 고유 컨벤션을 기준으로 작성되었습니다.
 ```
 
+### 리뷰 종료 시 터미널 보고 (REVIEW.md와 별도, 필수 출력)
+
+REVIEW.md 생성 완료 후 사용자에게 추가로 출력:
+
+```
+✅ 리뷰 완료
+
+REVIEW.md: <경로>
+실행 에이전트: <목록>
+주요 발견:
+  - Critical N · High N · Medium N · Low N
+  - Project Health 핵심 1줄 / Product Impact 핵심 1줄
+
+🔄 Retro
+  효과 있었음: <bullet 1~3 — 어떤 축의 점검이 가장 가치 있었는지>
+  실패·삽질: <bullet 1~3 또는 "해당 없음" — false positive·중복 지적·과한 강요 등>
+  다음엔 바꿀 것: <bullet 1~3 — 리뷰 범위·에이전트 선택·기준 조정 후속>
+  저장: /cfh-retro로 영구 기록 가능
+
+📝 제안 커밋
+  (리뷰는 코드 수정 없음. REVIEW.md 자체를 commit하는지는 팀 컨벤션에 따라)
+
+  REVIEW.md를 저장소에 commit할 경우:
+    메시지 초안: docs: add code review for <range-label>
+    스테이지 범위: REVIEW.md
+    분할: 단일
+    진행: yes / edit-msg / no-commit (보통 no-commit — 로컬 참고용)
+
+  리뷰 결과를 토대로 코드 수정에 들어가는 경우:
+    → /cfh-plan "<리뷰 지적 반영>" 또는 /cfh-tdd / /cfh-refactor 위임
+    → 위임받은 커맨드가 자체 종료 시 코드 수정 commit 제안
+
+다음 단계:
+- 지적 반영 → /cfh-plan "<목표>"
+- 회귀 테스트 보강 → /cfh-tdd 또는 /cfh-tc
+- 이번 리뷰 흐름 피드백 → /cfh-feedback review-orchestrator "<comment>"
+```
+
+**Retro·Commit 블록 형식**: `commands/references/retro-and-commit.md` 단일 출처. **/cfh-review는 보고 중심**이라 코드 수정 commit은 보통 위임된 커맨드에서 처리 — 여기선 REVIEW.md 자체의 commit 여부만 다룸 (대부분 no-commit이 기본).
+
 </output_format>
+
+<constraints>
+
+- 리뷰 종료 시 터미널 보고에서 **Retro 블록 생략 금지**. 형식은 `commands/references/retro-and-commit.md`.
+- REVIEW.md commit은 기본 no-commit (로컬 참고용). 사용자가 명시적으로 commit 요청 시에만 진행.
+- 코드 수정이 필요한 지적은 `/cfh-plan`·`/cfh-tdd`·`/cfh-refactor`로 위임 — `/cfh-review` 내에서 직접 수정 금지.
+
+</constraints>
