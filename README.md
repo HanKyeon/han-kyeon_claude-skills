@@ -12,7 +12,7 @@
 # 1. (30초) 설치 + 확인
 npm install -g @han-kyeon/claude-skills
 cfh install
-cfh list                 # 5 skills + 12 commands 보이면 성공
+cfh list                 # 7 skills + 15 commands 보이면 성공
 
 # 2. Claude Code 세션 시작 (또는 재시작)
 ```
@@ -568,6 +568,7 @@ cfh trace "<이 스킬이 떠야 할 대표 발화>"
 | 뭘 만들지 미정 | `/cfh-make [요구사항]` | 만들고 싶은데 skill/command/team 구분 안 설 때 | — |
 | 작업 어떻게 시작할지 상의 | `/cfh-plan [목표]` | 복합·모호한 작업의 목표·접근법 정리 후 실행 (명시 호출만) | 확정이면 해당 작업 커맨드 직접 |
 | 원인 불명 이슈 조사 | `/cfh-debug [증상]` *(0.8.0)* | 버그·장애·성능·회귀의 증거 주도 조사 (명시 호출만) | 원인 이미 알면 `/cfh-plan` |
+| **작업 회고 영구 기록** | `/cfh-retro [본문]` *(0.9.0)* | 직전 turn의 🔄 Retro 블록을 `~/.claude/.cfh-logs/retros/`에 저장. Stop 훅으로 자동 트리거 가능 | `/cfh-feedback` (스킬 자체 의견) |
 | 트리거 디버깅 | `/cfh-trace "<발화>"` | description 조정 중일 때 | `cfh doctor`로 overlap도 함께 |
 | 가이드 | `/cfh-guide [topic]` | 사용법 확인 | 이 README |
 
@@ -630,18 +631,19 @@ cfh trace "<이 스킬이 떠야 할 대표 발화>"
 
 | 커맨드 | 인자 | 역할 |
 |---|---|---|
-| `/cfh-review` | `[parent-branch]` | 적응형 AI 코드 리뷰 — diff 규모별 서브에이전트 수 조정. **0.8.0부터 Project Health·Product Impact 추가 (Medium+에서 7 에이전트)** |
-| `/cfh-debug` *(0.8.0)* | `[증상 설명]` | 증거 주도 조사 워크플로 — 버그·장애·성능·회귀. 5 Phase (증거 → 컨텍스트 → 가설 3+ → 검증 → 원인+수정 계획). `debug-investigator` 스킬로 자동 트리거도 가능 |
+| `/cfh-review` | `[parent-branch]` | 적응형 AI 코드 리뷰 — diff 규모별 서브에이전트 수 조정. **0.8.0부터 Project Health·Product Impact 추가 (Medium+에서 7 에이전트)**. **0.9.0부터 리뷰 종료 보고에 🔄 Retro 블록 (REVIEW.md 자체 commit은 기본 no-commit)** |
+| `/cfh-debug` *(0.8.0)* | `[증상 설명]` | 증거 주도 조사 워크플로 — 버그·장애·성능·회귀. 5 Phase (증거 → 컨텍스트 → 가설 3+ → 검증 → 원인+수정 계획). `debug-investigator` 스킬로 자동 트리거도 가능. **0.9.0부터 Phase 4 보고에 🔄 Retro 블록 (코드 수정은 위임 커맨드에서 commit)** |
 | `/cfh-tc` | `[path]` | 테스트 작성 — TDD Mode / Test-Fill Mode 자동 감지 (FE: RTL 관용구) |
 | `/cfh-tc-gen` | `[path]` | 테스트 작성 — BE·라이브러리·CLI 친화적 (DI·supertest·격리된 통합 테스트) |
 | `/cfh-feedback` | `<skill> "<comment>"` | 스킬 사용 피드백 기록 (cfh evolve 분석 반영, 옵트인) |
-| `/cfh-refactor` | `[target]` | `refactoring-strategy` 스킬 명시적 활성화 |
-| `/cfh-tdd` | `[target]` | `tdd-first` 5 Phase 순차 실행 (FE-friendly: RTL·userEvent 관용구) |
+| `/cfh-retro` *(0.9.0)* | `[본문]` | 작업 회고 영구 기록 — `~/.claude/.cfh-logs/retros/`. Stop 훅으로 5개 작업 커맨드 종료 시 자동 트리거 가능 |
+| `/cfh-refactor` | `[target]` | `refactoring-strategy` 스킬 명시적 활성화. **0.9.0부터 Step 8 보고에 🔄 Retro + 📝 제안 커밋 블록** |
+| `/cfh-tdd` | `[target]` | `tdd-first` 5 Phase 순차 실행 (FE-friendly: RTL·userEvent 관용구). **0.9.0부터 Phase 5 보고에 🔄 Retro + 📝 제안 커밋 블록 (test→feat→refactor 3분할 우선 제안)** |
 | `/cfh-tdd-gen` | `[target]` | `tdd-general` framework-agnostic 5 Phase (BE·CLI·라이브러리·순수 함수) |
 | `/cfh-new` | `<kind> <name>` | `skill-author` 활성화 + 인터뷰 기반 자산 작성 (종류 확정됐을 때) |
 | `/cfh-team` | `[domain]` | `harness-factory` 활성화 + 팀 생성 워크플로 |
 | `/cfh-make` | `[requirement]` | `asset-factory` dispatcher — 무엇을 만들지부터 분류 |
-| `/cfh-plan` | `[goal]` | 작업 dispatcher — 목표 캡처·접근법 상의·실행 (명시 호출 전용, 자동 트리거 없음). **0.8.0부터 Phase 2 접근법 카드에 Project Alignment + Product Impact 자동 검증 섹션 포함** |
+| `/cfh-plan` | `[goal]` | 작업 dispatcher — 목표 캡처·접근법 상의·실행 (명시 호출 전용, 자동 트리거 없음). **0.8.0부터 Phase 2 접근법 카드에 Project Alignment + Product Impact 자동 검증 섹션 포함**. **0.9.0부터 Phase 3 완료 보고에 🔄 Retro + 📝 제안 커밋 블록** |
 | `/cfh-trace` | `[query]` | 발화가 어느 스킬을 트리거할지 시뮬레이션 |
 | `/cfh-guide` | `[topic]` | 사용 가이드 |
 
@@ -919,6 +921,87 @@ Phase 2 Approach Proposal 카드에 **자동 추론 섹션**이 추가됩니다 
 
 ---
 
+## 작업 회고 + 커밋 제안 (0.9.0)
+
+0.9.0부터 5개 작업 커맨드(`/cfh-plan`·`/cfh-tdd`·`/cfh-refactor`·`/cfh-debug`·`/cfh-review`)의 완료 보고에 두 블록이 자동 포함됩니다. **"무엇이 효과 있었고 무엇이 실패했는가"를 매 작업마다 정리**하고, 코드 수정이 있으면 커밋 메시지·범위·분할까지 제안합니다.
+
+### 🔄 Retro 블록 (작업 회고)
+
+3섹션 고정:
+
+```
+🔄 Retro
+  효과 있었음 (계속할 것):
+    - <접근법·도구·순서 중 잘 작동한 것>
+  실패·삽질 (반복 금지):
+    - <헛수고였던 시도·잘못된 가정>
+  다음엔 바꿀 것:
+    - <개선 아이디어·후속 과제>
+```
+
+### 📝 제안 커밋 블록 (코드 수정 시)
+
+```
+📝 제안 커밋
+  메시지 초안: feat: add coupon validation to checkout
+  스테이지 범위: + src/features/coupon/, ~ src/features/checkout/...
+                 (제외: .env·credentials.* 등 비밀파일 자동 제외)
+  분할 추천: 단일 커밋 / 또는 N개로 분할 (다른 모듈·관심사 혼재 시)
+  진행: yes / edit-msg / split-differently / no-commit
+```
+
+**자동 commit 금지** — 제안만, 사용자 명시 yes 후에만 진행.
+
+**메시지 컨벤션 추정**: `git log -10 --pretty=format:"%s"`로 Conventional Commits / Square-bracket scope / 자유형 중 가장 빈번한 것 자동 채택.
+
+**분할 휴리스틱** (2개+ 신호 시 분할 제안): 다른 top-level 디렉터리 / 리팩터+기능 혼재 / 무관한 의존성 추가 / 5+ 파일 + 2+ 모듈.
+
+### 🪝 Stop 훅 자동 트리거
+
+`~/.claude/settings.json`의 Stop 훅에 `cfh-retro-hook.sh`를 등록하면, **Retro 블록이 출력된 turn에서만** `/cfh-retro`가 자동 호출되어 회고를 `~/.claude/.cfh-logs/retros/<date>-<slug>.md`에 영구 기록합니다. 가벼운 대화엔 silent.
+
+```json
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          { "type": "command", "command": "bash ~/.claude/scripts/cfh-retro-hook.sh" }
+        ]
+      }
+    ]
+  }
+}
+```
+
+훅 스크립트는 4개 필터로 필요할 때만 발동:
+1. Retro 블록 패턴 존재 (`효과 있었음` + `Retro` 동시 매칭)
+2. 이미 저장됨/옵트아웃 상태가 아닐 것
+3. 직전 메시지가 `/cfh-retro` 자체 출력이 아닐 것
+4. Stop hook loop 방지
+
+### 5개 커맨드별 분할 전략
+
+| 커맨드 | 분할 방식 |
+|---|---|
+| `/cfh-plan` | 작업 단위가 단일이면 단일 커밋, 복합이면 위임 커맨드 별로 |
+| `/cfh-tdd` | **3분할 우선**: test (Phase 3) → feat (Phase 4) → refactor (Phase 5) |
+| `/cfh-refactor` | **PR 단위 이미 분할** (Step 5): 각 Small PR마다 별도 커밋 메시지 |
+| `/cfh-debug` | 보통 코드 수정 없음 (위임). DEBUG-LOG 추가만 별도 |
+| `/cfh-review` | REVIEW.md 자체 commit은 기본 no-commit (로컬 참고용) |
+
+상세 형식·휴리스틱은 `commands/references/retro-and-commit.md` 단일 출처.
+
+### `/cfh-feedback`과의 차이
+
+| | `/cfh-feedback` | `/cfh-retro` |
+|---|---|---|
+| 대상 | 스킬 자체에 대한 의견 | 작업 한 건의 회고 |
+| 저장 | `~/.claude/.cfh-logs/<skill>.jsonl` | `~/.claude/.cfh-logs/retros/<file>.md` |
+| 활용 | `cfh evolve`가 description 개선 | 후속 세션 회상·작업 패턴 분석 |
+
+---
+
 ## Evolution commands (0.3.0, opt-in)
 
 스킬을 쓰다 보면 description이 실제 사용 패턴과 어긋납니다. `cfh evolve`는 정적 분석 + (옵트인 시) 사용 로그 기반 제안을 출력하여 이를 교정하도록 돕습니다. **모든 수정은 사용자가 직접** — 자동 적용은 0.3.0에 없습니다.
@@ -1174,13 +1257,17 @@ cfh list                # 커스텀 스킬은 그대로 user-authored로 남음
 │   ├── cfh-review.md, cfh-tc.md, cfh-refactor.md, cfh-tdd.md
 │   ├── cfh-tdd-gen.md            # framework-agnostic TDD (0.6.0)
 │   ├── cfh-tc-gen.md             # framework-agnostic 테스트 (0.6.0)
+│   ├── cfh-debug.md              # /cfh-debug → 이슈 조사 (0.8.0)
 │   ├── cfh-new.md                # /cfh-new → skill-author 활성화
 │   ├── cfh-team.md               # /cfh-team → harness-factory 활성화
 │   ├── cfh-make.md               # /cfh-make → asset-factory 활성화
 │   ├── cfh-plan.md               # /cfh-plan → 작업 dispatcher (0.4.0+)
 │   ├── cfh-trace.md              # /cfh-trace → 트리거 시뮬레이션
 │   ├── cfh-feedback.md           # /cfh-feedback → 사용 피드백 (0.6.0)
-│   └── cfh-guide.md              # /cfh-guide → 사용 가이드
+│   ├── cfh-retro.md              # /cfh-retro → 작업 회고 영구 기록 (0.9.0)
+│   ├── cfh-guide.md              # /cfh-guide → 사용 가이드
+│   └── references/
+│       └── retro-and-commit.md   # 5개 커맨드 공유 Retro+Commit 블록 형식 (0.9.0)
 └── templates/
     ├── skill/{SKILL.md, references/example.md}
     ├── command.md
