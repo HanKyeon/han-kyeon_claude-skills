@@ -24,7 +24,7 @@ npm install -g @han-kyeon/claude-skills
 cfh install
 ```
 
-끝. 두 번째 줄이 `~/.claude/skills/`와 `~/.claude/commands/`에 번들된 7개 스킬 + 17개 슬래시 커맨드를 복사합니다 (0.10.0 기준 — cost·progress·eval 포함).
+끝. 두 번째 줄이 `~/.claude/skills/`와 `~/.claude/commands/`에 번들된 7개 스킬 + 17개 슬래시 커맨드를 복사합니다 (0.12.0 기준 — cost·progress·eval·dashboard·variants·watch 포함).
 
 ### 확인
 
@@ -38,19 +38,19 @@ cfh list
 === Global (~/.claude) ===
 
 Skills (C:\Users\<you>\.claude\skills):
-  asset-factory            managed@0.10.0
-  debug-investigator       managed@0.10.0
-  harness-factory          managed@0.10.0
-  refactoring-strategy     managed@0.10.0
-  skill-author             managed@0.10.0
-  tdd-first                managed@0.10.0
-  tdd-general              managed@0.10.0
+  asset-factory            managed@0.12.0
+  debug-investigator       managed@0.12.0
+  harness-factory          managed@0.12.0
+  refactoring-strategy     managed@0.12.0
+  skill-author             managed@0.12.0
+  tdd-first                managed@0.12.0
+  tdd-general              managed@0.12.0
 
 Commands (C:\Users\<you>\.claude\commands):
   cfh-debug, cfh-feedback, cfh-guide, cfh-make, cfh-new,
   cfh-plan, cfh-progress, cfh-refactor, cfh-retro, cfh-review,
   cfh-tc, cfh-tc-gen, cfh-tdd, cfh-tdd-gen, cfh-team, cfh-trace
-                                          (모두 managed@0.10.0)
+                                          (모두 managed@0.12.0)
 ```
 
 Claude Code를 새 세션으로 시작하거나 `/agents`·`/`로 확인하면 커맨드가 떠야 합니다.
@@ -449,6 +449,15 @@ cfh cost --by session --days 1
 | **`cfh eval [skill]`** *(0.10.0)* | 스킬 행동 검증 — `--list` / `--dry-run` / `--manual` / `--executor claude`. assertion: contains/not_contains/regex |
 | **`cfh sentry`** *(0.10.0)* | tool 호출 실패·loop·empty Read 감지 — `--days N` `--tool <name>` |
 | **`cfh doctor --strict-confidence`** *(0.10.0)* | 스킬 SKILL.md에 confidence tagging 가이드 부재 시 info 경고 (옵트인) |
+| **`cfh dashboard`** *(0.11.0)* | cost+sentry+eval 통합 markdown 리포트, `--output FILE` |
+| **`cfh eval --variants <file>`** *(0.11.0)* | description 후보 비교 — trace 점수 기반, LLM 호출 없음 |
+| **`cfh eval --report junit`** *(0.11.0)* | JUnit XML 출력 — CI PR 체크 통합 |
+| **eval-history** *(0.11.0)* | `--executor claude`/`--manual` 결과를 `~/.claude/.cfh-logs/eval-history/<skill>/`에 영속화 (텔레메트리 옵트인 시) |
+| **`cfh cost --since-commit <hash>`** *(0.12.0)* | git commit 시점 이후 vs 이전 토큰 사용 비교 — 회귀 진단 |
+| **`cfh diff --skills-vs-evals`** *(0.12.0)* | SKILL.md mtime > evals mtime인 stale 스킬 감지 |
+| **`cfh new skill <name> --from-existing <other>`** *(0.12.0)* | 기존 스킬 fork — frontmatter TODO 마커 적용 |
+| **`cfh watch [--doctor]`** *(0.12.0)* | 파일 변경 시 validate(+doctor) 자동 재실행 |
+| **`cfh validate --strict`** *(0.12.0)* | SKILL.md frontmatter schema 엄격 검증 — 알 수 없는 필드 경고 |
 | `/cfh-guide [topic]` | 사용 가이드 |
 
 ---
@@ -1581,6 +1590,315 @@ cfh doctor --strict-confidence
 - 목적은 완벽한 정확성이 아니라 **사용자에게 압박 지점 신호 제공**.
 
 상세: `commands/references/confidence-tagging.md`.
+
+---
+
+### Dashboard (0.11.0)
+
+#### `cfh dashboard`
+
+**역할**: cost·sentry·eval coverage·eval history를 **markdown 통합 리포트**로 출력. 0.10.0이 만든 도구들이 흩어져 있던 문제 해결 — 한 화면에 다 보임.
+
+**플래그**:
+- `--days <N>` — 분석 기간 (기본 30)
+- `--match <substr>` — 프로젝트 슬러그 부분 매칭
+- `--target <path>` — `~/.claude` override
+- `--output <file>` — 파일 저장 (없으면 stdout)
+
+**리포트 섹션**:
+
+| 섹션 | 내용 |
+|---|---|
+| Overview | 스킬 수·evals 커버리지·텔레메트리 상태 |
+| Cost | 총 토큰·캐시 적중률·top 10 명령별 cost |
+| Tool failure sensor | 호출/에러/empty/repeat·top 실패 tool |
+| Eval coverage | 스킬별 케이스 수·마지막 실행 시각 |
+| Eval trend | 스킬별 최근 5회 결과 (영속화 활성 시) |
+
+**예시**:
+```bash
+cfh dashboard                                # stdout, 30일
+cfh dashboard --days 7 --match my-proj       # 최근 7일, 특정 프로젝트
+cfh dashboard --output dashboard.md          # 파일 저장
+```
+
+**한계**: 단순 markdown — 인터랙티브 chart 없음. cost·sentry 둘 다 transcript read-only이므로 별도 텔레메트리 옵트인 불필요.
+
+---
+
+### Skill eval --variants (0.11.0)
+
+#### `cfh eval <skill> --variants <file>`
+
+**역할**: 스킬 description의 **A/B/C 후보를 비교**하여 어느 변형이 트리거 영역을 가장 잘 잡는지 측정. **LLM 호출 없음** — `cfh trace`의 키워드 매칭 점수 기반.
+
+**입력 (variants.json)**:
+```json
+[
+  { "name": "current",  "description": "Use this skill when ...react/vue... Do NOT trigger backend." },
+  { "name": "broader",  "description": "Use this skill for any TDD work — frontend or backend." },
+  { "name": "stricter", "description": "Only React/Vue. Do NOT trigger fastapi, django, express." }
+]
+```
+
+**동작**:
+1. 스킬의 evals/ 모든 케이스 prompt 추출
+2. 각 케이스 prompt를 각 variant description에 대해 trace 점수 계산
+3. 케이스별 winner 표시 + 변형별 누적 점수 + 추천
+
+**예시 출력**:
+```
+📊 Description variants comparison — tdd-first
+  Cases: 3 · Variants: 3
+
+Aggregate scores:
+variant   total  wins  description
+--------  -----  ----  ----------------------
+current   4.0    3/3   ... React/Vue ...
+broader   2.0    2/3   ... any framework ...
+stricter  -0.5   1/3   ... ONLY React/Vue ...
+
+Per case:
+  no-trigger-on-backend-tdd
+    ★ current   score=0.5
+    ★ broader   score=0.5
+      stricter  score=-2.5  −[fastapi]    ← anti-trigger 페널티
+
+Recommendation:
+  ✅ "current" wins by 2.0 points (100% over runner-up)
+```
+
+**한계**:
+- **키워드 매칭만** — 의미 평가는 안 함. 진짜 행동 비교는 SKILL.md 임시 swap 후 `--executor claude` 따로 돌려야 함.
+- **케이스 의존**: eval 케이스가 적거나 키워드 빈약하면 신호도 약함.
+- **자동 적용 안 함**: 추천만 — SKILL.md 수정은 사람 판단.
+
+---
+
+### Skill eval --report junit (0.11.0)
+
+#### `cfh eval --report junit [--output FILE]`
+
+**역할**: JUnit XML 출력. GitHub Actions·GitLab CI·Jenkins가 표준 인식하는 포맷.
+
+**예시**:
+```bash
+cfh eval --executor claude --report junit --output junit.xml
+# CI에서 actions/upload-artifact + dorny/test-reporter로 PR에 표시
+```
+
+**XML 구조**:
+- `<testsuites>` = 모든 스킬
+- `<testsuite name="<skill>">` = 한 스킬
+- `<testcase name="<case>">` = 한 케이스
+- pass: 빈 testcase / fail: `<failure>` / error: `<error>` / skip: `<skipped>`
+- A/B 모드: treatment 결과를 primary로, baseline diff을 `<system-out>`에
+
+**종료 코드**: fail/error/regressed 있으면 exit 1 — CI 회귀 게이트로 직접 사용.
+
+---
+
+### Eval 결과 영속화 (0.11.0)
+
+`--executor claude` 또는 `--manual` 모드 실행 후, 텔레메트리 옵트인(`cfh log --enable`) 상태면 결과를 자동 저장:
+
+```
+~/.claude/.cfh-logs/eval-history/<skill>/<timestamp>.json
+```
+
+**파일 형식**:
+```json
+{
+  "timestamp": "2026-05-07T14:32:00Z",
+  "skill": "tdd-first",
+  "mode": "claude (subprocess) + baseline (A/B)",
+  "isAB": true,
+  "summary": {
+    "treatmentPass": 2,
+    "baselinePass": 1,
+    "helped": 1,
+    "regressed": 0,
+    "total": 3
+  },
+  "results": [...]
+}
+```
+
+**활용**:
+- `cfh dashboard`의 "Eval trend" 섹션이 이 파일들을 읽어 시계열 표시
+- 향후 `cfh evolve`가 trend 분석 (예: "3주 전엔 통과했는데 지금 fail" 신호)
+
+**저장 안 하는 경우**:
+- `--dry-run` (실제 실행 아님)
+- `--list` (조회만)
+- 텔레메트리 비활성화
+
+**output 크기**: 케이스당 출력 본문은 저장 안 함 — 메타데이터·assertion 결과만. 한 실행 ≈ 5~20KB.
+
+---
+
+### Cost regression analysis (0.12.0)
+
+#### `cfh cost --since-commit <hash>`
+
+**역할**: 특정 git commit **이후 vs 이전**의 토큰 사용을 비교해 회귀를 진단.
+
+**동작**:
+1. `git show -s --format=%cI <hash>`로 commit timestamp 추출
+2. 모든 세션 jsonl을 mtime 기준으로 before/after 분리
+3. 그룹별 토큰 합 + 명령별 변화량 계산
+4. ±20% 이상이면 회귀/개선으로 판정
+
+**예시**:
+```bash
+cfh cost --since-commit cc1350d --match my-project
+```
+
+**출력**:
+```
+📈 Cost since-commit comparison
+  Commit:    cc1350d
+  Timestamp: 2026-04-29T04:38:10Z
+
+  Sessions:  3 (before) → 1 (after)
+
+  Input+cache:  556M → 360M    (-195M, -35.2%)
+  Output:       1.7M → 1.2M    (-523K, -29.9%)
+
+Top changes by command (input+cache):
+command      before       after        delta         turns
+-----------  -----------  -----------  ------------  -------
+/cfh-plan    448,930,183  119,532,002  -329,398,181  702→326
+/cfh-review  0            171,383,351  +171,383,351  0→621
+
+✅ 의미 있는 토큰 감소 (-35.2%) — 효율 개선 확인.
+```
+
+**한계**:
+- session mtime 기반 — 세션이 commit 시점에 *시작*한 게 아니라 *마지막 활동*이 commit 이후면 after로 분류
+- commit timestamp는 author time이 아니라 commit time (`%cI`)
+- noise 큼 — N=4 세션 비교는 신호 약함, 의미 있는 변화 보려면 같은 작업의 같은 패턴 반복 필요
+
+---
+
+### Skills-vs-evals staleness (0.12.0)
+
+#### `cfh diff --skills-vs-evals`
+
+**역할**: SKILL.md mtime이 evals/ mtime보다 새로우면 → eval이 description 변경을 따라가지 못한 stale 상태.
+
+**예시**:
+```bash
+cfh diff --skills-vs-evals
+```
+
+**출력**:
+```
+🕒 Skills vs evals staleness check
+  Source: ~/.claude/skills
+
+  Fresh:    2 skills (evals updated after SKILL.md)
+  Stale:    1 skills (SKILL.md updated after evals — review evals)
+  No evals: 5 skills
+
+  ⚠ Stale skills:
+    • tdd-first   SKILL.md 2.1d newer than happy-path.json (3 cases)
+
+  ℹ No evals/ directory:
+    • asset-factory
+    • debug-investigator
+    ...
+```
+
+**한계**:
+- mtime은 fragile — git pull로 바뀔 수 있음
+- 의미 있는 변경 vs 사소한 typo 구분 못 함 (단순 timestamp 비교)
+- staleness ≠ broken — 신호이지 결론 아님
+
+---
+
+### Skill fork (0.12.0)
+
+#### `cfh new skill <name> --from-existing <other>`
+
+**역할**: 기존 스킬 **전체 디렉터리 복사** + frontmatter `name` 변경 + description에 TODO 마커.
+
+**예시**:
+```bash
+cfh new skill our-tdd --from-existing tdd-first
+# → ~/.claude/skills/our-tdd/ 생성
+# → SKILL.md frontmatter:
+#     name: our-tdd
+#     description: TODO update for our-tdd — was: ...
+```
+
+**적용 시점**:
+- 우리 팀만의 TDD 스타일 (e.g., 특정 lint·도메인 컨벤션 추가)
+- 기존 스킬 변형 실험 (`--from-existing`로 빠르게 시작 후 description 다듬기)
+
+**구현 디테일**:
+- evals/, references/ 등 하위 디렉터리 모두 복사
+- `.cfh-manifest.json` 자동 제거 → 새 스킬은 user-authored로 분류 → `cfh update`가 절대 덮어쓰지 않음
+- `--force`로 기존 덮어쓰기 가능
+
+**한계**:
+- 현재 `kind: skill`만 지원. command/agent는 후속 작업.
+- description 자동 변경은 단순 prefix만 — 의미 있는 변형은 사람이 수정 필요
+
+---
+
+### Watch mode (0.12.0)
+
+#### `cfh watch [--doctor]`
+
+**역할**: skills/·commands/ 디렉터리 변경 감지 → validate(+doctor) 자동 재실행. 스킬 작성 중 즉시 피드백.
+
+**예시**:
+```bash
+cfh watch                  # 변경 시 validate
+cfh watch --doctor         # validate + doctor (느림, 더 철저)
+cfh watch --target ./.test-target
+```
+
+**동작**:
+1. `~/.claude/skills`, `~/.claude/commands`, `./.claude/skills`, `./.claude/commands` (있으면) 모두 감시
+2. fs.watch + 500ms debounce — 빠른 연속 변경은 한 번으로 묶음
+3. 시작 시 한 번 실행, 이후 변경 시마다
+4. Ctrl+C로 종료
+
+**제외 파일**:
+- `.cfh-manifest.json` (피드백 루프 방지)
+- `.cfh-logs/` (로그 변경에 트리거 안 함)
+
+**한계**:
+- fs.watch는 OS별 동작 차이 — Windows 일부 케이스에서 누락 가능
+- recursive 옵션이 모든 OS에서 동작하진 않음 (macOS/Windows OK, Linux는 chokidar 같은 라이브러리 권장)
+
+---
+
+### Strict schema lint (0.12.0)
+
+#### `cfh validate --strict`
+
+**역할**: SKILL.md frontmatter를 **schema 기반**으로 더 엄격히 검증.
+
+**기본 schema**:
+- `name`: kebab-case, 1~63자, dir 이름과 일치
+- `description`: 20~1024자
+- `allowed_tools`: string 또는 array
+- `license`, `version`, `deps`: optional
+
+**`--strict`만의 추가 체크**:
+- 알 수 없는 frontmatter 필드 경고 (forward-compat 유지하되 인지 신호)
+- 향후: 형식 위반 더 엄격 적용
+
+**예시**:
+```bash
+cfh validate                # 기본 검증
+cfh validate --strict       # schema + 알 수 없는 필드 경고
+```
+
+**왜 옵트인인가**: 기존 사용자 SKILL.md에 임의 필드(custom metadata) 들어있을 수 있음. 강제 적용 시 false positive 위험. CI에서 정책으로 활성화 권장.
 
 ---
 

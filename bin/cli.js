@@ -19,6 +19,8 @@ const { exportCmd, importCmd } = require('../lib/export-import');
 const { cost } = require('../lib/cost');
 const { evalCmd } = require('../lib/eval');
 const { sentry } = require('../lib/sentry');
+const { dashboardCmd } = require('../lib/dashboard');
+const { watchCmd } = require('../lib/watch');
 const { name: PKG_NAME, version: PKG_VERSION } = require('../package.json');
 
 const [, , command, ...args] = process.argv;
@@ -28,7 +30,7 @@ function getFlagValue(list, name) {
   return i >= 0 && list[i + 1] !== undefined ? list[i + 1] : null;
 }
 
-const FLAGS_WITH_VALUE = new Set(['--target', '--only', '--top', '--event', '--note', '--helpful', '--utterance', '--kind', '--editor', '--output', '--by', '--days', '--match', '--session', '--executor', '--tool']);
+const FLAGS_WITH_VALUE = new Set(['--target', '--only', '--top', '--event', '--note', '--helpful', '--utterance', '--kind', '--editor', '--output', '--by', '--days', '--match', '--session', '--executor', '--tool', '--report', '--variants', '--since-commit', '--from-existing']);
 
 const flags = {
   link: args.includes('--link'),
@@ -68,6 +70,12 @@ const flags = {
   baseline: args.includes('--baseline'),
   strictConfidence: args.includes('--strict-confidence'),
   tool: getFlagValue(args, '--tool'),
+  report: getFlagValue(args, '--report'),
+  variants: getFlagValue(args, '--variants'),
+  strict: args.includes('--strict'),
+  sinceCommit: getFlagValue(args, '--since-commit'),
+  fromExisting: getFlagValue(args, '--from-existing'),
+  skillsVsEvals: args.includes('--skills-vs-evals'),
 };
 
 const positional = [];
@@ -126,17 +134,30 @@ function printHelp() {
     '  cost --by command|day|model|session    Pick the breakdown view',
     '  cost --days N --match <substr>          Filter by recency / project name',
     '',
-    'Skill eval (0.10.0):',
+    'Skill eval (0.10.0+):',
     '  eval [skill]                  Run eval cases (default: dry-run, no LLM call)',
     '  eval --list [skill]           List available eval cases',
     '  eval --dry-run                Print prompts + assertions, do not run',
     '  eval --manual                 Paste claude output manually for each case',
     '  eval --executor claude        Run via claude CLI subprocess (consumes tokens)',
     '  eval --baseline               A/B compare: skill enabled vs soft anti-trigger',
+    '  eval --variants <file>        (0.11.0) Compare description variants by trace score',
+    '  eval --report junit           (0.11.0) Output JUnit XML for CI integration',
     '',
     'Tool failure sensor (0.10.0):',
     '  sentry                        Detect tool errors / loops / empty reads in transcripts',
     '  sentry --days N --tool Read   Filter by recency / specific tool',
+    '',
+    'Dashboard (0.11.0):',
+    '  dashboard                     Combined cost + sentry + eval coverage report (markdown)',
+    '  dashboard --output FILE       Write to file instead of stdout',
+    '',
+    'Cost regression / DX (0.12.0):',
+    '  cost --since-commit <hash>    Compare token usage before/after a git commit',
+    '  diff --skills-vs-evals        Detect skills whose SKILL.md is newer than evals',
+    '  new skill <name> --from-existing <other>    Fork an existing skill',
+    '  watch [--doctor]              Re-run validate (and doctor) on file changes',
+    '  validate --strict             Schema lint with stricter frontmatter rules',
     '',
     'Options:',
     '  --link                        Use symbolic links instead of copying (install only)',
@@ -223,6 +244,7 @@ async function main() {
           force: flags.force,
           target: flags.target,
           project: flags.project,
+          fromExisting: flags.fromExisting,
         });
         break;
       case 'generate':
@@ -247,6 +269,7 @@ async function main() {
           name: positional[0],
           target: flags.target,
           full: flags.full,
+          skillsVsEvals: flags.skillsVsEvals,
         });
         break;
       case 'doctor':
@@ -321,6 +344,7 @@ async function main() {
           by: flags.by,
           sessionId: flags.session,
           json: flags.json,
+          sinceCommit: flags.sinceCommit,
         });
         break;
       case 'eval':
@@ -334,6 +358,9 @@ async function main() {
           executor: flags.executor,
           json: flags.json,
           baseline: flags.baseline,
+          report: flags.report,
+          output: flags.output,
+          variants: flags.variants,
         });
         break;
       case 'sentry':
@@ -344,6 +371,20 @@ async function main() {
           tool: flags.tool,
           sessionId: flags.session,
           json: flags.json,
+        });
+        break;
+      case 'dashboard':
+        await dashboardCmd({
+          days: flags.days,
+          match: flags.match,
+          target: flags.target,
+          output: flags.output,
+        });
+        break;
+      case 'watch':
+        await watchCmd({
+          target: flags.target,
+          doctor: args.includes('--doctor'),
         });
         break;
       case 'version':

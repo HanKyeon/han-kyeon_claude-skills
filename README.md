@@ -598,7 +598,15 @@ cfh trace "<이 스킬이 떠야 할 대표 발화>"
 | **이벤트 기록** | `cfh log <skill> --event --utterance --helpful` | 사용 패턴 수집 |
 | **스킬 제안** | `cfh evolve [<name>]` | description·원칙 개선 포인트 제안 |
 | **토큰 비용 집계** | `cfh cost` *(0.10.0)* | Claude Code transcript에서 토큰 사용량을 명령·일자·모델·세션별로 집계. 새 텔레메트리 수집 없이 기존 데이터 read-only |
-| **스킬 eval** | `cfh eval [skill]` *(0.10.0)* | 스킬 케이스 (`prompt + assertions`) 기반 검증. `--dry-run`(기본) / `--manual` / `--executor claude` |
+| **스킬 eval** | `cfh eval [skill]` *(0.10.0)* | 스킬 케이스 (`prompt + assertions`) 기반 검증. `--dry-run`(기본) / `--manual` / `--executor claude` / `--baseline` |
+| **변형 비교** | `cfh eval --variants <file>` *(0.11.0)* | description A/B/C 변형의 trace 점수 비교 (LLM 호출 없음) |
+| **JUnit 리포트** | `cfh eval --report junit` *(0.11.0)* | CI PR 체크용 JUnit XML 출력 |
+| **통합 대시보드** | `cfh dashboard` *(0.11.0)* | cost+sentry+eval coverage+trend markdown 리포트 |
+| **회귀 진단** | `cfh cost --since-commit <hash>` *(0.12.0)* | git commit 시점 기준 토큰 비교 |
+| **staleness 감지** | `cfh diff --skills-vs-evals` *(0.12.0)* | SKILL.md > evals mtime인 스킬 |
+| **스킬 fork** | `cfh new skill <name> --from-existing <other>` *(0.12.0)* | 기존 스킬 복제 + TODO 마커 |
+| **자동 감시** | `cfh watch [--doctor]` *(0.12.0)* | 파일 변경 시 validate 자동 재실행 |
+| **schema 린트** | `cfh validate --strict` *(0.12.0)* | frontmatter schema 엄격 검증 |
 
 **굵은 글씨**는 0.3.0 신규 명령입니다.
 
@@ -1609,6 +1617,233 @@ cfh doctor --strict-confidence
 
 ---
 
+## 측정 cascade 완성 (0.11.0)
+
+0.10.0이 측정 도구를 만들었다면, 0.11.0은 **그 도구들을 엮음**. 4가지 신규 기능이 측정 → 행동 루프를 닫습니다.
+
+### 1. `cfh dashboard` — 한 화면에 다 보기
+
+```bash
+cfh dashboard                                # stdout, 30일
+cfh dashboard --days 7 --match my-proj
+cfh dashboard --output dashboard.md          # 파일 저장
+```
+
+**보여주는 것** (markdown):
+- **Overview**: 스킬 수, evals 커버리지 %, 텔레메트리 상태
+- **Cost**: 총 토큰, 캐시 적중률, top 10 명령별 cost
+- **Tool failure sensor**: 호출/에러/empty/repeat 표
+- **Eval coverage**: 스킬별 케이스 수 + 마지막 실행 시각
+- **Eval trend**: 스킬별 최근 5회 결과 (영속화 활성 시)
+
+**왜 가치 있나**: 0.10.0에서 만든 도구들을 사용자가 따로따로 호출해야 했던 마찰 해소. 한 번의 `cfh dashboard`로 프로젝트 전체 건강도가 markdown으로 → README나 PROGRESS.md에 붙여넣기 가능.
+
+### 2. `cfh eval --variants <file>` — description A/B 자동 비교
+
+스킬 description을 어떻게 손댈지 데이터로 결정:
+
+```json
+[
+  { "name": "current",  "description": "...React/Vue... Do NOT trigger backend." },
+  { "name": "broader",  "description": "...any TDD work..." },
+  { "name": "stricter", "description": "...Only React. Do NOT trigger fastapi." }
+]
+```
+
+```bash
+cfh eval tdd-first --variants variants.json
+```
+
+**동작**:
+1. 각 케이스 prompt × 각 variant description → trace 점수 계산
+2. 케이스별 winner 표시 + 변형별 누적 점수 + 추천
+
+**핵심 설계**: **LLM 호출 없음**. trace의 키워드 매칭만 사용 → 토큰 0, 빠름.
+
+**한계**:
+- 키워드 매칭만 — 의미 평가 안 함
+- 진짜 행동 비교는 SKILL.md 임시 swap 후 `--executor claude` 따로 돌려야 함
+- 스킬에 evals 케이스가 풍부해야 신호도 풍부
+
+**왜 가치 있나**: description 튜닝의 추측이 데이터로 변함. "react를 더 강조해야 하나, 백엔드 anti-trigger를 추가해야 하나?"를 케이스별 점수로 바로 답.
+
+### 3. `cfh eval --report junit` — CI 통합
+
+```bash
+cfh eval --executor claude --report junit --output junit.xml
+```
+
+**XML 구조**:
+- `<testsuites>` = 모든 스킬
+- `<testsuite name="<skill>">` = 한 스킬
+- `<testcase name="<case>">` = 한 케이스 (pass: 빈 / fail: `<failure>` / error: `<error>` / skip: `<skipped>`)
+- A/B 모드: treatment 결과 + baseline diff을 `<system-out>`에
+
+**GitHub Actions 통합 예**:
+```yaml
+- run: cfh install
+- run: cfh eval --executor claude --report junit --output junit.xml
+- uses: dorny/test-reporter@v1
+  with:
+    name: Skill evals
+    path: junit.xml
+    reporter: jest-junit
+```
+
+**종료 코드**: fail/error/regressed 있으면 exit 1 → 회귀 PR 차단.
+
+### 4. Eval 결과 영속화 — evolve trend의 토대
+
+`--executor claude` 또는 `--manual` 실행 후, **텔레메트리 옵트인** 상태면 자동 저장:
+
+```
+~/.claude/.cfh-logs/eval-history/<skill>/<timestamp>.json
+```
+
+**저장 내용**: 메타데이터(timestamp, mode, summary) + assertion 결과만. 출력 본문은 저장 안 함 (≈5~20KB/run).
+
+**활용**:
+- `cfh dashboard`의 Eval trend 섹션이 시계열 표시
+- 향후 `cfh evolve`가 trend 분석 ("3주 전엔 통과했는데 지금 fail" 신호)
+
+**저장 안 하는 경우**: `--dry-run`, `--list`, 텔레메트리 비활성화.
+
+### 0.10.0 → 0.11.0 cascade
+
+| 단계 | 도구 | 역할 |
+|---|---|---|
+| 1. 측정 | `cfh cost` (0.10.0) | 실 사용 토큰 |
+| 2. 검증 | `cfh eval` (0.10.0) | 케이스 기반 행동 |
+| 3. **튜닝** | `cfh eval --variants` (0.11.0) | description 후보 비교 |
+| 4. 영속화 | eval-history (0.11.0) | trend 데이터 축적 |
+| 5. 통합 보기 | `cfh dashboard` (0.11.0) | 한 화면 |
+| 6. CI 통합 | `cfh eval --report junit` (0.11.0) | PR 회귀 차단 |
+| 7. 안전망 | `cfh sentry` (0.10.0) | tool 호출 신뢰도 |
+
+**0.11.0의 핵심 가치**: 0.10.0 도구가 있어도 **사용자가 매일 활용하긴 어려웠던** 마찰을 해소. dashboard로 가시화, junit으로 CI 통합, variants로 description tuning 자동화, history로 trend 축적.
+
+---
+
+## Cost 회귀 + DX 폴리시 (0.12.0)
+
+0.11.0이 측정 cascade를 완성했다면, 0.12.0은 **일상 작업의 마찰**을 정리. 5개 항목, 큰 기능 없지만 마찰 큰 부분 제거.
+
+### 1. `cfh cost --since-commit <hash>` — 회귀 진단
+
+특정 commit 이후 **토큰 사용 변화**를 정량 비교:
+
+```bash
+cfh cost --since-commit abc1234 --match my-project
+```
+
+```
+📈 Cost since-commit comparison
+  Commit:    cc1350d
+  Timestamp: 2026-04-29T04:38:10Z
+
+  Sessions:  3 (before) → 1 (after)
+  Input+cache:  556M → 360M    (-195M, -35.2%)
+  Output:       1.7M → 1.2M    (-523K, -29.9%)
+
+Top changes by command:
+  /cfh-plan    448M → 119M    (-329M)  702→326 turns
+  /cfh-review  0    → 171M    (+171M)  0→621 turns
+
+✅ 의미 있는 토큰 감소 (-35.2%)
+```
+
+**동작**: `git show -s --format=%cI <hash>`로 commit 시점 추출 → session jsonl을 mtime으로 before/after 분리 → 명령별 변화량 + ±20% 임계 판정.
+
+**한계**: session mtime 기반이라 commit과 무관하게 단순 시간 분리. N=4 세션 비교는 신호 약함 — 의미 있는 변화 보려면 같은 패턴 반복 필요.
+
+### 2. `cfh diff --skills-vs-evals` — staleness 감지
+
+description 수정됐는데 evals 안 바뀐 스킬 자동 발견:
+
+```bash
+cfh diff --skills-vs-evals
+```
+
+```
+🕒 Skills vs evals staleness check
+
+  Fresh:    2 skills (evals updated after SKILL.md)
+  Stale:    1 skills (SKILL.md updated after evals — review evals)
+  No evals: 5 skills
+
+  ⚠ Stale:
+    • tdd-first   SKILL.md 2.1d newer than happy-path.json (3 cases)
+
+  ℹ No evals/:
+    • asset-factory, debug-investigator, harness-factory, ...
+```
+
+**왜 가치 있나**: 0.11.0 eval 측정 인프라가 정착하려면 evals가 description과 동기 — 이 도구가 동기 깨짐을 자동 감지.
+
+**한계**: mtime fragile (git pull로 바뀜) — 의미 있는 변경 vs typo 구분 못 함. 신호이지 결론 아님.
+
+### 3. `cfh new skill <name> --from-existing <other>` — 스킬 fork
+
+기존 스킬을 빠르게 변형:
+
+```bash
+cfh new skill our-tdd --from-existing tdd-first
+# → ~/.claude/skills/our-tdd/ 생성 (전체 디렉터리 복사)
+# → frontmatter:
+#     name: our-tdd
+#     description: TODO update for our-tdd — was: ...
+# → .cfh-manifest.json 자동 제거 → user-authored 분류
+```
+
+**적용**: 우리 팀만의 TDD 스타일, 기존 스킬 변형 실험. progressive disclosure — `cfh new skill foo` (빈 스캐폴드) vs `--from-existing` (작동하는 시작점).
+
+**한계**: 현재 `kind: skill`만 지원. description 자동 변경은 prefix뿐 — 의미 변형은 사람이 수정.
+
+### 4. `cfh watch [--doctor]` — 자동 감시
+
+스킬 편집 중 즉시 피드백:
+
+```bash
+cfh watch                  # 변경 시 validate
+cfh watch --doctor         # validate + doctor (느림, 더 철저)
+```
+
+**동작**: `~/.claude/skills`, `~/.claude/commands`, 프로젝트 로컬까지 fs.watch로 감시 → 500ms debounce 후 validate 재실행. Ctrl+C로 종료.
+
+**제외**: `.cfh-manifest.json`, `.cfh-logs/` (피드백 루프·로그 변경 무시).
+
+**한계**: fs.watch는 OS별 차이 — Linux의 recursive 옵션이 일부 케이스 누락 가능. 작업 중 즉시 피드백 정도로 사용, CI 검증은 별도 명령.
+
+### 5. `cfh validate --strict` — schema 린트
+
+SKILL.md frontmatter를 **schema 기반**으로 더 엄격히 검증:
+
+```bash
+cfh validate                # 기본 (현 동작 그대로)
+cfh validate --strict       # schema + 알 수 없는 필드 경고
+```
+
+**Schema (0.12.0)**:
+- `name`: kebab-case, 1~63자, dir 이름과 일치
+- `description`: 20~1024자
+- `allowed_tools` / `license` / `version` / `deps`: optional, 타입 검증
+
+**`--strict`의 추가 체크**: 알 수 없는 frontmatter 필드 경고 (forward-compat 유지). CI에서 정책으로 활성화 권장.
+
+**왜 옵트인인가**: 기존 사용자 SKILL.md에 임의 필드 들어있을 수 있음 — 강제 적용 시 false positive 위험.
+
+### 0.10.0 → 0.11.0 → 0.12.0 누적
+
+| 단계 | 도구 | 추가된 가치 |
+|---|---|---|
+| 측정 | cost·eval·sentry | 데이터 수집 |
+| 측정 cascade (0.11.0) | dashboard·variants·junit·history | 데이터 활용·시각화 |
+| **DX 폴리시 (0.12.0)** | cost --since-commit·diff --skills-vs-evals·watch·--from-existing·--strict | **일상 마찰 제거** |
+
+다음 0.13.0은 **Semantic eval (LLM-judge)** — string 매칭 한계 돌파.
+
+---
+
 ## Evolution commands (0.3.0, opt-in)
 
 스킬을 쓰다 보면 description이 실제 사용 패턴과 어긋납니다. `cfh evolve`는 정적 분석 + (옵트인 시) 사용 로그 기반 제안을 출력하여 이를 교정하도록 돕습니다. **모든 수정은 사용자가 직접** — 자동 적용은 0.3.0에 없습니다.
@@ -1852,9 +2087,11 @@ cfh list                # 커스텀 스킬은 그대로 user-authored로 남음
 │   ├── validate.js              # frontmatter 검증
 │   ├── manifest.js              # .cfh-manifest.json 읽기·쓰기·해싱
 │   ├── frontmatter.js           # 미니멀 YAML 파서 (zero deps)
-│   ├── cost.js                  # transcript 토큰 집계 (0.10.0)
-│   ├── eval.js                  # skill eval 케이스 실행·assertion (0.10.0)
+│   ├── cost.js                  # transcript 토큰 집계 + since-commit (0.10.0+)
+│   ├── eval.js                  # skill eval + variants + junit + history (0.10.0+)
 │   ├── sentry.js                # tool 호출 실패 sensor (0.10.0)
+│   ├── dashboard.js             # 통합 markdown 리포트 (0.11.0)
+│   ├── watch.js                 # 파일 변경 감시 (0.12.0)
 │   └── paths.js                 # 경로 헬퍼
 ├── skills/
 │   ├── refactoring-strategy/

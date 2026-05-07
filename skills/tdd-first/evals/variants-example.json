@@ -1,0 +1,14 @@
+[
+  {
+    "name": "current",
+    "description": "Use this skill when the user wants to follow TDD (test-driven development) for **React/Vue/frontend components** — asks to write tests first, is starting a new feature, fixing a bug that lacks a regression test, or refactoring a tested area. Do NOT trigger when the project is backend-only."
+  },
+  {
+    "name": "broader",
+    "description": "Use this skill for any TDD work — frontend, backend, library. Test-first development with React, Vue, Node, Python or any framework."
+  },
+  {
+    "name": "stricter",
+    "description": "Use this skill ONLY for React/Vue component TDD. Do NOT trigger for backend (FastAPI, Express, Django), CLI tools, libraries, or stack-neutral TDD."
+  }
+]

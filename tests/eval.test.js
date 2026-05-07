@@ -17,6 +17,9 @@ const {
   makeBaselineCase,
   diffPair,
   dryRunExecutor,
+  loadVariants,
+  runVariantsComparison,
+  buildJUnitXml,
 } = require('../lib/eval');
 
 function mkTmpDir() {
@@ -361,4 +364,135 @@ test('runCaseWithBaseline: both runs pass → no diff', () => {
   const stub = () => 'always there';
   const pair = runCaseWithBaseline(tc, stub, 'whatever');
   assert.strictEqual(pair.diff.delta, 0);
+});
+
+// --- Variants ---
+
+test('loadVariants: rejects non-array', () => {
+  const dir = mkTmpDir();
+  const file = path.join(dir, 'v.json');
+  fs.writeFileSync(file, JSON.stringify({ name: 'a', description: 'x' }));
+  assert.throws(() => loadVariants(file), /array/);
+});
+
+test('loadVariants: rejects missing name', () => {
+  const dir = mkTmpDir();
+  const file = path.join(dir, 'v.json');
+  fs.writeFileSync(file, JSON.stringify([{ description: 'x' }]));
+  assert.throws(() => loadVariants(file), /name/);
+});
+
+test('loadVariants: rejects missing description', () => {
+  const dir = mkTmpDir();
+  const file = path.join(dir, 'v.json');
+  fs.writeFileSync(file, JSON.stringify([{ name: 'a' }]));
+  assert.throws(() => loadVariants(file), /description/);
+});
+
+test('loadVariants: accepts well-formed list', () => {
+  const dir = mkTmpDir();
+  const file = path.join(dir, 'v.json');
+  fs.writeFileSync(file, JSON.stringify([
+    { name: 'a', description: 'TDD frontend React' },
+    { name: 'b', description: 'TDD any framework' },
+  ]));
+  const v = loadVariants(file);
+  assert.strictEqual(v.length, 2);
+  assert.strictEqual(v[0].name, 'a');
+});
+
+test('runVariantsComparison: produces per-case scores and a winner', () => {
+  const cases = [
+    { name: 'fe-case', prompt: 'TDD react component', assertions: [{ type: 'contains', value: 'x' }] },
+  ];
+  const variants = [
+    { name: 'narrow', description: 'react component TDD' },
+    { name: 'wide', description: 'general TDD' },
+  ];
+  const results = runVariantsComparison({ skill: 'tdd-first', cases, variants });
+  assert.strictEqual(results.length, 2);
+  // narrow has more matching keywords (react, component, TDD) — should win
+  const narrow = results.find((r) => r.name === 'narrow');
+  const wide = results.find((r) => r.name === 'wide');
+  assert.ok(narrow.totalScore > wide.totalScore, `narrow should outscore wide; got narrow=${narrow.totalScore}, wide=${wide.totalScore}`);
+});
+
+test('runVariantsComparison: detects anti-trigger penalty', () => {
+  const cases = [
+    { name: 'be-case', prompt: 'fastapi TDD backend', assertions: [{ type: 'contains', value: 'x' }] },
+  ];
+  const variants = [
+    { name: 'no-anti', description: 'TDD any framework' },
+    { name: 'with-anti', description: 'react TDD. Do NOT trigger fastapi' },
+  ];
+  const results = runVariantsComparison({ skill: 'tdd-first', cases, variants });
+  const withAnti = results.find((r) => r.name === 'with-anti');
+  // with-anti should be penalized for having "fastapi" in negative section
+  assert.ok(withAnti.totalScore < 1, `with-anti should be penalized; got ${withAnti.totalScore}`);
+});
+
+// --- JUnit XML ---
+
+test('buildJUnitXml: produces valid structure with passing case', () => {
+  const buckets = [{
+    name: 'tdd-first',
+    results: [{
+      name: 'happy',
+      pass: true,
+      skipped: false,
+      error: null,
+      assertions: [{ type: 'contains', pass: true }],
+    }],
+  }];
+  const xml = buildJUnitXml(buckets);
+  assert.match(xml, /<\?xml version="1.0"/);
+  assert.match(xml, /<testsuites/);
+  assert.match(xml, /name="tdd-first"/);
+  assert.match(xml, /name="happy"/);
+  // No <failure>, <skipped>, <error> elements for a passing case
+  assert.ok(!/<failure/.test(xml));
+});
+
+test('buildJUnitXml: emits failure element with reason', () => {
+  const buckets = [{
+    name: 's',
+    results: [{
+      name: 'broken',
+      pass: false,
+      skipped: false,
+      error: null,
+      assertions: [
+        { type: 'contains', value: 'x', pass: false, reason: 'output missing: "x"' },
+      ],
+    }],
+  }];
+  const xml = buildJUnitXml(buckets);
+  assert.match(xml, /<failure/);
+  assert.match(xml, /output missing/);
+});
+
+test('buildJUnitXml: emits skipped element for dry-run cases', () => {
+  const buckets = [{
+    name: 's',
+    results: [{ name: 'skip-case', pass: false, skipped: true, error: null, assertions: [], note: 'dry-run' }],
+  }];
+  const xml = buildJUnitXml(buckets);
+  assert.match(xml, /<skipped/);
+  assert.match(xml, /dry-run/);
+});
+
+test('buildJUnitXml: A/B mode reports treatment as primary', () => {
+  const buckets = [{
+    name: 's',
+    results: [{
+      name: 'ab-case',
+      treatment: { pass: false, skipped: false, error: null, assertions: [{ type: 'contains', pass: false, reason: 'missing' }] },
+      baseline: { pass: true, skipped: false, error: null, assertions: [] },
+      diff: { delta: -1, label: 'skill regressed' },
+    }],
+  }];
+  const xml = buildJUnitXml(buckets, { isAB: true });
+  assert.match(xml, /<failure/);
+  assert.match(xml, /system-out/);
+  assert.match(xml, /skill regressed/);
 });
