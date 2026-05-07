@@ -16,6 +16,7 @@ const { logEvent, evolve } = require('../lib/evolve');
 const { search } = require('../lib/search');
 const { open: openCmd } = require('../lib/open');
 const { exportCmd, importCmd } = require('../lib/export-import');
+const { cost } = require('../lib/cost');
 const { name: PKG_NAME, version: PKG_VERSION } = require('../package.json');
 
 const [, , command, ...args] = process.argv;
@@ -25,7 +26,7 @@ function getFlagValue(list, name) {
   return i >= 0 && list[i + 1] !== undefined ? list[i + 1] : null;
 }
 
-const FLAGS_WITH_VALUE = new Set(['--target', '--only', '--top', '--event', '--note', '--helpful', '--utterance', '--kind', '--editor', '--output']);
+const FLAGS_WITH_VALUE = new Set(['--target', '--only', '--top', '--event', '--note', '--helpful', '--utterance', '--kind', '--editor', '--output', '--by', '--days', '--match', '--session']);
 
 const flags = {
   link: args.includes('--link'),
@@ -55,6 +56,11 @@ const flags = {
   output: getFlagValue(args, '--output'),
   all: args.includes('--all'),
   caseSensitive: args.includes('--case-sensitive'),
+  by: getFlagValue(args, '--by'),
+  days: getFlagValue(args, '--days'),
+  match: getFlagValue(args, '--match'),
+  session: getFlagValue(args, '--session'),
+  json: args.includes('--json'),
 };
 
 const positional = [];
@@ -108,6 +114,11 @@ function printHelp() {
     '  export [names...]             Export user-authored assets to a JSON bundle (pass --all for managed too)',
     '  import <bundle.json>          Import assets from a bundle (conflicts require --force or interactive confirm)',
     '',
+    'Cost telemetry (0.10.0):',
+    '  cost                          Aggregate token usage from Claude Code transcripts',
+    '  cost --by command|day|model|session    Pick the breakdown view',
+    '  cost --days N --match <substr>          Filter by recency / project name',
+    '',
     'Options:',
     '  --link                        Use symbolic links instead of copying (install only)',
     '  --force, -f                   Overwrite existing / bypass safety refusals',
@@ -146,6 +157,8 @@ function printHelp() {
     '  cfh evolve                    Print suggestions for all installed skills',
     '  cfh evolve tdd-first          Focus on a specific skill',
     '  cfh remove tdd-first          Remove installed skill',
+    '  cfh cost --days 7 --by command    Token usage by /cfh-* command, last 7 days',
+    '  cfh cost --by session         Recent sessions with token cost',
     '',
     'Default paths:',
     '  Install target:  ~/.claude/{skills,commands}/',
@@ -278,6 +291,16 @@ async function main() {
           force: flags.force,
           yes: flags.yes,
           dryRun: flags.dryRun,
+        });
+        break;
+      case 'cost':
+        await cost({
+          target: flags.target,
+          project: flags.match,
+          days: flags.days ? Number(flags.days) : null,
+          by: flags.by,
+          sessionId: flags.session,
+          json: flags.json,
         });
         break;
       case 'version':
