@@ -1,0 +1,19 @@
+{
+  "name": "semantic-tdd-flow-quality",
+  "prompt": "TDD로 src/utils/parsePhone.ts (전화번호 정규화 함수) 만들어줘",
+  "skill_should_trigger": "tdd-first",
+  "assertions": [
+    { "type": "contains", "value": "Phase" },
+    {
+      "type": "judge",
+      "criterion": "응답이 사용자에게 입력 종류·예외 케이스·반환 형식 같은 의도 질문을 먼저 하고, 코드부터 작성하지 않는가",
+      "model": "claude-haiku-4-5"
+    },
+    {
+      "type": "judge",
+      "criterion": "응답이 React/RTL 같은 FE 관용구를 쓰지 않고 순수 함수 단위 테스트 톤을 유지하는가 (parsePhone은 유틸 함수임)"
+    }
+  ],
+  "tags": ["semantic", "judge", "intent-interview"],
+  "notes": "string 매칭으로는 잡기 어려운 의도 충실성 검증. judge 1번 ≈ 500토큰, 케이스 한 번에 ~1000토큰 추가."
+}

@@ -30,7 +30,7 @@ function getFlagValue(list, name) {
   return i >= 0 && list[i + 1] !== undefined ? list[i + 1] : null;
 }
 
-const FLAGS_WITH_VALUE = new Set(['--target', '--only', '--top', '--event', '--note', '--helpful', '--utterance', '--kind', '--editor', '--output', '--by', '--days', '--match', '--session', '--executor', '--tool', '--report', '--variants', '--since-commit', '--from-existing']);
+const FLAGS_WITH_VALUE = new Set(['--target', '--only', '--top', '--event', '--note', '--helpful', '--utterance', '--kind', '--editor', '--output', '--by', '--days', '--match', '--session', '--executor', '--tool', '--report', '--variants', '--since-commit', '--from-existing', '--judge-model']);
 
 const flags = {
   link: args.includes('--link'),
@@ -76,6 +76,8 @@ const flags = {
   sinceCommit: getFlagValue(args, '--since-commit'),
   fromExisting: getFlagValue(args, '--from-existing'),
   skillsVsEvals: args.includes('--skills-vs-evals'),
+  enableJudge: args.includes('--enable-judge'),
+  judgeModel: getFlagValue(args, '--judge-model'),
 };
 
 const positional = [];
@@ -143,6 +145,8 @@ function printHelp() {
     '  eval --baseline               A/B compare: skill enabled vs soft anti-trigger',
     '  eval --variants <file>        (0.11.0) Compare description variants by trace score',
     '  eval --report junit           (0.11.0) Output JUnit XML for CI integration',
+    '  eval --enable-judge           (0.13.0) Run judge assertions (semantic, LLM call per assertion)',
+    '  eval --judge-model <name>     (0.13.0) Override judge model (default: claude-haiku-4-5)',
     '',
     'Tool failure sensor (0.10.0):',
     '  sentry                        Detect tool errors / loops / empty reads in transcripts',
@@ -361,6 +365,8 @@ async function main() {
           report: flags.report,
           output: flags.output,
           variants: flags.variants,
+          enableJudge: flags.enableJudge,
+          judgeModel: flags.judgeModel,
         });
         break;
       case 'sentry':

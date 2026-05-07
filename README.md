@@ -607,6 +607,7 @@ cfh trace "<이 스킬이 떠야 할 대표 발화>"
 | **스킬 fork** | `cfh new skill <name> --from-existing <other>` *(0.12.0)* | 기존 스킬 복제 + TODO 마커 |
 | **자동 감시** | `cfh watch [--doctor]` *(0.12.0)* | 파일 변경 시 validate 자동 재실행 |
 | **schema 린트** | `cfh validate --strict` *(0.12.0)* | frontmatter schema 엄격 검증 |
+| **Semantic eval** | `cfh eval --enable-judge` *(0.13.0)* | judge assertion으로 의미 검증 (LLM 호출 추가) |
 
 **굵은 글씨**는 0.3.0 신규 명령입니다.
 
@@ -1841,6 +1842,128 @@ cfh validate --strict       # schema + 알 수 없는 필드 경고
 | **DX 폴리시 (0.12.0)** | cost --since-commit·diff --skills-vs-evals·watch·--from-existing·--strict | **일상 마찰 제거** |
 
 다음 0.13.0은 **Semantic eval (LLM-judge)** — string 매칭 한계 돌파.
+
+---
+
+## Semantic eval — LLM-judge (0.13.0)
+
+assertion이 단순 string 매칭으로는 잡을 수 없는 **의미 검증**을 LLM judge에 위임. 0.10.0 eval의 한계 ("Phase 1 Intent Interview 문자열만 있으면 통과 → 실제 Q1 내용이 의도대로인지 검증 못 함")를 메우는 마지막 조각.
+
+### Judge assertion — 4번째 타입
+
+기존 3종(`contains`/`not_contains`/`regex`)에 `judge` 추가:
+
+```json
+{
+  "type": "judge",
+  "criterion": "응답이 사용자에게 의도 질문을 먼저 하고, 코드부터 작성하지 않는가",
+  "model": "claude-haiku-4-5"
+}
+```
+
+| 필드 | 의미 |
+|---|---|
+| `criterion` | 판정 기준 (≤500자, yes/no로 답할 수 있게 구체적으로) |
+| `model` (선택) | 판정 LLM (기본 Haiku — 싸고 빠름) |
+
+### 동작
+
+`--enable-judge` 옵트인 시:
+1. eval이 보통처럼 prompt 실행 → assistant 응답 수집
+2. judge assertion마다 별도 LLM 호출 (Haiku):
+   ```
+   Response to evaluate: """<output>"""
+   Criterion: <criterion>
+   Reply: YES: <reason> or NO: <reason>
+   ```
+3. `^YES` → pass, `^NO` → fail, 그 외 → unparseable error
+
+### 옵트인 + 비용 추정
+
+```bash
+cfh eval tdd-first --executor claude --enable-judge
+```
+
+```
+💡 Judge assertions enabled — 2 assertion(s) across 4 case(s).
+   Estimated extra LLM calls: 2 (single mode)
+   Rough cost: ~1,000 tokens (Haiku-class).
+   Verify after via: cfh cost --days 1
+```
+
+`--enable-judge` 없으면 judge assertion이 있어도 **LLM 호출 안 함** + 사용자에게 안내. 실수로 토큰 소비 방지.
+
+### 4가지 assertion의 위계
+
+```
+적합 신호                          → 적합 assertion
+─────────────────────────────────────────────
+특정 키워드 등장                   → contains      (free)
+특정 키워드 없음 (anti-pattern)    → not_contains  (free)
+패턴 매칭                          → regex         (free)
+의미·태도·구조 적합성              → judge         (LLM, ~500토큰)
+```
+
+**Cascade**: 가능한 한 free 도구로 잡고, 진짜 의미 검증 필요한 부분만 judge — 비용 최소화.
+
+### 예제 케이스
+
+`skills/tdd-first/evals/semantic-judge.json` 동봉:
+
+```json
+{
+  "name": "semantic-tdd-flow-quality",
+  "prompt": "TDD로 src/utils/parsePhone.ts 만들어줘",
+  "assertions": [
+    { "type": "contains", "value": "Phase" },
+    {
+      "type": "judge",
+      "criterion": "응답이 사용자에게 입력·예외·반환 의도 질문을 먼저 하고 코드부터 작성하지 않는가"
+    },
+    {
+      "type": "judge",
+      "criterion": "응답이 RTL 같은 FE 관용구를 쓰지 않고 순수 함수 단위 테스트 톤을 유지하는가"
+    }
+  ]
+}
+```
+
+string 매칭으론 잡기 어려운 의도 충실성 검증.
+
+### A/B baseline + judge 결합
+
+```bash
+cfh eval tdd-first --executor claude --baseline --enable-judge
+```
+
+A/B doubles judge calls — 2 assertions × 2 (treatment + baseline) = 4 LLM calls per case.
+
+판정이 baseline에서 NO이고 treatment에서 YES면 **스킬이 의미 측면에서 도움**을 주고 있다는 정량 신호.
+
+### 한계 — 정직한 한 줄
+
+- **Judge 자체가 LLM**: 판정도 비결정적. 같은 입력 → 약간 다른 verdict 가능
+- **Haiku가 항상 정확하지 않음**: 미묘한 criterion은 Sonnet/Opus 필요할 수도 (`--judge-model` override)
+- **토큰 비용**: assertion당 ~500 토큰. 케이스 10개에 judge 3개씩 + A/B = 60회 호출. 일상 CI에선 부담
+- **Verdict 파싱 실패**: judge가 "Yes, definitely" 같이 답하면 못 잡음. 표준 형식 강제하지만 100% 보장 안 됨
+- **자동 차단 안 함**: judge fail은 보고만, SKILL.md 수정은 사람 판단
+
+### 권장 사용 패턴
+
+1. **개발 중**: `--dry-run` 또는 `--executor claude` (judge 없이) — 빠르게 회귀 확인
+2. **PR 직전 1회**: `--enable-judge --baseline` — 의미·트리거 정합성 종합 검증
+3. **주간 점검**: dashboard + judge eval-history trend — 의미 정합성 시계열 추적
+
+### 0.10.0 → 0.13.0 누적
+
+| 단계 | 추가 |
+|---|---|
+| 측정 (0.10.0) | cost · eval (string assertion) · sentry · evolve+evals |
+| 측정 cascade (0.11.0) | dashboard · variants · junit · history |
+| DX 폴리시 (0.12.0) | since-commit · skills-vs-evals · from-existing · watch · --strict |
+| **Semantic (0.13.0)** | **judge assertion** — string 매칭 한계 돌파 |
+
+다음 0.14.0은 **Sentinel mode** — `cfh sentry --watch` 실시간 모니터링.
 
 ---
 

@@ -24,7 +24,7 @@ npm install -g @han-kyeon/claude-skills
 cfh install
 ```
 
-끝. 두 번째 줄이 `~/.claude/skills/`와 `~/.claude/commands/`에 번들된 7개 스킬 + 17개 슬래시 커맨드를 복사합니다 (0.12.0 기준 — cost·progress·eval·dashboard·variants·watch 포함).
+끝. 두 번째 줄이 `~/.claude/skills/`와 `~/.claude/commands/`에 번들된 7개 스킬 + 17개 슬래시 커맨드를 복사합니다 (0.13.0 기준 — cost·progress·eval·dashboard·variants·watch·judge 포함).
 
 ### 확인
 
@@ -38,19 +38,19 @@ cfh list
 === Global (~/.claude) ===
 
 Skills (C:\Users\<you>\.claude\skills):
-  asset-factory            managed@0.12.0
-  debug-investigator       managed@0.12.0
-  harness-factory          managed@0.12.0
-  refactoring-strategy     managed@0.12.0
-  skill-author             managed@0.12.0
-  tdd-first                managed@0.12.0
-  tdd-general              managed@0.12.0
+  asset-factory            managed@0.13.0
+  debug-investigator       managed@0.13.0
+  harness-factory          managed@0.13.0
+  refactoring-strategy     managed@0.13.0
+  skill-author             managed@0.13.0
+  tdd-first                managed@0.13.0
+  tdd-general              managed@0.13.0
 
 Commands (C:\Users\<you>\.claude\commands):
   cfh-debug, cfh-feedback, cfh-guide, cfh-make, cfh-new,
   cfh-plan, cfh-progress, cfh-refactor, cfh-retro, cfh-review,
   cfh-tc, cfh-tc-gen, cfh-tdd, cfh-tdd-gen, cfh-team, cfh-trace
-                                          (모두 managed@0.12.0)
+                                          (모두 managed@0.13.0)
 ```
 
 Claude Code를 새 세션으로 시작하거나 `/agents`·`/`로 확인하면 커맨드가 떠야 합니다.
@@ -458,6 +458,8 @@ cfh cost --by session --days 1
 | **`cfh new skill <name> --from-existing <other>`** *(0.12.0)* | 기존 스킬 fork — frontmatter TODO 마커 적용 |
 | **`cfh watch [--doctor]`** *(0.12.0)* | 파일 변경 시 validate(+doctor) 자동 재실행 |
 | **`cfh validate --strict`** *(0.12.0)* | SKILL.md frontmatter schema 엄격 검증 — 알 수 없는 필드 경고 |
+| **`cfh eval --enable-judge`** *(0.13.0)* | Semantic eval — judge assertion으로 의미 검증 (LLM 호출 추가, ~500토큰/assertion) |
+| **`cfh eval --judge-model <name>`** *(0.13.0)* | judge 모델 override (기본 claude-haiku-4-5) |
 | `/cfh-guide [topic]` | 사용 가이드 |
 
 ---
@@ -1899,6 +1901,94 @@ cfh validate --strict       # schema + 알 수 없는 필드 경고
 ```
 
 **왜 옵트인인가**: 기존 사용자 SKILL.md에 임의 필드(custom metadata) 들어있을 수 있음. 강제 적용 시 false positive 위험. CI에서 정책으로 활성화 권장.
+
+---
+
+### Semantic eval — LLM-judge (0.13.0)
+
+#### `cfh eval --enable-judge`
+
+**역할**: assertion이 단순 string 매칭으로는 잡을 수 없는 **의미 검증**을 LLM judge에 위임. "응답이 의도대로인가"를 yes/no로 판정.
+
+**기본은 옵트인** — `--enable-judge` 없으면 judge assertion이 있어도 LLM 호출 안 하고 fail로 표시 + 사용자에게 안내. 실수로 토큰 소비 방지.
+
+**Judge assertion 형식**:
+```json
+{
+  "type": "judge",
+  "criterion": "응답이 사용자에게 의도 질문을 먼저 하고, 코드부터 작성하지 않는가",
+  "model": "claude-haiku-4-5"
+}
+```
+
+- `criterion` (필수): 판정 기준 문장. 500자 이내. 가능한 한 yes/no로 답할 수 있게 구체적으로.
+- `model` (선택): 판정에 쓸 LLM. 기본 `claude-haiku-4-5` (싸고 빠름).
+
+**Judge prompt 표준 형식** (라이브러리 내장):
+```
+You are evaluating whether an AI response satisfies a specific criterion.
+
+Response to evaluate:
+"""
+<output>
+"""
+
+Criterion: <criterion>
+
+Did the response satisfy the criterion? Reply on a single line:
+  YES: <one-line reason>
+  NO: <one-line reason>
+
+Be strict — only YES if the response clearly meets the criterion.
+```
+
+응답 파싱 — `^YES`로 시작 → pass, `^NO` → fail, 그 외 → "judge verdict unparseable" error.
+
+#### 비용 추정 + 옵트인 흐름
+
+`--enable-judge` 사용 시:
+
+```bash
+cfh eval tdd-first --executor claude --enable-judge
+```
+
+```
+💡 Judge assertions enabled — 2 assertion(s) across 4 case(s).
+   Estimated extra LLM calls: 2 (single mode)
+   Rough cost: ~1,000 tokens (Haiku-class).
+   Verify after via: cfh cost --days 1
+```
+
+A/B baseline과 결합:
+```bash
+cfh eval tdd-first --executor claude --baseline --enable-judge
+# A/B doubles judge calls — 2 assertions × 2 (treatment + baseline) = 4 LLM calls
+```
+
+#### 4가지 도구의 위계 — 어디에 어떤 assertion?
+
+| 신호 | 적합 assertion |
+|---|---|
+| 특정 키워드·구문 등장 | `contains` |
+| 특정 키워드 *없음* (anti-pattern) | `not_contains` |
+| 패턴 매칭 (가변 형식) | `regex` |
+| **의미·태도·구조 적합성** | `judge` (LLM 필요) |
+
+**Cascade**: 가능한 한 contains/regex로 잡고, 진짜 의미 검증 필요한 부분만 judge — 비용 최소화.
+
+#### 한계 — 정직한 한 줄
+
+- **Judge 자체가 LLM**: 판정도 비결정적. 같은 입력에도 약간 다른 verdict 가능.
+- **Haiku가 항상 정확하지 않음**: 미묘한 criterion은 Sonnet/Opus가 필요할 수도. `--judge-model` 또는 케이스별 `model` 필드로 override.
+- **토큰 비용**: assertion당 ~500 토큰. 케이스 10개에 judge 3개씩 + A/B → 60회 LLM 호출. 일상 CI에선 부담 큼.
+- **Verdict 파싱 실패**: judge가 "Yes, definitely" 같이 답하면 정규식이 못 잡음. 표준 형식 강제하지만 100% 보장 안 됨.
+- **자동 차단 안 함**: judge가 fail해도 단순 보고. 사용자가 결과 보고 SKILL.md 수정 결정.
+
+#### 권장 사용 패턴
+
+1. **개발 중**: `--dry-run` 또는 `--executor claude` (judge 없이) — 빠르게 회귀 확인
+2. **PR 직전 1회**: `--enable-judge --baseline` — 의미·트리거 정합성 종합 검증
+3. **주간 점검**: dashboard + judge eval-history trend — 의미 정합성 시계열 추적
 
 ---
 

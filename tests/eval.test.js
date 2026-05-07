@@ -20,6 +20,8 @@ const {
   loadVariants,
   runVariantsComparison,
   buildJUnitXml,
+  countJudgeAssertions,
+  JUDGE_PROMPT_TEMPLATE,
 } = require('../lib/eval');
 
 function mkTmpDir() {
@@ -479,6 +481,114 @@ test('buildJUnitXml: emits skipped element for dry-run cases', () => {
   const xml = buildJUnitXml(buckets);
   assert.match(xml, /<skipped/);
   assert.match(xml, /dry-run/);
+});
+
+// --- Judge assertions (semantic eval) ---
+
+test('validateCase: judge type requires criterion', () => {
+  const issues = validateCase({
+    name: 'x',
+    prompt: 'p',
+    assertions: [{ type: 'judge' }],
+  }, 'src');
+  assert.ok(issues.find((i) => /criterion/.test(i.message)));
+});
+
+test('validateCase: judge type accepts valid criterion', () => {
+  const issues = validateCase({
+    name: 'x',
+    prompt: 'p',
+    assertions: [{ type: 'judge', criterion: 'Did the response cover edge cases?' }],
+  }, 'src');
+  assert.deepStrictEqual(issues, []);
+});
+
+test('validateCase: judge.criterion length cap', () => {
+  const longCriterion = 'a'.repeat(600);
+  const issues = validateCase({
+    name: 'x',
+    prompt: 'p',
+    assertions: [{ type: 'judge', criterion: longCriterion }],
+  }, 'src');
+  assert.ok(issues.find((i) => /too long/.test(i.message)));
+});
+
+test('runAssertion: judge without judgeFn fails with hint', () => {
+  const r = runAssertion(
+    { type: 'judge', criterion: 'is the response polite' },
+    'some output',
+    null
+  );
+  assert.strictEqual(r.pass, false);
+  assert.match(r.reason, /enable-judge/);
+});
+
+test('runAssertion: judge calls judgeFn with criterion + output', () => {
+  let captured = null;
+  const stubJudge = (criterion, output, opts) => {
+    captured = { criterion, output, model: opts?.model };
+    return { pass: true, reason: 'judge: looks good' };
+  };
+  const r = runAssertion(
+    { type: 'judge', criterion: 'is concise', model: 'claude-haiku-4-5' },
+    'short answer',
+    stubJudge
+  );
+  assert.strictEqual(r.pass, true);
+  assert.strictEqual(captured.criterion, 'is concise');
+  assert.strictEqual(captured.output, 'short answer');
+  assert.strictEqual(captured.model, 'claude-haiku-4-5');
+});
+
+test('runAssertion: judge YES verdict passes, NO fails', () => {
+  const yesJudge = () => ({ pass: true, reason: 'judge: explicit YES' });
+  const noJudge = () => ({ pass: false, reason: 'judge said NO: missing context' });
+
+  const yes = runAssertion({ type: 'judge', criterion: 'x' }, 'out', yesJudge);
+  const no = runAssertion({ type: 'judge', criterion: 'x' }, 'out', noJudge);
+
+  assert.strictEqual(yes.pass, true);
+  assert.strictEqual(no.pass, false);
+  assert.match(no.reason, /NO/);
+});
+
+test('runCase: judge assertion pass tracked as judge type with criterion', () => {
+  const tc = {
+    name: 'tc',
+    prompt: 'p',
+    assertions: [{ type: 'judge', criterion: 'is helpful' }],
+  };
+  const judge = () => ({ pass: true, reason: 'judge: helpful', verdict: 'YES: helpful' });
+  const r = runCase(tc, () => 'output', judge);
+  assert.strictEqual(r.pass, true);
+  assert.strictEqual(r.assertions[0].type, 'judge');
+  assert.strictEqual(r.assertions[0].criterion, 'is helpful');
+  assert.match(r.assertions[0].verdict, /YES/);
+});
+
+test('countJudgeAssertions: counts across skills and cases', () => {
+  const skills = [
+    {
+      name: 's1', cases: [
+        { assertions: [{ type: 'contains', value: 'x' }, { type: 'judge', criterion: 'a' }] },
+        { assertions: [{ type: 'judge', criterion: 'b' }, { type: 'judge', criterion: 'c' }] },
+      ]
+    },
+    {
+      name: 's2', cases: [
+        { assertions: [{ type: 'regex', value: 'x' }] },
+      ]
+    },
+  ];
+  assert.strictEqual(countJudgeAssertions(skills), 3);
+});
+
+test('JUDGE_PROMPT_TEMPLATE: includes criterion and output', () => {
+  const prompt = JUDGE_PROMPT_TEMPLATE('be concise', 'sample answer');
+  assert.match(prompt, /be concise/);
+  assert.match(prompt, /sample answer/);
+  assert.match(prompt, /YES:/);
+  assert.match(prompt, /NO:/);
 });
 
 test('buildJUnitXml: A/B mode reports treatment as primary', () => {
