@@ -1,0 +1,25 @@
+[
+  {
+    "name": "skill-author-explicit-create",
+    "prompt": "claude-code 스킬 만들고 싶어요. 환자 데이터 다루는 컴포넌트에서 HIPAA 규칙을 자동 적용하는.",
+    "skill_should_trigger": "skill-author",
+    "assertions": [
+      { "type": "regex", "value": "Phase\\s+(0|1)|Pre-scan|인터뷰" },
+      { "type": "contains", "value": "Q1" },
+      { "type": "not_contains", "value": "asset-factory" }
+    ],
+    "tags": ["happy-path", "explicit"],
+    "notes": "스킬 종류가 확정된 발화 — asset-factory dispatcher 우회하고 직접 skill-author로 진입해야 함."
+  },
+  {
+    "name": "skill-author-on-existing-edit",
+    "prompt": "기존 tdd-first 스킬 description 좀 다듬어줘",
+    "skill_should_trigger": "skill-author",
+    "assertions": [
+      { "type": "regex", "value": "기존|existing|description" },
+      { "type": "not_contains", "value": "Phase 1 Q1" }
+    ],
+    "tags": ["edit", "modify"],
+    "notes": "기존 스킬 편집은 skill-author도 처리하지만 Phase 1 인터뷰는 skip해야 함 (이미 정의된 스킬)."
+  }
+]

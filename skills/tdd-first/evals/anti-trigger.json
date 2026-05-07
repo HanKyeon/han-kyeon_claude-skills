@@ -1,0 +1,13 @@
+{
+  "name": "no-trigger-on-backend-tdd",
+  "prompt": "FastAPI 엔드포인트 TDD로 짜고 싶어요",
+  "skill_should_trigger": "tdd-general",
+  "assertions": [
+    { "type": "not_contains", "value": "RTL" },
+    { "type": "not_contains", "value": "userEvent" },
+    { "type": "not_contains", "value": "getByRole" },
+    { "type": "regex", "value": "tdd-general|stack-neutral|Arrange-Act-Assert|table-driven" }
+  ],
+  "tags": ["anti-trigger", "be"],
+  "notes": "Python FastAPI 백엔드 TDD는 tdd-first 아닌 tdd-general이 떠야 함. RTL·userEvent 같은 FE 토큰 등장 시 false positive."
+}

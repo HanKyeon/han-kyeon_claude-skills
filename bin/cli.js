@@ -17,6 +17,8 @@ const { search } = require('../lib/search');
 const { open: openCmd } = require('../lib/open');
 const { exportCmd, importCmd } = require('../lib/export-import');
 const { cost } = require('../lib/cost');
+const { evalCmd } = require('../lib/eval');
+const { sentry } = require('../lib/sentry');
 const { name: PKG_NAME, version: PKG_VERSION } = require('../package.json');
 
 const [, , command, ...args] = process.argv;
@@ -26,7 +28,7 @@ function getFlagValue(list, name) {
   return i >= 0 && list[i + 1] !== undefined ? list[i + 1] : null;
 }
 
-const FLAGS_WITH_VALUE = new Set(['--target', '--only', '--top', '--event', '--note', '--helpful', '--utterance', '--kind', '--editor', '--output', '--by', '--days', '--match', '--session']);
+const FLAGS_WITH_VALUE = new Set(['--target', '--only', '--top', '--event', '--note', '--helpful', '--utterance', '--kind', '--editor', '--output', '--by', '--days', '--match', '--session', '--executor', '--tool']);
 
 const flags = {
   link: args.includes('--link'),
@@ -61,6 +63,11 @@ const flags = {
   match: getFlagValue(args, '--match'),
   session: getFlagValue(args, '--session'),
   json: args.includes('--json'),
+  manual: args.includes('--manual'),
+  executor: getFlagValue(args, '--executor'),
+  baseline: args.includes('--baseline'),
+  strictConfidence: args.includes('--strict-confidence'),
+  tool: getFlagValue(args, '--tool'),
 };
 
 const positional = [];
@@ -118,6 +125,18 @@ function printHelp() {
     '  cost                          Aggregate token usage from Claude Code transcripts',
     '  cost --by command|day|model|session    Pick the breakdown view',
     '  cost --days N --match <substr>          Filter by recency / project name',
+    '',
+    'Skill eval (0.10.0):',
+    '  eval [skill]                  Run eval cases (default: dry-run, no LLM call)',
+    '  eval --list [skill]           List available eval cases',
+    '  eval --dry-run                Print prompts + assertions, do not run',
+    '  eval --manual                 Paste claude output manually for each case',
+    '  eval --executor claude        Run via claude CLI subprocess (consumes tokens)',
+    '  eval --baseline               A/B compare: skill enabled vs soft anti-trigger',
+    '',
+    'Tool failure sensor (0.10.0):',
+    '  sentry                        Detect tool errors / loops / empty reads in transcripts',
+    '  sentry --days N --tool Read   Filter by recency / specific tool',
     '',
     'Options:',
     '  --link                        Use symbolic links instead of copying (install only)',
@@ -235,6 +254,7 @@ async function main() {
           target: flags.target,
           warnOnly: flags.warnOnly,
           usage: flags.usage,
+          strictConfidence: flags.strictConfidence,
         });
         break;
       case 'trace':
@@ -299,6 +319,29 @@ async function main() {
           project: flags.match,
           days: flags.days ? Number(flags.days) : null,
           by: flags.by,
+          sessionId: flags.session,
+          json: flags.json,
+        });
+        break;
+      case 'eval':
+        await evalCmd({
+          skill: positional[0],
+          target: flags.target,
+          project: flags.project,
+          list: flags.listFlag,
+          dryRun: flags.dryRun,
+          manual: flags.manual,
+          executor: flags.executor,
+          json: flags.json,
+          baseline: flags.baseline,
+        });
+        break;
+      case 'sentry':
+        await sentry({
+          target: flags.target,
+          project: flags.match,
+          days: flags.days ? Number(flags.days) : null,
+          tool: flags.tool,
           sessionId: flags.session,
           json: flags.json,
         });

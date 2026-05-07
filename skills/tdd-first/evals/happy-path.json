@@ -1,0 +1,25 @@
+[
+  {
+    "name": "fe-tdd-trigger-on-test-first",
+    "prompt": "TDD로 src/components/CouponInput.tsx 만들어줘. 테스트 먼저 작성하면서.",
+    "skill_should_trigger": "tdd-first",
+    "assertions": [
+      { "type": "contains", "value": "Phase" },
+      { "type": "regex", "value": "Intent\\s+Interview|의도|목표" },
+      { "type": "not_contains", "value": "TypeError" }
+    ],
+    "tags": ["happy-path", "fe", "react"],
+    "notes": "FE 컴포넌트 + '테스트 먼저' 발화는 tdd-first 직진 트리거. Phase 1 Intent Interview가 시작돼야 함."
+  },
+  {
+    "name": "fe-tdd-with-jsx-context",
+    "prompt": "useAuth 훅 새로 만들어야 하는데 TDD로 하고 싶어요",
+    "skill_should_trigger": "tdd-first",
+    "assertions": [
+      { "type": "regex", "value": "Phase\\s+0|Scope\\s+Narrowing" },
+      { "type": "contains", "value": "Q1" }
+    ],
+    "tags": ["happy-path", "fe", "hook"],
+    "notes": "FE hook + TDD. Phase 0 Scope Narrowing 7 질문이 먼저 떠야 함."
+  }
+]
