@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/han-kyeon/claude-fe-harness/schemas/skill-frontmatter.json",
+  "title": "SKILL.md frontmatter (1.0)",
+  "description": "Schema for SKILL.md frontmatter in @han-kyeon/claude-skills. Enforced by `cfh check schema` since 1.0.0 (use --legacy for 0.x warn-only behavior).",
+  "type": "object",
+  "required": ["name", "description"],
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{0,62}$",
+      "description": "kebab-case, 1~63 chars, must start with letter. Must match directory name."
+    },
+    "description": {
+      "type": "string",
+      "minLength": 20,
+      "maxLength": 1024,
+      "description": "Trigger description. Should follow TRIGGER / SKIP / EXAMPLES convention (Track 4.3)."
+    },
+    "allowed_tools": {
+      "oneOf": [
+        { "type": "string" },
+        { "type": "array", "items": { "type": "string" } }
+      ]
+    },
+    "license": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "deps": {
+      "oneOf": [
+        { "type": "string" },
+        { "type": "array", "items": { "type": "string" } }
+      ]
+    },
+    "origin": {
+      "type": "string",
+      "description": "Optional provenance URL when the skill is adapted from an external source."
+    },
+    "commands": {
+      "oneOf": [
+        { "type": "string" },
+        { "type": "array", "items": { "type": "string", "pattern": "^/cfh-[a-z0-9-]+$" } }
+      ],
+      "description": "Mirror commands that invoke this skill (Track 5.1). Used by `cfh list` mapping column and `cfh check skills` mapping consistency."
+    }
+  }
+}

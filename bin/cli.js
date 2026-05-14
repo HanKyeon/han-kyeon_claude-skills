@@ -32,8 +32,10 @@ function getFlagValue(list, name) {
 
 const FLAGS_WITH_VALUE = new Set(['--target', '--only', '--top', '--event', '--note', '--helpful', '--utterance', '--kind', '--editor', '--output', '--by', '--days', '--match', '--session', '--executor', '--tool', '--report', '--variants', '--since-commit', '--from-existing', '--judge-model']);
 
+// --link flag was removed in 1.0 (see PLAN.md Track 1.3). Detect + warn for graceful UX.
+const _deprecatedLinkFlag = args.includes('--link');
+
 const flags = {
-  link: args.includes('--link'),
   force: args.includes('--force') || args.includes('-f'),
   dryRun: args.includes('--dry-run'),
   target: getFlagValue(args, '--target'),
@@ -69,10 +71,12 @@ const flags = {
   executor: getFlagValue(args, '--executor'),
   baseline: args.includes('--baseline'),
   strictConfidence: args.includes('--strict-confidence'),
+  mapping: args.includes('--mapping'),
   tool: getFlagValue(args, '--tool'),
   report: getFlagValue(args, '--report'),
   variants: getFlagValue(args, '--variants'),
-  strict: args.includes('--strict'),
+  strict: args.includes('--strict') ? true : undefined,
+  legacy: args.includes('--legacy'),
   sinceCommit: getFlagValue(args, '--since-commit'),
   fromExisting: getFlagValue(args, '--from-existing'),
   skillsVsEvals: args.includes('--skills-vs-evals'),
@@ -80,6 +84,7 @@ const flags = {
   judgeModel: getFlagValue(args, '--judge-model'),
   live: args.includes('--live'),
   installHook: args.includes('--install-hook'),
+  noMirror: args.includes('--no-mirror'),
 };
 
 const positional = [];
@@ -111,21 +116,27 @@ function printHelp() {
     'Authoring commands (framework mode):',
     '  new <kind> <name>             Scaffold a new skill/command/agent from templates',
     '                                kind: skill | command | agent',
-    '  validate                      Lint all skills/commands (frontmatter + invocation checks)',
     '  generate <preset>             Generate a team (agents + skills) in .claude/ from a preset',
     '  generate --list               List available presets',
     '',
-    'Maintenance commands (0.3.0):',
+    'Maintenance / health (1.0):',
+    '  check                         Run all health checks (schema lint + skill diagnostics)',
+    '  check schema                  Frontmatter lint only (alias: `cfh validate`)',
+    '  check skills                  Trigger overlap / orphan manifest / agent team checks (alias: `cfh doctor`)',
+    '  check --strict                Stricter frontmatter rules + confidence-tagging coverage',
     '  adopt <name>                  Convert managed item to user-authored (drops manifest)',
     '  diff <name>                   Show what you changed since install (summary)',
-    '  doctor                        Run health checks on installed items (--usage adds 30-day usage summary)',
+    '  diff --skills-vs-evals        Detect skills whose SKILL.md is newer than evals',
     '  trace "<query>"               Simulate which skill would be triggered by an utterance',
+    '  (legacy: `cfh validate` / `cfh doctor` still work with a deprecation warning until 2.0.)',
     '',
-    'Evolution commands (0.3.0, opt-in):',
-    '  log <skill>                   Record a usage event to ~/.claude/.cfh-logs/<skill>.jsonl',
-    '  log --enable | --disable      Turn telemetry on/off (opt-in, local only)',
-    '  log --status                  Show telemetry state and log file summary',
-    '  evolve [<skill>]              Analyze description + logs, print suggestions (no auto-apply)',
+    'Feedback / evolution (opt-in, local only):',
+    '  feedback [<skill>]            Analyze description + logs, print suggestions (no auto-apply)',
+    '  feedback enable | disable     Turn telemetry on/off',
+    '  feedback status               Show telemetry state and log file summary',
+    '  feedback log <skill>          Record a usage event to ~/.claude/.cfh-logs/<skill>.jsonl',
+    '                                  Flags: --event trigger|success|miss --note "..." --helpful y|n --utterance "..."',
+    '  (legacy: `cfh evolve` and `cfh log` still work with a deprecation warning until 2.0.)',
     '',
     'Utilities (0.7.0):',
     '  search "<keyword>"            Search installed skills/commands by keyword (name + description + body)',
@@ -138,27 +149,32 @@ function printHelp() {
     '  cost --by command|day|model|session    Pick the breakdown view',
     '  cost --days N --match <substr>          Filter by recency / project name',
     '',
-    'Skill eval (0.10.0+):',
-    '  eval [skill]                  Run eval cases (default: dry-run, no LLM call)',
-    '  eval --list [skill]           List available eval cases',
-    '  eval --dry-run                Print prompts + assertions, do not run',
-    '  eval --manual                 Paste claude output manually for each case',
-    '  eval --executor claude        Run via claude CLI subprocess (consumes tokens)',
-    '  eval --baseline               A/B compare: skill enabled vs soft anti-trigger',
-    '  eval --variants <file>        (0.11.0) Compare description variants by trace score',
-    '  eval --report junit           (0.11.0) Output JUnit XML for CI integration',
-    '  eval --enable-judge           (0.13.0) Run judge assertions (semantic, LLM call per assertion)',
-    '  eval --judge-model <name>     (0.13.0) Override judge model (default: claude-haiku-4-5)',
+    'Maintainer-facing (skill authors):',
+    '  dev eval [skill]              Run skill eval cases (default: dry-run, no LLM call)',
+    '  dev eval --list [skill]       List available eval cases',
+    '  dev eval --dry-run            Print prompts + assertions, do not run',
+    '  dev eval --manual             Paste claude output manually for each case',
+    '  dev eval --executor claude    Run via claude CLI subprocess (consumes tokens)',
+    '  dev eval --baseline           A/B compare: skill enabled vs soft anti-trigger',
+    '  dev eval --variants <file>    Compare description variants by trace score',
+    '  dev eval --report junit       Output JUnit XML for CI integration',
+    '  dev eval --enable-judge       Run judge assertions (semantic, LLM call per assertion)',
+    '  dev eval --judge-model <name> Override judge model (default: claude-haiku-4-5)',
+    '  (legacy: top-level `cfh eval` still works with a deprecation warning until 2.0.)',
     '',
-    'Tool failure sensor (0.10.0+):',
+    'Tool failure sensor:',
     '  sentry                        Detect tool errors / loops / empty reads in transcripts',
     '  sentry --days N --tool Read   Filter by recency / specific tool',
-    '  sentry --live                 (0.14.0) Show current PostToolUse hook state',
-    '  sentry --install-hook         (0.14.0) Copy hook script + print settings.json snippet',
+    '  sentry live                   Show current PostToolUse hook state',
+    '  sentry hook install           Copy hook script + print settings.json snippet',
+    '  (legacy: `--live` and `--install-hook` flags still work with a deprecation warning until 2.0.)',
     '',
-    'Dashboard (0.11.0):',
-    '  dashboard                     Combined cost + sentry + eval coverage report (markdown)',
-    '  dashboard --output FILE       Write to file instead of stdout',
+    'Observability (1.0):',
+    '  stats                         Combined cost + sentry + eval coverage report (markdown)',
+    '  stats cost                    Token usage breakdown (alias: `cfh cost`)',
+    '  stats errors                  Tool failure summary (alias: `cfh sentry`)',
+    '  stats --output FILE           Write to file instead of stdout',
+    '  (legacy: `cfh dashboard` still works with a deprecation warning until 2.0.)',
     '',
     'Cost regression / DX (0.12.0):',
     '  cost --since-commit <hash>    Compare token usage before/after a git commit',
@@ -168,7 +184,6 @@ function printHelp() {
     '  validate --strict             Schema lint with stricter frontmatter rules',
     '',
     'Options:',
-    '  --link                        Use symbolic links instead of copying (install only)',
     '  --force, -f                   Overwrite existing / bypass safety refusals',
     '  --yes, -y                     Skip confirmation prompts (adopt)',
     '  --dry-run                     Show actions without writing',
@@ -186,7 +201,6 @@ function printHelp() {
     '',
     'Examples:',
     '  cfh install                   Install all packaged skills + commands',
-    '  cfh install --link            Use symlinks (auto-update on npm update)',
     '  cfh install refactoring-strategy    Only a specific item',
     '  cfh update --only skills      Refresh only skills, never commands',
     '  cfh list                      Global + project (if ./.claude exists)',
@@ -200,10 +214,10 @@ function printHelp() {
     '  cfh diff tdd-first            See what I changed after install',
     '  cfh doctor                    Check for broken manifests, trigger clashes, etc.',
     '  cfh trace "리뷰해줘"          See which skill would trigger',
-    '  cfh log --enable              Opt-in to local usage logging',
-    '  cfh log tdd-first --event trigger --utterance "TDD로 시작" --helpful y',
-    '  cfh evolve                    Print suggestions for all installed skills',
-    '  cfh evolve tdd-first          Focus on a specific skill',
+    '  cfh feedback enable           Opt-in to local usage logging',
+    '  cfh feedback log tdd-first --event trigger --utterance "TDD로 시작" --helpful y',
+    '  cfh feedback                  Print suggestions for all installed skills',
+    '  cfh feedback tdd-first        Focus on a specific skill',
     '  cfh remove tdd-first          Remove installed skill',
     '  cfh cost --days 7 --by command    Token usage by /cfh-* command, last 7 days',
     '  cfh cost --by session         Recent sessions with token cost',
@@ -220,6 +234,9 @@ async function main() {
   try {
     switch (command) {
       case 'install':
+        if (_deprecatedLinkFlag) {
+          console.warn('  !  --link is no longer supported (removed in 1.0). For local dev iteration, use `npm link` from the package source. Continuing with copy install.');
+        }
         await install({ ...flags, skills: positional });
         break;
       case 'update':
@@ -242,8 +259,42 @@ async function main() {
         await remove({ ...flags, skills: positional });
         break;
       case 'validate':
+        console.warn('  !  `cfh validate` is deprecated (removed in 2.0). Use `cfh check schema` (or `cfh check` for everything).');
         await validate(flags);
         break;
+      case 'check': {
+        // 1.0 health-check umbrella (Track 1.4): combines validate + doctor.
+        // Subcommands: (none) = all, schema = validate, skills = doctor
+        // --strict propagates to BOTH (umbrella expectation): schema=strict frontmatter,
+        // skills=strict-confidence coverage. --strict-confidence remains a direct opt-in.
+        const sub = positional[0];
+        const strictAll = flags.strict === true;
+        const doctorArgs = {
+          target: flags.target,
+          warnOnly: flags.warnOnly,
+          usage: flags.usage,
+          strictConfidence: flags.strictConfidence || strictAll,
+          mapping: flags.mapping,
+        };
+        switch (sub) {
+          case undefined:
+            await validate(flags);
+            console.log('');
+            await doctor(doctorArgs);
+            break;
+          case 'schema':
+            await validate(flags);
+            break;
+          case 'skills':
+            await doctor(doctorArgs);
+            break;
+          default:
+            console.error(`  ✖ Unknown check subcommand: "${sub}". Available: (none) | schema | skills`);
+            process.exitCode = 1;
+            break;
+        }
+        break;
+      }
       case 'new':
         await newCmd({
           kind: positional[0],
@@ -253,6 +304,7 @@ async function main() {
           target: flags.target,
           project: flags.project,
           fromExisting: flags.fromExisting,
+          noMirror: flags.noMirror,
         });
         break;
       case 'generate':
@@ -281,11 +333,13 @@ async function main() {
         });
         break;
       case 'doctor':
+        console.warn('  !  `cfh doctor` is deprecated (removed in 2.0). Use `cfh check skills` (or `cfh check` for everything).');
         await doctor({
           target: flags.target,
           warnOnly: flags.warnOnly,
           usage: flags.usage,
           strictConfidence: flags.strictConfidence,
+          mapping: flags.mapping,
         });
         break;
       case 'trace':
@@ -295,7 +349,9 @@ async function main() {
           top: flags.top ? Number(flags.top) : 5,
         });
         break;
-      case 'log':
+      case 'log': {
+        console.warn('  !  `cfh log` is deprecated (removed in 2.0). Use `cfh feedback` subcommands instead.');
+        // Legacy flag-style routing — same args as 0.x
         await logEvent({
           skill: positional[0],
           event: flags.event,
@@ -307,11 +363,63 @@ async function main() {
           status: flags.statusFlag,
         });
         break;
-      case 'evolve':
-        await evolve({
-          name: positional[0],
-        });
+      }
+      case 'evolve': {
+        console.warn('  !  `cfh evolve` is deprecated (removed in 2.0). Use `cfh feedback [skill]` instead.');
+        // Legacy passthrough: --top N → cfh feedback top N behavior.
+        const topN = flags.top ? parseInt(flags.top, 10) : null;
+        await evolve({ name: positional[0], top: Number.isFinite(topN) ? topN : null });
         break;
+      }
+      case 'feedback': {
+        // Unified feedback command (1.0 — Track 1.1 + Track 2 in PLAN.md).
+        // Subcommands: enable | disable | status | log | top | <skill> | (none = analyze all)
+        const sub = positional[0];
+        switch (sub) {
+          case 'enable':
+            await logEvent({ enable: true });
+            break;
+          case 'disable':
+            await logEvent({ disable: true });
+            break;
+          case 'status':
+            await logEvent({ status: true });
+            break;
+          case 'log':
+            // cfh feedback log <skill> --event ... --note ... --helpful ... --utterance ...
+            await logEvent({
+              skill: positional[1],
+              event: flags.event,
+              note: flags.note,
+              helpful: flags.helpful,
+              utterance: flags.utterance,
+            });
+            break;
+          case 'top': {
+            // `cfh feedback top [N]` — top-N skills by actionable suggestion count.
+            // N defaults to 5; --top flag also honored for backward-compat.
+            let topN = positional[1] ? parseInt(positional[1], 10) : null;
+            if ((topN === null || !Number.isFinite(topN)) && flags.top) {
+              topN = parseInt(flags.top, 10);
+            }
+            await evolve({ name: undefined, top: Number.isFinite(topN) && topN > 0 ? topN : 5 });
+            break;
+          }
+          case undefined:
+            // `cfh feedback` (no args) = analyze all skills.
+            // Honor --top as a positional-less shortcut so legacy scripts keep working.
+            {
+              const topN = flags.top ? parseInt(flags.top, 10) : null;
+              await evolve({ name: undefined, top: Number.isFinite(topN) && topN > 0 ? topN : null });
+            }
+            break;
+          default:
+            // `cfh feedback <skill>` — analyze specific skill
+            await evolve({ name: sub });
+            break;
+        }
+        break;
+      }
       case 'search':
         await search({
           query: positional.join(' '),
@@ -355,7 +463,8 @@ async function main() {
           sinceCommit: flags.sinceCommit,
         });
         break;
-      case 'eval':
+      case 'eval': {
+        console.warn('  !  `cfh eval` is deprecated as a top-level command (removed in 2.0). Use `cfh dev eval` instead — eval is a maintainer tool, not part of the end-user surface.');
         await evalCmd({
           skill: positional[0],
           target: flags.target,
@@ -373,7 +482,61 @@ async function main() {
           judgeModel: flags.judgeModel,
         });
         break;
-      case 'sentry':
+      }
+      case 'dev': {
+        // 1.0 maintainer namespace (Track 2): currently hosts `dev eval`.
+        const sub = positional[0];
+        switch (sub) {
+          case 'eval':
+            await evalCmd({
+              skill: positional[1],
+              target: flags.target,
+              project: flags.project,
+              list: flags.listFlag,
+              dryRun: flags.dryRun,
+              manual: flags.manual,
+              executor: flags.executor,
+              json: flags.json,
+              baseline: flags.baseline,
+              report: flags.report,
+              output: flags.output,
+              variants: flags.variants,
+              enableJudge: flags.enableJudge,
+              judgeModel: flags.judgeModel,
+            });
+            break;
+          case undefined:
+            console.log('Usage: cfh dev <subcommand>');
+            console.log('  dev eval [skill]    Run skill eval cases (maintainer-facing)');
+            break;
+          default:
+            console.error(`  ✖ Unknown dev subcommand: "${sub}". Available: eval`);
+            process.exitCode = 1;
+            break;
+        }
+        break;
+      }
+      case 'sentry': {
+        // 1.0 subcommands (Track 1.1): `sentry live`, `sentry hook install`.
+        // Legacy flags (--live, --install-hook) still work with deprecation warning.
+        let live = flags.live;
+        let installHook = flags.installHook;
+        const sub = positional[0];
+        if (sub === 'live') {
+          live = true;
+        } else if (sub === 'hook' && positional[1] === 'install') {
+          installHook = true;
+        } else if (sub === 'hook') {
+          console.error('  ✖ Usage: cfh sentry hook install');
+          process.exitCode = 1;
+          break;
+        }
+        if (flags.live) {
+          console.warn('  !  `--live` flag is deprecated (removed in 2.0). Use `cfh sentry live` instead.');
+        }
+        if (flags.installHook) {
+          console.warn('  !  `--install-hook` flag is deprecated (removed in 2.0). Use `cfh sentry hook install` instead.');
+        }
         await sentry({
           target: flags.target,
           project: flags.match,
@@ -381,11 +544,13 @@ async function main() {
           tool: flags.tool,
           sessionId: flags.session,
           json: flags.json,
-          live: flags.live,
-          installHook: flags.installHook,
+          live,
+          installHook,
         });
         break;
+      }
       case 'dashboard':
+        console.warn('  !  `cfh dashboard` is deprecated (removed in 2.0). Use `cfh stats` (default = dashboard view).');
         await dashboardCmd({
           days: flags.days,
           match: flags.match,
@@ -393,6 +558,47 @@ async function main() {
           output: flags.output,
         });
         break;
+      case 'stats': {
+        // Observability umbrella (1.0 — Track 2): default = dashboard, `stats cost` = cost, `stats errors` = sentry summary.
+        const sub = positional[0];
+        switch (sub) {
+          case undefined:
+            await dashboardCmd({
+              days: flags.days,
+              match: flags.match,
+              target: flags.target,
+              output: flags.output,
+            });
+            break;
+          case 'cost':
+            await cost({
+              target: flags.target,
+              project: flags.match,
+              days: flags.days ? Number(flags.days) : null,
+              by: flags.by,
+              sessionId: flags.session,
+              json: flags.json,
+              sinceCommit: flags.sinceCommit,
+            });
+            break;
+          case 'errors':
+            // sentry summary mode only — live / hook install stay on `cfh sentry`.
+            await sentry({
+              target: flags.target,
+              project: flags.match,
+              days: flags.days ? Number(flags.days) : null,
+              tool: flags.tool,
+              sessionId: flags.session,
+              json: flags.json,
+            });
+            break;
+          default:
+            console.error(`  ✖ Unknown stats subcommand: "${sub}". Available: (none) | cost | errors`);
+            process.exitCode = 1;
+            break;
+        }
+        break;
+      }
       case 'watch':
         await watchCmd({
           target: flags.target,

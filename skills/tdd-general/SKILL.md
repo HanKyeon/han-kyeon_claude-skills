@@ -9,10 +9,22 @@ description: |
   Preservation) but with stack-neutral guidance (Arrange-Act-Assert, given-when-then,
   table-driven tests, property-based optional). Do NOT trigger when the user is
   working on React/Vue components — `tdd-first` covers FE-specific RTL conventions.
+commands: [/cfh-tdd-gen, /cfh-tc-gen]
 ---
 
 # TDD-General Workflow
 
+
+## 트리거 조건 (1.0 컨벤션 — 본문 참고용, frontmatter description이 권위)
+
+```
+TRIGGER:  framework-agnostic TDD — '백엔드 TDD', 'library TDD', 'pure function TDD',
+          'TDD without React'.
+SKIP:     React/Vue 컴포넌트 → tdd-first (FE-specific RTL 관용구).
+EXAMPLES:
+  - 'FastAPI 엔드포인트 TDD로' → tdd-general의 Arrange-Act-Assert 가이드
+  - 'CLI 도구 TDD' → table-driven test 권장
+```
 `tdd-first`의 5 Phase 구조를 그대로 따르되, **테스트 라이브러리·관용구가 stack-neutral**한 버전입니다. 백엔드 서비스·CLI·라이브러리·순수 함수·데이터 파이프라인 등 React/Vue가 끼지 않는 영역에서 사용합니다.
 
 ## tdd-first와 차이

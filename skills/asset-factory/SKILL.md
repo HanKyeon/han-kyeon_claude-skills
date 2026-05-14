@@ -9,10 +9,23 @@ description: |
   (for commands). Do NOT trigger when the user already specified the asset kind (use
   skill-author or harness-factory directly), or for one-shot requests that do not need
   persistence.
+commands: [/cfh-make]
 ---
 
 # Asset Factory
 
+
+## 트리거 조건 (1.0 컨벤션 — 본문 참고용, frontmatter description이 권위)
+
+```
+TRIGGER:  '자동화해줘', '이거 만들어줘', '반복 작업 줄이고 싶어', 'automate this',
+          'turn into a workflow' 같이 만들 자산 종류가 아직 정해지지 않은 경우.
+SKIP:     이미 skill/command/team 종류가 명확하면 (skill-author/harness-factory 직접 호출).
+          One-shot 요청(영속성 불필요)에도 트리거 안 됨.
+EXAMPLES:
+  - '리뷰 응답 검증 자동화하고 싶어' → 분류 인터뷰 → skill/command/team 결정
+  - '뭔가 만들고 싶은데' → 3 질문 디스패치
+```
 사용자의 "뭔가 만들어줘" 발화를 받아, **skill / command / agent / team 중 어느 것이 맞는지**를 분류하고 해당 메타-스킬로 위임하는 **dispatcher 메타-스킬**입니다. 사용자가 Claude Code의 자산 종류를 구분하지 못해도 목적에서 출발해 올바른 생성 경로로 인도합니다.
 
 ## 활성화 시 반드시

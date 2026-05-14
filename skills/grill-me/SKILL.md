@@ -3,6 +3,7 @@ name: grill-me
 description: Use this skill when the user wants to stress-test a plan, design, or decision through deep sequential questioning — keywords "grill me", "stress-test this plan", "진짜 이거 맞아", "더 깊이 봐줘", "결정 트리 파봐", "이 디자인 검증해줘". Walks the decision tree branch-by-branch, resolves dependencies, and provides recommendations with rationale for every question. Explores the codebase before asking when answers can be found in code. Do NOT trigger for casual planning (use /cfh-plan) or initial intent gathering (use /cfh-make).
 license: MIT
 origin: https://github.com/mattpocock/skills/blob/main/skills/productivity/grill-me/SKILL.md
+commands: [/cfh-grill]
 ---
 
 <provenance>
@@ -39,6 +40,19 @@ Ask the questions one at a time.
 - Recommendation rationale is **enhancement**, not replacement — original just said "recommended answer", we added why; the recommendation itself is still core
 
 </provenance>
+
+## 트리거 조건 (1.0 컨벤션 — 본문 참고용, frontmatter description이 권위)
+
+```
+TRIGGER:  'grill me', 'stress-test this plan', '진짜 이거 맞아?', '더 깊이 봐줘',
+          '결정 트리 파봐', '이 디자인 검증해줘' — 기존 plan·design을 깊이 인터뷰.
+SKIP:     casual planning (use /cfh-plan), initial intent gathering (use /cfh-make),
+          bug investigation (use /cfh-debug). 자동 trigger 약함 — 명시 호출(`/cfh-grill`) 우선.
+EXAMPLES:
+  - '/cfh-grill 쿠폰 검증 plan' → Phase 1 decision tree enumerate + 순차 인터뷰
+  - '/cfh-plan' Phase 2 카드에서 (grill) 선택 → Context handoff 블록 + /cfh-grill 위임
+  - '/cfh-grill 결제 쪽' → 광범위 topic 가드: 좁히는 질문 후 진입
+```
 
 <s>
 You are grill-me — a relentless but disciplined interview skill that interrogates a plan or design **one question at a time** until shared understanding is reached.

@@ -1,6 +1,8 @@
 # @han-kyeon/claude-skills
 
-> A **framework** for authoring, installing, and orchestrating Claude Code skills, slash commands, and team agents. FE-friendly starter assets + general-purpose meta-skills (skill authoring, team factory, asset dispatcher, evolution).
+> A **framework** for authoring, installing, and orchestrating Claude Code skills, slash commands, and team agents. FE/BE friendly starter assets + general-purpose meta-skills (skill authoring, team factory, asset dispatcher, decision-tree grilling).
+>
+> **버전 0.16.0 — 1.0.0-rc1 후보.** CLI surface가 1.0 contract로 정리됨 (`cfh feedback` / `cfh stats` / `cfh check` / `cfh dev eval` / `cfh sentry <sub>`). 구 명령은 1.0.x 동안 alias + deprecation warning. 상세: [Migration Guide](#migration-guide-0x--10) · [Deprecation Policy](./docs/deprecation-policy.md).
 
 ---
 
@@ -12,7 +14,7 @@
 # 1. (30초) 설치 + 확인
 npm install -g @han-kyeon/claude-skills
 cfh install
-cfh list                 # 8 skills + 18 commands 보이면 성공
+cfh list                 # 8 skills + 19 commands 보이면 성공
 
 # 2. Claude Code 세션 시작 (또는 재시작)
 ```
@@ -38,7 +40,14 @@ cfh list                 # 8 skills + 18 commands 보이면 성공
 
 (6) /cfh-feedback tdd-first "인터뷰 중 어색했던 점 짧게"
    → 피드백은 `~/.claude/.cfh-logs/`에만 저장 (외부 전송 없음).
-   → cfh evolve가 이 기록을 분석해 스킬 개선 제안을 만듭니다.
+   → `cfh feedback` (구 cfh evolve)이 이 기록을 분석해 스킬 개선 제안을 만듭니다.
+```
+
+추가로 터미널에서 한 번 확인:
+
+```bash
+cfh stats --days 7         # 통합 markdown 리포트 (cost + sentry + eval coverage + trend)
+cfh check                  # 모든 health checks (schema lint + skill 진단)
 ```
 
 위 6단계만 거치면 이 패키지의 **4대 핵심**(자동 트리거 / dispatcher / 자산 작성 / 피드백 루프)을 모두 만져보신 셈입니다. 다음은 [표준 사용법](#표준-사용법) 섹션이나 본인 상황에 맞는 [시나리오 가이드](#언제-무엇을-쓰나--시나리오-가이드)로 가시면 됩니다.
@@ -1723,6 +1732,61 @@ cfh install --target ./.my-sandbox --dry-run
 cfh list --target ./.my-sandbox
 cfh validate --target ./.my-sandbox
 ```
+
+---
+
+## Migration Guide (0.x → 1.0)
+
+1.0은 명령 이름·subcommand 구조 정리가 핵심 BREAKING. **모든 구 명령은 1 사이클(1.0.x 동안) alias 유지**, 2.0에서 제거됩니다. 자동화 스크립트는 1.0에서 즉시 수정 불필요.
+
+### 이름 변경 요약
+
+```
+# Feedback / evolution
+cfh evolve [skill]              →  cfh feedback [skill]
+cfh log <skill>                 →  cfh feedback log <skill>
+cfh log --enable                →  cfh feedback enable
+cfh log --disable               →  cfh feedback disable
+cfh log --status                →  cfh feedback status
+
+# Observability umbrella
+cfh dashboard                   →  cfh stats           (default = dashboard 뷰)
+                                   cfh stats cost      (= cfh cost, alias만)
+                                   cfh stats errors    (= cfh sentry summary)
+
+# Sentry subcommands (flag → sub)
+cfh sentry --live               →  cfh sentry live
+cfh sentry --install-hook       →  cfh sentry hook install
+
+# Maintainer namespace
+cfh eval                        →  cfh dev eval
+
+# Health checks umbrella
+cfh validate                    →  cfh check schema    (또는 cfh check 전체)
+cfh doctor                      →  cfh check skills
+
+# Removed (no alias)
+cfh install --link              →  removed; use `npm link` for dev iteration
+```
+
+### Schema 검증 강화
+
+1.0부터 `cfh check schema`(구 `cfh validate`)는 default가 strict 모드 — SKILL.md frontmatter의 unknown field를 ERROR로 보고합니다. 0.x 동작이 필요하면 `--legacy` flag 사용:
+
+```bash
+cfh check schema --legacy       # 0.x style: unknown field = warn-only
+```
+
+CI에서 1.0.x 동안 `--legacy` 통과 후 1.1+ 시점에 제거 권장.
+
+### Deprecation 사이클
+
+상세 정책: [`docs/deprecation-policy.md`](docs/deprecation-policy.md).
+
+- 1.0.x: 구 명령·플래그가 작동하며 stderr에 deprecation warning 출력
+- 2.0.0: 구 명령·플래그 제거
+
+자동화 스크립트는 1.0.x 동안 무수정 작동. 2.0 전에 신 명령으로 migration 권장.
 
 ---
 

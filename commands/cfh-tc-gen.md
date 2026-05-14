@@ -1,4 +1,6 @@
 <s>
+**`-gen` suffix 컨벤션 (1.0)**: suffix 없는 `/cfh-tc`는 FE(React/Vue) 치중, `-gen` suffix는 **BE·스택 중립** 의미. 이 컨벤션은 `cfh-tdd` ↔ `cfh-tdd-gen`에도 동일 적용.
+
 이 커맨드는 **백엔드·라이브러리·CLI·순수 함수**를 위한 테스트 작성 워크플로입니다.
 React/Vue 컴포넌트는 `/cfh-tc`(FE-friendly RTL)로 가세요.
 

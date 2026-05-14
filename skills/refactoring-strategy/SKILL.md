@@ -6,10 +6,34 @@ description: |
   code without changing behavior, or is cleaning up legacy code written by
   multiple authors. Provides strategy, safety guardrails, and references to
   library-official anti-patterns.
+commands: [/cfh-refactor, /cfh-refactor-gen]
 ---
 
 # Refactoring Strategy
 
+
+## 트리거 조건 (1.0 컨벤션 — 본문 참고용, frontmatter description이 권위)
+
+```
+TRIGGER:  '리팩터링', 'refactor', 'restructure', 'cleanup', 'migration' — 행동 보존
+          하면서 구조 변경 의도.
+SKIP:     디버그(원인 조사) → debug-investigator. 새 기능 추가 → tdd-*.
+EXAMPLES:
+  - '레거시 모듈 정리해줘' → Step 1 Scope Narrowing 8 질문
+  - 'zustand → jotai 마이그레이션' → Step 4 Safety Net + Step 5 Small PR 분할
+```
+
+### FE / BE 컨텍스트 분기 (0.16.1+, `-gen` suffix 컨벤션)
+
+같은 5 Step 메타 워크플로(Scope · Profile · Blast Radius · Safety Net · Small PR)를 적용하되, **컨텍스트별 가이드가 다름**:
+
+| 신호 | 가이드 |
+|---|---|
+| FE 컴포넌트·React/Vue·queryKey·i18n·Suspense 등장 | `/cfh-refactor` (FE 가이드 — RTL·MSW·React 라이브러리 안티패턴) |
+| BE handler·repository·migration·OpenTelemetry·ORM 등장 | `/cfh-refactor-gen` (BE 가이드 — DB schema·API contract·observability·Strangler Fig 분할) |
+| 둘 다 또는 모호 | 발화에서 명시 신호 우선. 없으면 `/cfh-refactor` (default) 또는 사용자에게 확인 |
+
+분기는 Blast Radius·Library 안티패턴·Safety Net 단계에서 가장 두드러짐. Scope Narrowing 8 질문 자체는 stack-agnostic.
 기존 동작을 보존하면서 구조만 개선하는 작업을 안전하게 수행하기 위한 전략과 체크리스트입니다.
 
 ## 5대 원칙 (Always Apply)

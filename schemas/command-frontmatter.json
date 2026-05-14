@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/han-kyeon/claude-fe-harness/schemas/command-frontmatter.json",
+  "title": "Slash command frontmatter (1.0, optional)",
+  "description": "Schema for optional YAML frontmatter at the top of slash command .md files. Commands without frontmatter are also valid — body content is the primary contract. Schema enforced by `cfh check schema` when frontmatter exists.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{0,62}$",
+      "description": "Command name without leading slash. Must match filename (cfh-tdd.md → name: cfh-tdd)."
+    },
+    "description": {
+      "type": "string",
+      "minLength": 20,
+      "maxLength": 1024
+    },
+    "skill": {
+      "type": ["string", "null"],
+      "description": "Skill this command mirrors (Track 5.1). null for workflow/utility commands."
+    },
+    "category": {
+      "type": "string",
+      "enum": ["skill-mirror", "workflow", "utility"],
+      "description": "1.0 category (Track 5.4). skill-mirror = single skill invocation; workflow = multi-skill orchestration; utility = thin CLI wrapper."
+    }
+  }
+}

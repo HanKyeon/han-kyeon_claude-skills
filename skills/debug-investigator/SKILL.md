@@ -13,10 +13,22 @@ description: |
   a fix (use `/cfh-tdd` or `/cfh-plan`), for routine refactoring
   (use `/cfh-refactor`), for writing new features (use `/cfh-tdd` or
   `/cfh-tdd-gen`), or for simple one-shot questions without investigation need.
+commands: [/cfh-debug]
 ---
 
 # Debug Investigator
 
+
+## 트리거 조건 (1.0 컨벤션 — 본문 참고용, frontmatter description이 권위)
+
+```
+TRIGGER:  증상은 알지만 원인을 *모르는* 상황 — '원인 모르겠다', 'stack trace',
+          '500 에러', '배포 후 깨짐', 'p95 spike', '인시던트'.
+SKIP:     원인 *알고* 있고 수정만 — tdd-* 또는 cfh-plan. 루틴 리팩터 → refactoring-strategy.
+EXAMPLES:
+  - '배포 후 500 에러 — 원인 모름' → 5 Phase Evidence-driven investigation
+  - 'p95 spike' → Performance 가설 prioritization
+```
 **원인이 불분명한 증상·에러**에서 출발해 체계적으로 근본 원인을 찾는 조사 스킬입니다. 이 스킬은 `commands/cfh-debug.md`의 5 Phase 워크플로를 활성화하는 **자동 트리거 진입점**입니다.
 
 ## 활성화 시 반드시

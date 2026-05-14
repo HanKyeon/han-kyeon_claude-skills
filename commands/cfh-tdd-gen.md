@@ -1,4 +1,6 @@
 <s>
+**`-gen` suffix 컨벤션 (1.0)**: suffix 없는 `/cfh-tdd`는 FE(React/Vue) 치중, `-gen` suffix는 **BE·스택 중립** 의미. 이 컨벤션은 `cfh-tc` ↔ `cfh-tc-gen`에도 동일 적용.
+
 이 커맨드는 `tdd-general` 스킬을 활성화하여 **framework-agnostic TDD 워크플로**를 시작합니다.
 React/Vue·Testing Library 가정이 적용되지 않는 영역(백엔드 서비스, CLI, 라이브러리, 순수 함수, 데이터 파이프라인)에 적합합니다.
 스킬이 자동 트리거되지 않았다면 지금 `~/.claude/skills/tdd-general/SKILL.md`를 읽고 5 Phase에 따라 진행하세요.

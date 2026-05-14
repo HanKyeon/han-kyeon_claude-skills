@@ -7,10 +7,22 @@ description: |
   구성"). Interviews the user, picks one of six architecture patterns, and generates
   .claude/agents/*.md + .claude/skills/*/SKILL.md project-locally. Do NOT trigger for
   single-skill authoring (use skill-author) or for using existing agents.
+commands: [/cfh-team]
 ---
 
 # Harness Factory
 
+
+## 트리거 조건 (1.0 컨벤션 — 본문 참고용, frontmatter description이 권위)
+
+```
+TRIGGER:  '팀 에이전트', 'team agents', 'multi-agent', 'orchestrate agents',
+          '서브에이전트 구성' 같이 *여러 에이전트를 묶는* 의도.
+SKIP:     단일 skill 작성은 skill-author. 기존 에이전트 사용은 트리거 안 됨.
+EXAMPLES:
+  - 'PR 응답 검증 팀 만들어줘' → Phase 1 인터뷰 + 6 패턴 중 1 선택
+  - 'producer-reviewer 패턴으로' → 인터뷰 단축, 즉시 Phase 2
+```
 도메인 설명을 받아 **에이전트 팀 + 전용 스킬**을 프로젝트 로컬(`.claude/`)에 생성하는 메타-스킬입니다. revfactory/harness와 같은 L3 meta-factory 역할.
 
 ## 활성화 시 반드시

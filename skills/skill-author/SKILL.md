@@ -7,10 +7,23 @@ description: |
   drafts SKILL.md frontmatter, proposes a references/ layout, and validates the result
   before Claude writes files. Do NOT trigger for questions about *using* an existing skill,
   only for authoring a new or modifying an existing one.
+commands: [/cfh-new]
 ---
 
 # Skill Author
 
+
+## 트리거 조건 (1.0 컨벤션 — 본문 참고용, frontmatter description이 권위)
+
+```
+TRIGGER:  'create a skill', 'write a skill', '새 스킬', '스킬 만들', 'author a skill',
+          'turn this workflow into a skill' 같이 *새 스킬을 작성*하는 의도.
+SKIP:     *기존 스킬 사용* 질문이면 트리거 안 됨. 다른 자산(command/team) 작성이면
+          asset-factory 또는 harness-factory.
+EXAMPLES:
+  - 'HIPAA 준수 검증 스킬 만들고 싶어' → Phase 0 Pre-scan + Q1~Q6 인터뷰
+  - '기존 tdd-first description 다듬어줘' → Edit 모드 (Phase 1 인터뷰 skip)
+```
 사용자와 대화하며 **Claude Code 스킬을 설계·작성**하는 메타-스킬입니다. 이 스킬이 활성화되면 Claude는 아래 프로토콜을 따라 사용자와 함께 `SKILL.md` + `references/`를 만듭니다.
 
 ## 활성화 시 반드시
@@ -35,8 +48,12 @@ Phase 2: Trigger Design          (description 초안 + 사용자 승인)
 Phase 3: Outline                 (SKILL.md 섹션·references 목록 제안)
    ↓
 Phase 4: Write Files             (cfh new로 스캐폴드 + Edit으로 채움)
+                                  • 1.0 기본: skill + auto-mirror command 동시 생성 (Track 5.3)
+                                  • --no-mirror 옵션으로 mirror 생략 가능
+                                  • frontmatter `commands: [/cfh-<name>]` 자동 채움 (Track 5.1)
+                                  • references/ 분리 권장 여부도 Phase 3에서 결정
    ↓
-Phase 5: Validate + Iterate      (cfh validate 실행 + 드라이런 시험 트리거)
+Phase 5: Validate + Iterate      (cfh check schema 실행 + 드라이런 시험 트리거)
 ```
 
 ## Phase 복귀 규칙 (공통)

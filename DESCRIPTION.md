@@ -24,7 +24,9 @@ npm install -g @han-kyeon/claude-skills
 cfh install
 ```
 
-끝. 두 번째 줄이 `~/.claude/skills/`와 `~/.claude/commands/`에 번들된 8개 스킬 + 18개 슬래시 커맨드를 복사합니다 (0.15.0 — measurement·quality·grill 누적의 stable consolidation. 1.0.0 후보 단계).
+끝. 두 번째 줄이 `~/.claude/skills/`와 `~/.claude/commands/`에 번들된 **8개 스킬 + 19개 슬래시 커맨드 + 4개 reference 파일 + JSON Schema 파일**을 복사합니다 (0.16.1 — `/cfh-refactor-gen` 신설 patch).
+
+> **1.0 변경 요약**: CLI surface가 subcommand 중심으로 정리됨 — `cfh feedback` (구 evolve+log) · `cfh stats` (구 dashboard+cost+sentry summary) · `cfh check` (구 validate+doctor) · `cfh dev eval` (구 eval, maintainer namespace) · `cfh sentry live`/`cfh sentry hook install` (구 --live/--install-hook). 구 명령은 deprecation warning + 1 사이클 alias 유지 (2.0 제거). `cfh install --link` 제거 (dev: `npm link` 사용). 상세 매핑은 [README "Migration Guide"](./README.md) + [docs/deprecation-policy.md](./docs/deprecation-policy.md).
 
 ### 확인
 
@@ -32,25 +34,26 @@ cfh install
 cfh list
 ```
 
-아래와 같이 나오면 성공:
+아래와 같이 나오면 성공 (1.0부터 skill ↔ command mapping이 함께 표시됨):
 
 ```
 === Global (~/.claude) ===
 
 Skills (C:\Users\<you>\.claude\skills):
-  asset-factory            managed@0.15.4
-  debug-investigator       managed@0.15.4
-  harness-factory          managed@0.15.4
-  refactoring-strategy     managed@0.15.4
-  skill-author             managed@0.15.4
-  tdd-first                managed@0.15.4
-  tdd-general              managed@0.15.4
+  asset-factory            managed@0.16.2  →  [/cfh-make]
+  debug-investigator       managed@0.16.2  →  [/cfh-debug]
+  grill-me                 managed@0.16.2  →  [/cfh-grill]
+  harness-factory          managed@0.16.2  →  [/cfh-team]
+  refactoring-strategy     managed@0.16.2  →  [/cfh-refactor, /cfh-refactor-gen]
+  skill-author             managed@0.16.2  →  [/cfh-new]
+  tdd-first                managed@0.16.2  →  [/cfh-tdd, /cfh-tc]
+  tdd-general              managed@0.16.2  →  [/cfh-tdd-gen, /cfh-tc-gen]
 
 Commands (C:\Users\<you>\.claude\commands):
-  cfh-debug, cfh-feedback, cfh-guide, cfh-make, cfh-new,
-  cfh-plan, cfh-progress, cfh-refactor, cfh-retro, cfh-review,
-  cfh-tc, cfh-tc-gen, cfh-tdd, cfh-tdd-gen, cfh-team, cfh-trace
-                                          (모두 managed@0.15.4)
+  cfh-debug, cfh-feedback, cfh-grill, cfh-guide, cfh-make, cfh-new,
+  cfh-plan, cfh-progress, cfh-refactor, cfh-refactor-gen, cfh-retro,
+  cfh-review, cfh-tc, cfh-tc-gen, cfh-tdd, cfh-tdd-gen, cfh-team, cfh-trace
+                                          (모두 managed@0.16.2)
 ```
 
 Claude Code를 새 세션으로 시작하거나 `/agents`·`/`로 확인하면 커맨드가 떠야 합니다.
@@ -396,33 +399,70 @@ cfh cost --by session --days 1
 
 ---
 
-## 7. 한눈에 보는 명령어 치트시트
+## 7. 한눈에 보는 명령어 치트시트 (1.0)
+
+> 🛈 1.0부터 일부 명령이 subcommand로 정리됨. 구 명령은 1.0.x 동안 alias 유지 (deprecation warning + 2.0 제거). 전체 매핑은 §7.5 또는 [README Migration Guide](./README.md).
 
 | 일상 | 명령 |
 |---|---|
-| 처음 설치 | `cfh install` |
-| 상태 확인 | `cfh list` (전역+프로젝트) |
+| 처음 설치 | `cfh install` (`--link` 제거됨 — dev는 `npm link`) |
+| 상태 확인 | `cfh list` (skill ↔ command mapping 함께 표시) |
 | 패키지 갱신 | `cfh update` |
 | 특정 스킬 제거 | `cfh remove <name>` |
-| 내 스킬 만들기 (대화) | `/cfh-new skill <name>` |
-| 내 스킬 만들기 (CLI) | `cfh new skill <name>` |
+| 내 스킬 만들기 | `cfh new skill <name>` (auto-mirror command 함께 생성, `--no-mirror`로 비활성) |
+| 기존 스킬 fork | `cfh new skill <name> --from-existing <other>` |
 | 내 커맨드 만들기 | `cfh new command <name>` |
 | 내 에이전트 만들기 | `cfh new agent <name> --project` |
-| 검증 | `cfh validate` |
-| 팀 생성 (빠름) | `cfh generate <preset>` |
-| 팀 생성 (대화) | `/cfh-team [도메인 설명] [--deep|--fast]` |
-| 프리셋 목록 | `cfh generate --list` |
+| 검증 (1.0 umbrella) | `cfh check` (전체) / `cfh check schema` / `cfh check skills` |
+| schema 엄격 검사 | `cfh check schema` (1.0 default strict) — 0.x 동작은 `--legacy` |
+| 매핑 일관성 검증 | `cfh check skills --mapping` |
+| confidence 가이드 검사 | `cfh check skills --strict-confidence` |
+| 팀 생성 (빠름) | `cfh generate <preset>` · 목록: `cfh generate --list` |
+| 팀 생성 (대화) | `/cfh-team [도메인 설명] [--deep\|--fast]` |
 | 번들 스킬 편집 보호 | `cfh adopt <name>` |
-| 내 변경분 확인 | `cfh diff <name>` |
-| 전체 건강 점검 | `cfh doctor` |
-| **30일 사용 현황** *(0.6.0)* | `cfh doctor --usage` |
+| 내 변경분 확인 | `cfh diff <name>` · staleness: `cfh diff --skills-vs-evals` |
 | 트리거 시뮬레이션 | `cfh trace "<query>"` 또는 `/cfh-trace` |
-| **즉석 피드백** *(0.6.0)* | `/cfh-feedback <skill> "<comment>"` |
-| **키워드 검색** *(0.7.0)* | `cfh search "<keyword>" [--kind skill\|command]` |
-| **자산 편집** *(0.7.0)* | `cfh open <name>` |
-| **자산 번들 내보내기** *(0.7.0)* | `cfh export [--all] [--output FILE]` |
-| **자산 번들 가져오기** *(0.7.0)* | `cfh import <bundle.json>` |
+| 즉석 피드백 (스킬) | `/cfh-feedback <skill> "<comment>"` |
+| 키워드 검색 | `cfh search "<keyword>" [--kind skill\|command]` |
+| 자산 편집 | `cfh open <name>` |
+| 자산 번들 내보내기 | `cfh export [--all] [--output FILE]` |
+| 자산 번들 가져오기 | `cfh import <bundle.json>` |
+| 파일 변경 자동 검증 | `cfh watch [--doctor]` |
+| 30일 사용 현황 | `cfh check skills --usage` |
 | 버전 확인 | `cfh --version` 또는 `cfh -v` |
+
+### Feedback / evolution (1.0)
+
+| 명령 | 동작 |
+|---|---|
+| `cfh feedback` | 모든 스킬 분석 (구 `cfh evolve`) |
+| `cfh feedback <skill>` | 특정 스킬 분석 |
+| `cfh feedback enable\|disable\|status` | telemetry 옵트인 토글 |
+| `cfh feedback log <skill> --event ... --note ... --helpful y\|n --utterance "..."` | 사용 이벤트 기록 (구 `cfh log <skill>`) |
+
+### Observability — `cfh stats` umbrella (1.0)
+
+| 명령 | 동작 |
+|---|---|
+| `cfh stats` | 통합 markdown 리포트 (구 `cfh dashboard`) |
+| `cfh stats cost --by command\|day\|model\|session --days N --match <substr>` | 토큰 사용량 집계 |
+| `cfh stats cost --since-commit <hash>` | commit 시점 기준 회귀 진단 |
+| `cfh stats errors --tool <name> --days N` | tool 호출 실패 패턴 (구 `cfh sentry` summary) |
+| `cfh sentry live` | 실시간 훅 상태 스냅샷 (구 `cfh sentry --live`) |
+| `cfh sentry hook install` | PostToolUse 훅 스크립트 설치 (구 `cfh sentry --install-hook`) |
+
+### Maintainer-facing (1.0 — `cfh dev` namespace)
+
+| 명령 | 동작 |
+|---|---|
+| `cfh dev eval --list` | 케이스 목록·정적 검증 (구 top-level `cfh eval`) |
+| `cfh dev eval <skill> --dry-run` | 프롬프트 미리보기 (LLM 호출 없음, default) |
+| `cfh dev eval <skill> --manual` | 사용자 paste 모드 |
+| `cfh dev eval <skill> --executor claude` | claude CLI subprocess (토큰 소비) |
+| `cfh dev eval --baseline` | A/B (skill 활성 vs anti-trigger prefix) |
+| `cfh dev eval --variants <file>` | description A/B/C 비교 (LLM 호출 없음) |
+| `cfh dev eval --enable-judge` | judge assertion (semantic, ~500토큰/assertion) |
+| `cfh dev eval --report junit --output junit.xml` | CI 통합용 JUnit XML |
 
 | 대화에서 | 발동 |
 |---|---|
@@ -464,6 +504,24 @@ cfh cost --by session --days 1
 | **`cfh sentry --install-hook`** *(0.14.0)* | 훅 스크립트 ~/.claude/scripts/에 복사 + settings.json 스니펫 출력 |
 | **`/cfh-grill`** *(0.14.1)* | 결정 트리 walk + 추천+이유 인터뷰 — 기존 plan 깊이 파기 (mattpocock grill-me 어댑테이션) |
 | `/cfh-guide [topic]` | 사용 가이드 |
+
+### 7.5 1.0 신/구 명령 매핑 (요약)
+
+| 구 (0.x) | 신 (1.0) | 비고 |
+|---|---|---|
+| `cfh evolve [skill]` | `cfh feedback [skill]` | alias 1 사이클 |
+| `cfh log <skill>` | `cfh feedback log <skill>` | alias 1 사이클 |
+| `cfh log --enable\|--disable\|--status` | `cfh feedback enable\|disable\|status` | alias 1 사이클 |
+| `cfh dashboard` | `cfh stats` (default = dashboard) | alias 1 사이클 |
+| `cfh sentry --live` | `cfh sentry live` | flag → subcommand |
+| `cfh sentry --install-hook` | `cfh sentry hook install` | flag → subcommand |
+| `cfh eval [skill]` | `cfh dev eval [skill]` | maintainer namespace |
+| `cfh validate` | `cfh check schema` | umbrella |
+| `cfh doctor` | `cfh check skills` | umbrella |
+| `cfh install --link` | **제거됨** | dev: `npm link` |
+| `cfh validate` default | `cfh check schema` default = strict | `--legacy` flag로 0.x 동작 |
+
+Deprecation 정책: 1.0.x 동안 구 명령은 stderr deprecation warning + 동작 유지. 2.0에서 제거. 자동화 스크립트는 1.0에서 즉시 수정 불필요. 상세: [`docs/deprecation-policy.md`](./docs/deprecation-policy.md).
 
 ---
 
@@ -2153,6 +2211,11 @@ cfh 인터뷰·옵션 제시·dispatch 결정에 **빈 질문 금지** 컨벤션
 | `--output <path>` *(0.7.0)* | `cfh export` 출력 파일 경로 |
 | `--all` *(0.7.0)* | `cfh export` managed 자산 포함 |
 | `--yes` *(0.7.0)* | `cfh import` 충돌 일괄 승인 |
+| `--strict` *(0.12.0+, 1.0 default)* | `cfh check schema` schema 엄격 검사 |
+| `--legacy` *(1.0)* | `cfh check schema` 0.x 동작 (warn-only on unknown frontmatter) |
+| `--mapping` *(1.0)* | `cfh check skills` skill ↔ command 매핑 consistency 검증 |
+| `--no-mirror` *(1.0)* | `cfh new skill` 시 mirror command 생성 비활성 |
+| `--manual` / `--executor claude` / `--baseline` / `--variants` / `--enable-judge` / `--judge-model` / `--report junit` *(0.10.0~0.13.0)* | `cfh dev eval` (구 `cfh eval`) 옵션 |
 
 ---
 

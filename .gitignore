@@ -7,6 +7,11 @@ coverage/
 .idea/
 .claude/settings.local.json
 
-DESC_CFL.md
-question.md
-preview.md
+# Ignore all root-level .md files by default — scratch notes, review drafts,
+# session logs. Tracked docs are whitelisted below.
+/*.md
+!/README.md
+!/DESCRIPTION.md
+
+# Scratch HTML preview files at repo root (e.g., index.html dev preview)
+/*.html

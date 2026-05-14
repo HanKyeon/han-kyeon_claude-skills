@@ -9,10 +9,22 @@ description: |
   when the project is backend-only (Node/Python/Go/Rust/Java without React or Vue),
   CLI, library, or pure logic — `tdd-general` covers stack-neutral TDD with
   framework-agnostic idioms.
+commands: [/cfh-tdd, /cfh-tc]
 ---
 
 # TDD-First Workflow
 
+
+## 트리거 조건 (1.0 컨벤션 — 본문 참고용, frontmatter description이 권위)
+
+```
+TRIGGER:  React/Vue/FE 컴포넌트 + TDD 키워드 — '테스트 먼저', '테스트부터',
+          '컴포넌트 TDD', 'TDD로 .tsx 만들어줘'.
+SKIP:     백엔드(FastAPI/Express/Django), CLI, 라이브러리, 순수 함수는 tdd-general.
+EXAMPLES:
+  - 'TDD로 src/components/CouponInput.tsx 만들어줘' → Phase 1 Intent Interview
+  - 'useAuth 훅 TDD로 시작' → Phase 0 Scope Narrowing 7 질문
+```
 새 기능·버그 수정·리팩터링을 **테스트 먼저 작성**하여 진행하는 5단계 워크플로입니다. AI와 사용자가 **테스트라는 공통 목표**를 공유하여 의도 정렬을 극대화합니다.
 
 ## 활성화 시 반드시

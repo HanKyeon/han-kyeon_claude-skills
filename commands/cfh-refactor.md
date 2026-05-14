@@ -1,4 +1,6 @@
 <s>
+**`-gen` suffix 컨벤션 (1.0)**: 이 커맨드(`/cfh-refactor`)는 **FE(React/Vue) 치중** 가이드 — queryKey·i18n·React Suspense·RTL·MSW 같은 FE-specific Blast Radius 축과 라이브러리 안티패턴을 우선 적용합니다. **BE·스택 중립** 리팩터링은 `/cfh-refactor-gen`로 가세요 (ORM·HTTP client·DI·migration·observability 축).
+
 이 커맨드는 `refactoring-strategy` 스킬을 활성화하여 **안전한 리팩터링 워크플로**를 시작합니다.
 스킬이 자동으로 트리거되지 않은 상태라면 지금 `~/.claude/skills/refactoring-strategy/SKILL.md`를 읽고 그 원칙에 따라 진행하세요.
 </s>
