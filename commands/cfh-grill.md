@@ -56,6 +56,7 @@ plan·design 깊이 파기를 시작합니다.
 | `$ARGUMENTS` 인자 있음 + 신규 기능·추상 목표 (예: `쿠폰 검증 추가`, `auth 재설계`) | **Pre-scan skip** — decision-tree.md template 기반 enumerate, Phase 1 |
 | `/cfh-plan` (grill) 위임으로 호출 (인자 + 직전 turn에 명시 handoff 블록) | 인자 = 핵심 topic, handoff 블록 = 추가 컨텍스트. Phase 1 진입 |
 | 인자 없음 | **한 질문**: "이 grill의 plan·목표는? 한 문장으로." 사용자 답 받기 전엔 Phase 1 진입 금지 |
+| 인자·답이 광범위 ("결제 쪽", "auth 관련", "프론트 좀") | **카테고리 트리 enumerate 금지.** 한 번 더 좁히는 질문: "구체적으로 어떤 결정·plan을 grill할까요? (예: 결제 실패 시 retry 정책 / 카드 토큰 저장 전략 / 멱등성)". 사용자가 좁힌 후에만 Phase 1 진입. |
 
 **mini Pre-scan 규칙** (기존 코드 대상일 때만, E. review 반영):
 - **목적**: 결정 지점을 *enumerate*하기 위한 도메인 파악만. **답을 찾는 것 아님.**
@@ -262,6 +263,11 @@ unresolved 노드 남아있으면 Step 1로 회귀 (다음 turn에서).
 - **추천+이유 필수.** 빈 질문 ("어떻게 생각하세요?") 금지.
 - **사용자 의도 우선.** 결정은 항상 사용자에게 묻기. 코드는 추천 이유의 컨텍스트로만 (선택적).
 - **명확한 답변 필수.** "OK"/Enter/짧은 응답/침묵은 *ambiguous* — default 동의로 해석 금지. 사용자가 의도를 명시 표현할 때까지 대기. 어디든 적용 (Phase 0·1·2·3 모두).
+- **자가검증 원칙 (slot ≠ purpose).** 모든 결정 노드·"다른 옵션 B/C"·sub-decision은 *형식 슬롯이 있어서*가 아니라 **사용자 plan에 실제 영향을 주기 때문에** 등장해야 함. 슬롯 채우기 = 빈 질문 = 금지. 구체 적용:
+  - **Phase 1 enumerate**: 각 노드가 이 plan에 실제 영향 주는지 자가검증. "decision-tree.md 템플릿에 있어서"는 제외 사유. 의심스러우면 default 제외 (사용자가 "그것도 봐야 해" 하면 그때 추가).
+  - **Phase 2 Step 1 질문 전**: [verified]·[inferred] 근거 없이 [guessed]만으로 추천을 만들어야 한다면, 질문하지 말고 Phase 3 종료 보고의 "미해결 — 정보 부족"으로 옮김. 무리해서 [guessed] 질문 강행 금지.
+  - **"다른 옵션 B/C"**: 실제 trade-off 있을 때만 제시. 추천이 압도적이면 "다른 옵션: 없음 — 단일 선택지 명확" 명시. 가짜 대안 강제 채우기 금지.
+  - **Sub-decision 추가**: 사용자 답이 *새 결정 분기를 명시적으로 열었을 때* 또는 blocking 결정일 때만 트리에 추가. "A로 갈게" 답에서 "그럼 A의 세부 X·Y·Z도…" 자동 파생 금지.
 - **Tree 먼저.** Phase 1 enumerate + 사용자 가지치기 기회 → 그 다음 Phase 2.
 - **Confidence markers.** [verified]·[inferred]·[guessed] 사용 — 사용자가 어디를 압박할지 알 수 있게.
 - **종료 조건 명시.** Phase 3에서 어느 조건으로 종료했는지 보고.
