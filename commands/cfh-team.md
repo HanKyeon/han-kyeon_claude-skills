@@ -34,16 +34,42 @@
 4. 실패 비용
 5. 규모
 
-## Phase 2 — Pattern Selection
+## Phase 2 — Pattern Selection (추천+이유 패턴, 0.14.1+)
 
-`harness-factory/references/patterns/`의 6 패턴 중 1개 추천 + 대안 1개 제시:
+`harness-factory/references/patterns/`의 6 패턴 중 1개 자동 추천:
 
-- Pipeline
-- Fan-out / Fan-in
-- Expert Pool
-- Producer-Reviewer
-- Supervisor
-- Hierarchical Delegation
+| 패턴 | 적합 신호 |
+|---|---|
+| **Pipeline** | Q1 "단계가 명확한 선형 변환" + Q2 "한 방향 흐름" |
+| **Fan-out / Fan-in** | Q1 "큰 입력을 독립 부분으로 분할" + Q5 "병렬 가능" |
+| **Expert Pool** | Q1 "같은 입력을 여러 축에서 평가" + Q3 "축이 명확 (보안·성능·a11y·타입)" |
+| **Producer-Reviewer** | Q4 "실패 비용 큼" + Q1 "검증 중심" (테스트 통과만 하는 가짜 구현 위험) |
+| **Supervisor** | Q1 "런타임에 경로가 결정" + Q5 "다이내믹 분기" |
+| **Hierarchical Delegation** | Q5 "10+ 에이전트" + Q3 "여러 도메인 분할" |
+
+**추천 형식**:
+```
+📌 추천 패턴: <Pattern>
+   이유:
+     - [verified] Q1 답이 "<인용>" — <적합 신호> 매칭
+     - [verified] Q4 실패 비용이 "<인용>"
+     - [inferred] Q3 전문성 축이 N개 — 패턴의 sweet spot
+     - [guessed] (있다면) 사용자 답에서 추정한 부분
+
+다른 옵션:
+   - <대안 패턴> — 사용자가 <조건>이면 적합 (예: "런타임 분기가 더 명확하면 Supervisor")
+   - <대안 2> — <조건>
+
+답변: 추천대로 / <대안> / 다시 인터뷰 / grill (패턴 선택을 깊이 파기)
+```
+
+상세 추천 패턴: `commands/references/recommendation-pattern.md`.
+
+(grill) 선택 시 `/cfh-grill`로 위임. 자주 깊이 파는 sub-branches:
+- 에이전트 수 (3 vs 5 vs 7+)
+- 도구 권한 분할 (각 에이전트가 어떤 tool만 쓰나)
+- 통신 패턴 (broadcast vs targeted)
+- 실패 처리 (early-exit vs continue)
 
 사용자 승인 후 Phase 3.
 

@@ -1,0 +1,25 @@
+[
+  {
+    "name": "no-trigger-on-fresh-plan",
+    "prompt": "새 기능 plan부터 짜고 싶어요",
+    "skill_should_trigger": "asset-factory",
+    "assertions": [
+      { "type": "not_contains", "value": "결정 트리" },
+      { "type": "not_contains", "value": "grill" },
+      { "type": "regex", "value": "cfh-make|cfh-plan|asset-factory" }
+    ],
+    "tags": ["anti-trigger"],
+    "notes": "fresh plan은 cfh-make / cfh-plan이지 grill-me 아님"
+  },
+  {
+    "name": "no-trigger-on-debug",
+    "prompt": "이 버그 원인 모르겠어요. 같이 조사해줘",
+    "skill_should_trigger": "debug-investigator",
+    "assertions": [
+      { "type": "not_contains", "value": "결정 트리 walk" },
+      { "type": "regex", "value": "debug|증거|hypotheses|가설" }
+    ],
+    "tags": ["anti-trigger"],
+    "notes": "원인 조사는 debug-investigator, grill 아님"
+  }
+]

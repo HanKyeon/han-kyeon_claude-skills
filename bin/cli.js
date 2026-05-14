@@ -78,6 +78,8 @@ const flags = {
   skillsVsEvals: args.includes('--skills-vs-evals'),
   enableJudge: args.includes('--enable-judge'),
   judgeModel: getFlagValue(args, '--judge-model'),
+  live: args.includes('--live'),
+  installHook: args.includes('--install-hook'),
 };
 
 const positional = [];
@@ -148,9 +150,11 @@ function printHelp() {
     '  eval --enable-judge           (0.13.0) Run judge assertions (semantic, LLM call per assertion)',
     '  eval --judge-model <name>     (0.13.0) Override judge model (default: claude-haiku-4-5)',
     '',
-    'Tool failure sensor (0.10.0):',
+    'Tool failure sensor (0.10.0+):',
     '  sentry                        Detect tool errors / loops / empty reads in transcripts',
     '  sentry --days N --tool Read   Filter by recency / specific tool',
+    '  sentry --live                 (0.14.0) Show current PostToolUse hook state',
+    '  sentry --install-hook         (0.14.0) Copy hook script + print settings.json snippet',
     '',
     'Dashboard (0.11.0):',
     '  dashboard                     Combined cost + sentry + eval coverage report (markdown)',
@@ -377,6 +381,8 @@ async function main() {
           tool: flags.tool,
           sessionId: flags.session,
           json: flags.json,
+          live: flags.live,
+          installHook: flags.installHook,
         });
         break;
       case 'dashboard':

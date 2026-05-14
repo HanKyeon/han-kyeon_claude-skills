@@ -15,9 +15,9 @@
 
 <workflow>
 
-## Step 1 — Scope Narrowing (사용자 질문)
+## Step 1 — Scope Narrowing (사용자 질문, 추천+이유 패턴 적용)
 
-`refactoring-strategy/references/scope-narrowing.md`의 8 질문을 3~4개씩 묶어 순차 수행:
+`refactoring-strategy/references/scope-narrowing.md`의 8 질문을 **3~4개씩 묶지 말고 한 번에 한 질문**으로 순차 수행 (0.14.1+ grill-me 컨벤션):
 
 - Q1 범위 축 (Breadth)
 - Q2 깊이 축 (Depth)
@@ -30,8 +30,41 @@
 
 답을 받기 전에 코드 수정 금지. 레거시/마이그레이션/성능/접근성 리팩터링이면 follow-up 질문 추가.
 
+**각 질문은 추천 + 이유 + 다른 옵션 형식** (0.14.1+):
+
+```
+❓ Q1: 범위 축은? 단일 파일인가 디렉터리 전체인가?
+
+📌 추천: <상황별>
+   예 (대상이 단일 컴포넌트일 때):
+     "단일 파일"
+     이유:
+       - [verified] 대상이 src/components/Foo.tsx 한 파일
+       - [inferred] Blast Radius가 좁아 안전망 작게 가능
+   예 (legacy 디렉터리 정리일 때):
+     "디렉터리 전체"
+     이유:
+       - [verified] $ARGUMENTS가 디렉터리 경로
+       - [inferred] 일관성 유지 위해 한 PR에 묶는 게 자연스러움
+
+다른 옵션:
+  - <대안> — <조건>일 때 적합
+
+답변: 추천대로 / <대안> / 다른 답
+```
+
+상세 추천 패턴: `commands/references/recommendation-pattern.md`.
+
+**(grill) 옵션** (0.14.1+): Step 1 종료 후 사용자가 "더 깊이 봐야 할 결정이 많다"고 느끼면 `/cfh-grill`로 위임. Q1~Q8 답변 + Project Profile + Blast Radius 결과 컨텍스트로 자동 이관.
+
+자주 grill 가치 있는 sub-branches (Step 1 종료 시 hint로 노출 권장):
+- migration 전략 (big-bang vs strangler-fig vs adapter)
+- 회귀 테스트 layer (unit / characterization / smoke / e2e)
+- 라이브러리 안티패턴 우선순위 (어느 패턴부터 제거)
+- PR 분할 경계 (vertical slice vs horizontal slice)
+
 **질문과 결과 설명 구분**:
-- **질문**: 개발 판단에 필요한 정보 획득용. 자연스러운 형태로.
+- **질문**: 개발 판단에 필요한 정보 획득용. 추천+이유 동반.
 - **결과 설명**: Why/What/How/What if 4축 (`references/reasoning-format.md`) — 출력 전용.
 
 ## Step 2 — Project Profile 스캔
@@ -65,13 +98,39 @@
 | 거의 없음 | **Step 5 진행 전 반드시 Characterization Test 작성** (`refactoring-strategy/references/characterization-test.md`) |
 | 없음 + 도입 불가 | 사용자에게 Playwright smoke test 최소 세트 제안 |
 
-## Step 5 — Small PR 계획
+## Step 5 — Small PR 계획 (추천+이유 패턴)
 
 `refactoring-strategy/references/small-pr-guide.md` 기준:
 
 - 목표 크기: Small 이하 (50~200줄, 5파일 이내)
-- 쪼개는 전략 제안: Vertical Slice / Horizontal Slice / Scaffolding / Adapter
-- 각 PR의 **커밋 메시지 초안** 제시
+- 쪼개는 전략: Vertical Slice / Horizontal Slice / Scaffolding / Adapter
+
+**분할 전략 추천** (0.14.1+):
+
+```
+📌 추천 분할 전략: <Vertical Slice | Horizontal Slice | Scaffolding | Adapter>
+   이유:
+     - [verified] Blast Radius 결과 — <영향 파일 수·도메인 경계>
+     - [verified] Q3 행동 변경 여부 — 보존만이면 Scaffolding 적합 등
+     - [inferred] PR 분할 시 의존성 순서 — 어느 PR이 먼저 가야 하는지
+
+다른 옵션:
+   - Vertical Slice — 사용자 동선 전체를 한 PR에 (test→impl→consumer) — 작은 기능에 적합
+   - Horizontal Slice — 같은 layer를 가로지르는 변경 (모든 컴포넌트의 prop rename 등) — codemod류
+   - Scaffolding — 새 구조 추가 → 기존 마이그레이션 → 기존 제거 (3+ PR) — 큰 변경 안전 분할
+   - Adapter — 신/구 인터페이스 동시 지원 → 점진 전환 → 구 제거 — breaking change 회피
+
+분할 결과 (PR별):
+  PR 1: <subject>  (~N줄, M파일)
+    커밋 메시지: refactor: <설명>
+    의존: 없음 (먼저 가도 됨)
+  PR 2: <subject>  (~N줄, M파일)
+    의존: PR 1 머지 후
+
+답변: 추천대로 / 다른 전략 / PR 분할 수정 / grill (전략 결정을 깊이 파기)
+```
+
+상세 추천 패턴: `commands/references/recommendation-pattern.md`.
 
 사용자 승인 후 각 PR 단위로 실행.
 

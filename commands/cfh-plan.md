@@ -2,7 +2,8 @@
 **🔀 잘못 진입하셨다면**:
 - 새로운 **skill·command·team을 만들고** 싶으신가요? → `/cfh-make`로 가세요.
 - 작업 종류가 **이미 확정**(TDD·리팩터·테스트·리뷰)이면 → `/cfh-tdd` / `/cfh-refactor` / `/cfh-tc` / `/cfh-review` 직접.
-- 위 둘 다 아니고, **"이 작업을 어떻게 시작할지 정리하고 싶다"**면 — 이 커맨드(`/cfh-plan`)가 맞습니다.
+- **기존 plan·design을 깊이 파고 싶다** ("grill me", "stress-test", "진짜 이거 맞아?") → `/cfh-grill`로 가세요.
+- 위 셋 다 아니고, **"이 작업을 어떻게 시작할지 정리하고 싶다"**면 — 이 커맨드(`/cfh-plan`)가 맞습니다.
 
 이 커맨드는 복잡하거나 모호한 작업을 시작할 때 **목표 캡처 → 접근법 상의 → 작업 분류 → 실행·위임**의 3 Phase를 수행합니다.
 `/cfh-make`가 "**재사용 자산 생성**"의 dispatcher라면, `/cfh-plan`은 "**실제 작업 실행**"의 dispatcher입니다.
@@ -184,11 +185,28 @@ Phase 1의 정보(목표 + scoped 스캔 결과 + Q2~Q4)를 근거로 Claude가 
   - 긴급도: <Q4>
   - Project·Product 검증 결과 요약 (위 두 섹션)
 
-이대로 진행하시겠습니까?
-- (yes) Phase 3 실행
-- (adjust) 특정 단계만 수정
-- (reclassify) 태스크 분류 재논의
-- (revise-checks) Project·Product 검증 결과 재검토
+🌳 결정 트리 sub-branch 힌트 (선택 사항)
+
+이 접근법 안에 아직 안 정한 결정들 (사용자가 가지치기 가능):
+  - <decision 1 — 예: state 위치 (zustand vs local)>
+  - <decision 2 — 예: error UX (inline vs toast)>
+  - <decision 3 — 예: cache TTL>
+
+→ 깊이 파고 싶으면 (grill) 선택 / 충분하면 (yes) Phase 3
+
+📌 추천: yes — Phase 3 실행
+   이유:
+     - [verified] Q1~Q4 답변이 일관됨 (모순·공백 없음)
+     - [verified] Project Alignment·Product Impact 위험 신호 없음
+     - [inferred] 위임 대상 명확 — Q1 키워드와 매칭
+
+다른 옵션:
+  - adjust <단계> — 빠진 단계가 있거나 Q2 성공 기준이 모호하게 느껴질 때
+  - reclassify — task type 동의 안 할 때 (예: "리팩터가 아니라 신규 기능 같다")
+  - revise-checks — Project Alignment 또는 Product Impact 추론이 너무 추측 같을 때
+  - grill — 결정 트리 sub-branch가 너무 많이 미해결일 때 (위 힌트가 길면 신호)
+
+선택: yes / adjust <단계> / reclassify / revise-checks / grill
 ```
 
 ### Project·Product 검증 추론 원칙
@@ -215,6 +233,45 @@ Phase 1의 정보(목표 + scoped 스캔 결과 + Q2~Q4)를 근거로 Claude가 
 ```
 
 사용자가 `(revise-checks)` 선택 시 해당 섹션만 재논의 (다른 Phase 답변은 유지).
+
+사용자가 `(grill)` 선택 시 → `/cfh-grill`로 **명시적 위임** (자동 흡수 X). 다음 형식으로 출력:
+
+```
+📋 Context handoff for /cfh-grill
+
+Q1 목표:       <한 문장>
+Q2 성공 기준:  <답변>
+Q3 제약:       <답변, 특히 out-of-scope>
+Q4 긴급도:     <답변>
+
+태스크 분류:   <카테고리>
+접근법 요약:   <Phase 2 카드 한 줄>
+결정 트리 힌트: <미해결 sub-branch 목록>
+
+다음 명령으로 진행하세요:
+  /cfh-grill <Q1 목표 한 문장>
+
+(위 handoff 블록을 /cfh-grill이 명시 컨텍스트로 참조합니다. 자동 흡수 아님 — 사용자가 명령을 그대로 실행해야 위임 완료.)
+```
+
+`/cfh-grill`은 인자 = Q1 목표 + 직전 turn의 handoff 블록 = 컨텍스트로 받음. Phase 1 결정 트리 enumerate부터 즉시 시작 (재질문 없음). grill 종료 후 사용자에게 Phase 3 복귀 또는 plan 재검토 권장.
+
+### 추천 + 이유 패턴 (필수)
+
+Phase 2 approach card 옵션 제시에 **빈 질문 금지**. 모든 옵션 블록은 다음 구조:
+
+```
+📌 추천: <기본 선택지>
+   이유:
+     - [verified] <사용자 답변·코드 인용>
+     - [inferred] <합리적 추론>
+     - [guessed] <약한 신호 — 사용자 확인 권장>
+
+다른 옵션:
+  - <X> — <조건>일 때 적합
+```
+
+상세 컨벤션: `commands/references/recommendation-pattern.md`.
 
 ### 복합 태스크 처리
 

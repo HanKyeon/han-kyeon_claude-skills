@@ -24,7 +24,7 @@ npm install -g @han-kyeon/claude-skills
 cfh install
 ```
 
-끝. 두 번째 줄이 `~/.claude/skills/`와 `~/.claude/commands/`에 번들된 7개 스킬 + 17개 슬래시 커맨드를 복사합니다 (0.13.0 기준 — cost·progress·eval·dashboard·variants·watch·judge 포함).
+끝. 두 번째 줄이 `~/.claude/skills/`와 `~/.claude/commands/`에 번들된 8개 스킬 + 18개 슬래시 커맨드를 복사합니다 (0.15.0 — measurement·quality·grill 누적의 stable consolidation. 1.0.0 후보 단계).
 
 ### 확인
 
@@ -38,19 +38,19 @@ cfh list
 === Global (~/.claude) ===
 
 Skills (C:\Users\<you>\.claude\skills):
-  asset-factory            managed@0.13.0
-  debug-investigator       managed@0.13.0
-  harness-factory          managed@0.13.0
-  refactoring-strategy     managed@0.13.0
-  skill-author             managed@0.13.0
-  tdd-first                managed@0.13.0
-  tdd-general              managed@0.13.0
+  asset-factory            managed@0.15.0
+  debug-investigator       managed@0.15.0
+  harness-factory          managed@0.15.0
+  refactoring-strategy     managed@0.15.0
+  skill-author             managed@0.15.0
+  tdd-first                managed@0.15.0
+  tdd-general              managed@0.15.0
 
 Commands (C:\Users\<you>\.claude\commands):
   cfh-debug, cfh-feedback, cfh-guide, cfh-make, cfh-new,
   cfh-plan, cfh-progress, cfh-refactor, cfh-retro, cfh-review,
   cfh-tc, cfh-tc-gen, cfh-tdd, cfh-tdd-gen, cfh-team, cfh-trace
-                                          (모두 managed@0.13.0)
+                                          (모두 managed@0.15.0)
 ```
 
 Claude Code를 새 세션으로 시작하거나 `/agents`·`/`로 확인하면 커맨드가 떠야 합니다.
@@ -460,6 +460,9 @@ cfh cost --by session --days 1
 | **`cfh validate --strict`** *(0.12.0)* | SKILL.md frontmatter schema 엄격 검증 — 알 수 없는 필드 경고 |
 | **`cfh eval --enable-judge`** *(0.13.0)* | Semantic eval — judge assertion으로 의미 검증 (LLM 호출 추가, ~500토큰/assertion) |
 | **`cfh eval --judge-model <name>`** *(0.13.0)* | judge 모델 override (기본 claude-haiku-4-5) |
+| **`cfh sentry --live`** *(0.14.0)* | PostToolUse 훅 상태 스냅샷 — 실시간 누적 카운트·breach 표시 |
+| **`cfh sentry --install-hook`** *(0.14.0)* | 훅 스크립트 ~/.claude/scripts/에 복사 + settings.json 스니펫 출력 |
+| **`/cfh-grill`** *(0.14.1)* | 결정 트리 walk + 추천+이유 인터뷰 — 기존 plan 깊이 파기 (mattpocock grill-me 어댑테이션) |
 | `/cfh-guide [topic]` | 사용 가이드 |
 
 ---
@@ -1989,6 +1992,146 @@ cfh eval tdd-first --executor claude --baseline --enable-judge
 1. **개발 중**: `--dry-run` 또는 `--executor claude` (judge 없이) — 빠르게 회귀 확인
 2. **PR 직전 1회**: `--enable-judge --baseline` — 의미·트리거 정합성 종합 검증
 3. **주간 점검**: dashboard + judge eval-history trend — 의미 정합성 시계열 추적
+
+---
+
+### Sentinel mode — 실시간 안전망 (0.14.0)
+
+#### 후행 분석 → 실시간 모니터링
+
+0.10.0의 `cfh sentry`는 transcript **후행 분석**이었습니다. 0.14.0은 같은 신호를 **실시간**으로 잡음 — PostToolUse 훅으로 매 tool 호출 직후 상태를 누적, threshold 넘으면 즉시 stderr 경고.
+
+#### 설치
+
+```bash
+cfh sentry --install-hook
+# ✓ Copied hook script: ~/.claude/scripts/cfh-sentry-hook.js
+#
+# Next: add to your ~/.claude/settings.json under "hooks.PostToolUse":
+#   { "PostToolUse": [{ "hooks": [{ "type": "command", "command": "node ~/..." }] }] }
+```
+
+**자동 settings.json 편집은 안 함** — 사용자 기존 hooks 손상 위험. snippet 보여주고 사용자가 직접 추가.
+
+#### 감지 패턴 (3종, threshold)
+
+| 패턴 | 임계 | 의미 |
+|---|---|---|
+| 연속 tool 에러 | 3회 | 다음 호출 전 점검 필요 |
+| 동일 input 반복 | 3회 | loop 가능성 (의도된 retry vs 실패의 구분은 사람) |
+| 연속 빈 Read | 2회 | 잘못된 경로 가능성 (literal 0자만 empty로 판정 — false positive 회피) |
+
+threshold 넘으면 stderr에 한 줄 경고:
+```
+🚨 cfh sentry: 3회 연속 tool 에러 — 다음 호출 전에 점검 필요 | Edit 동일 input 3회 반복 — loop 가능성
+```
+
+#### 상태 조회 — `cfh sentry --live`
+
+```bash
+cfh sentry --live
+```
+
+```
+🚨 cfh sentry --live (PostToolUse hook state)
+
+  Recent tool calls tracked:    47
+  Consecutive errors:           0
+  Same-input repeats (current): 1
+  Empty Reads (consecutive):    0
+
+  Last call: Edit  ✓ ok  @ 03:14:22
+
+  Recent breaches (last 3):
+    2026-05-07 02:51:08  Edit
+      ↳ 3회 연속 tool 에러 — 다음 호출 전에 점검 필요
+    2026-05-07 02:33:14  Bash
+      ↳ Bash 동일 input 3회 반복 — loop 가능성
+```
+
+#### 상태 파일
+
+`~/.claude/.cfh-logs/sentry-state.json` — 훅이 매 호출 갱신. 최근 100회 + 마지막 20개 breach 보관.
+
+#### 후행 sentry vs 실시간 sentry — 언제 어느 쪽?
+
+| 도구 | 분석 시점 | 비용 | 용도 |
+|---|---|---|---|
+| `cfh sentry` (0.10.0) | 후행 (transcript jsonl 읽음) | 0 | 회고·트렌드 |
+| `cfh sentry --live` (0.14.0) | 실시간 (state file 스냅샷) | 0 | 진행 중 상태 |
+| PostToolUse 훅 (0.14.0) | 매 호출 직후 | 거의 0 | 즉시 경고 |
+
+**같이 쓰는 게 자연스러움**: 훅이 실시간 경고 + 매일 cfh sentry로 전체 트렌드 + cfh sentry --live로 현재 상태.
+
+#### 한계
+
+- **훅이 fail해도 사용자는 모름**: `process.exit(0)` 강제 → tool 호출 절대 안 막음. 단점: 훅 자체 버그가 silent.
+- **fakeHome/임시 경로 환경 미지원**: 기본 `~/.claude/`. 다른 위치에 두려면 `CFH_SENTRY_STATE_FILE` env 사용.
+- **threshold는 hardcoded**: 3회·3회·2회. 향후 설정파일 기반 조정 (현재는 SKILL.md 임시 패치 권장).
+- **자동 수정·차단 안 함**: 보고만. 사용자 판단 신뢰.
+
+---
+
+### Grill-me — 결정 트리 깊이 파기 (0.14.1)
+
+#### `/cfh-grill [topic]`
+
+**역할**: 기존 plan·design의 **결정 트리를 한 가지씩** 파는 인터뷰. mattpocock의 `grill-me`를 cfh 가치에 맞게 어댑테이션.
+
+**원본과 차이**:
+- 한 번에 한 질문 (원본 동일)
+- **추천 + 이유 의무화** (어댑테이션) — 빈 질문 ("어떻게 생각하세요?") 금지
+- **코드 우선** (원본 동일 — "explore the codebase instead")
+- **결정 트리 enumerate 먼저** (어댑테이션) — 사용자 가지치기 기회
+- **종료 조건 명시** (어댑테이션) — 트리 소진 / "enough" / 추측 영역 / 시간 박스
+- **`[verified]`/`[inferred]`/`[guessed]` 마커** (어댑테이션)
+
+**호출 경로**:
+1. 명시: `/cfh-grill` 또는 `/cfh-grill <topic>`
+2. `/cfh-plan` 위임: Phase 2 approach card에서 `(grill)` 선택 → 자동 위임
+3. 자동 트리거: "grill me", "stress-test", "진짜 이거 맞아?"
+
+**3 Phase**:
+| Phase | 행동 |
+|---|---|
+| Phase 0 | 직전 컨텍스트 흡수 (`/cfh-plan` answers 또는 mini Pre-scan) |
+| Phase 1 | 결정 트리 enumerate + 사용자 가지치기 기회 |
+| Phase 2 | 순차 인터뷰 (코드 우선 → 사용자 질문, 추천+이유 동반) |
+| Phase 3 | 수렴 — resolved/unresolved 정리 + 다음 단계 추천 |
+
+상세: `skills/grill-me/SKILL.md`, `skills/grill-me/references/decision-tree.md`.
+
+---
+
+### 추천+이유 패턴 (0.14.1, 전 cfh-* 확산)
+
+cfh 인터뷰·옵션 제시·dispatch 결정에 **빈 질문 금지** 컨벤션. grill-me의 핵심 원칙을 결정 지점 전반에 확산.
+
+**적용 위치**:
+
+| 커맨드 | 적용 지점 | 도입 |
+|---|---|---|
+| `/cfh-plan` | Phase 2 approach card 옵션 (yes/adjust/reclassify/revise-checks/grill) | 0.14.1 |
+| `/cfh-make` | dispatch 결정 (skill/command/team/agent) | 0.14.1 |
+| `/cfh-debug` | Phase 2 가설 prioritization | 0.14.1 |
+| `/cfh-review` | Step 2.5 exclusion 인터뷰 | 0.14.1 |
+| `/cfh-refactor` | Step 1 Scope 8질문 (each) + Step 5 분할 전략 | 0.14.2 |
+| `/cfh-team` | Phase 2 패턴 선택 (6 중 1) | 0.14.2 |
+| `/cfh-grill` | 매 질문 (본질) | 0.14.1 |
+
+**형식**:
+```
+📌 추천: <기본 선택지>
+   이유:
+     - [verified] <인용>
+     - [inferred] <추론>
+     - [guessed] <약한 신호>
+
+다른 옵션:
+  - <X> — <조건>일 때 적합
+```
+
+상세 컨벤션: `commands/references/recommendation-pattern.md`.
 
 ---
 

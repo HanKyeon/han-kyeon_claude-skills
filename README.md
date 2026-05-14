@@ -12,7 +12,7 @@
 # 1. (30초) 설치 + 확인
 npm install -g @han-kyeon/claude-skills
 cfh install
-cfh list                 # 7 skills + 17 commands 보이면 성공
+cfh list                 # 8 skills + 18 commands 보이면 성공
 
 # 2. Claude Code 세션 시작 (또는 재시작)
 ```
@@ -608,6 +608,8 @@ cfh trace "<이 스킬이 떠야 할 대표 발화>"
 | **자동 감시** | `cfh watch [--doctor]` *(0.12.0)* | 파일 변경 시 validate 자동 재실행 |
 | **schema 린트** | `cfh validate --strict` *(0.12.0)* | frontmatter schema 엄격 검증 |
 | **Semantic eval** | `cfh eval --enable-judge` *(0.13.0)* | judge assertion으로 의미 검증 (LLM 호출 추가) |
+| **실시간 sentry** | `cfh sentry --live` / `--install-hook` *(0.14.0)* | PostToolUse 훅으로 tool 실패 패턴 실시간 감지 |
+| **결정 트리 grill** | `/cfh-grill [topic]` *(0.14.1)* | 결정 트리 walk + 추천+이유 인터뷰 (mattpocock grill-me 어댑테이션) |
 
 **굵은 글씨**는 0.3.0 신규 명령입니다.
 
@@ -892,1078 +894,270 @@ cfh import my-bundle.json --yes          # 일괄 승인
 
 ---
 
-## 프로젝트·프로덕트 축 평가 (0.8.0)
+## 성숙 단계 기능 — Measurement · Quality · Inquiry (0.8.0 → 0.15.0)
 
-0.8.0부터 `/cfh-review`와 `/cfh-plan`이 **코드 품질 축을 넘어서 프로젝트 건강성·프로덕트 임팩트 축**도 평가합니다. "더 좋은 코드"가 아닌 "더 좋은 프로젝트·더 좋은 프로덕트"를 위한 관점입니다.
+0.8.0부터 0.15.0까지 누적된 도구들이 **측정·품질·인터뷰**의 세 축으로 자리잡았습니다. 각 도구는 독립 사용 가능하지만, **서로 엮어 쓸 때 cascade 효과**가 크게 납니다 — 예: `cfh eval`로 케이스 검증 → 결과를 `cfh dashboard`에서 시각화 → `cfh evolve`가 trend 기반 제안 → `cfh cost --since-commit`으로 회귀 감지.
 
-### 두 새 축
+### 측정 cascade — 한눈에
 
-| 축 | 의미 | 예시 질문 |
-|---|---|---|
-| **Project Health** | 코드베이스 장기 건강성 | 기술 부채 방향·모듈 경계 침식·의존성 정당성·migration 정렬 |
-| **Product Impact** | 사용자·비즈니스 가치 | 사용자 체감·실패 UX·메트릭·롤백 안전성·80% 대안 |
+| 도구 | 측정 대상 | 비용 | 도입 |
+|---|---|---|---|
+| `cfh cost` | 실 사용 토큰 (Claude Code transcript read-only) | 0 | 0.10.0 |
+| `cfh eval` | 케이스 기반 행동 (assertion, A/B, judge) | dry-run 0 / executor 토큰 | 0.10.0~0.13.0 |
+| `cfh sentry` | tool 호출 실패·loop·empty Read | 0 (read-only) | 0.10.0 |
+| `cfh evolve` | description 정적 + eval 구조 인식 | 0 | 0.3.0 + 0.10.0 |
+| `cfh dashboard` | 위 4개 통합 markdown 리포트 | 0 | 0.11.0 |
 
-### `/cfh-review`에서 (Medium+ diff)
-
-기본 5개 서브에이전트(Convention·Logic·Test·Performance·Security)에 **Project Health (F)·Product Impact (G)** 2개 추가 → 총 7개.
-
-**Step 2.5에 제외 인터뷰 추가**: "7개 기본 포함됩니다. 제외할 에이전트가 있나요? (예: 'E 제외' / 'F,G 제외')"
-
-출력 `REVIEW.md`에 🏗️ Project Health·🎯 Product Impact 섹션이 Summary 표에 포함되어 생성.
-
-### `/cfh-plan`에서 (모든 작업)
-
-Phase 2 Approach Proposal 카드에 **자동 추론 섹션**이 추가됩니다 (새 질문은 없음):
-
-```
-📦 Project Alignment Check
-  - 기술 부채 영향: 중립 — 신규 의존성 없음, any 사용 없음
-  - 모듈 경계: 기존 payments/·orders/ 경계 유지
-  - Migration 정렬: TypeScript strict 전환과 일치 ✅
-
-🎯 Product Impact Check
-  - 사용자 체감: 쿠폰 입력 시 즉시 할인액 표시
-  - 실패 UX: 코드 무효·네트워크 실패·서버 오류 3가지 메시지 명시 필요
-  - 롤백: feature flag 권장 (coupons.validation.enabled)
-  - 80% 대안: 클라이언트 whitelist는 보안 이슈로 기각
-```
-
-### 컨텍스트 부족 시
-
-`CLAUDE.md`에 제품 맥락(사용자 segment·핵심 메트릭)이나 migration 정보가 없으면 두 축 분석이 얕아집니다. 이때 "ℹ 추론 기반 분석" 명시. 보완 권장은 프로젝트 로컬 `CLAUDE.md`에 맥락 추가 (본 패키지가 표준 포맷을 강요하진 않음 — 자유 서술).
+"이 스킬이 비용 대비 가치 있나"·"description drift 일으켰나"를 처음으로 정량 답할 수 있게 됩니다.
 
 ---
 
-## 작업 회고 + 커밋 제안 (0.9.0)
+### 1. 측정 (Measurement)
 
-0.9.0부터 5개 작업 커맨드(`/cfh-plan`·`/cfh-tdd`·`/cfh-refactor`·`/cfh-debug`·`/cfh-review`)의 완료 보고에 두 블록이 자동 포함됩니다. **"무엇이 효과 있었고 무엇이 실패했는가"를 매 작업마다 정리**하고, 코드 수정이 있으면 커밋 메시지·범위·분할까지 제안합니다.
+#### `cfh cost` — 토큰 사용량 집계
 
-### 🔄 Retro 블록 (작업 회고)
+```bash
+cfh cost                                 # 전체
+cfh cost --by command --days 7           # 명령별, 최근 7일
+cfh cost --by day --match my-proj        # 프로젝트별·일자별
+cfh cost --since-commit <hash>           # 특정 commit 이후 vs 이전 비교 (0.12.0)
+cfh cost --by session                    # 최근 20 세션
+cfh cost --json                          # 스크립팅
+```
 
-3섹션 고정:
+**핵심**: Claude Code 기존 transcript(`~/.claude/projects/`)를 read-only로 분석 → 새 텔레메트리 수집 없음, 옵트인 불필요. 슬래시 커맨드 attribution 휴리스틱.
+
+실데이터 예: 이 프로젝트 4 sessions에 **772M 토큰** (98% cache read), `/cfh-plan`이 가장 비싼 명령 (326턴 119M).
+
+#### `cfh sentry` — tool 호출 안전망
+
+```bash
+cfh sentry --days 7                      # 후행 분석 (transcript jsonl)
+cfh sentry --tool Edit                   # 특정 tool만
+cfh sentry --install-hook                # 실시간 모니터링 (PostToolUse 훅) 설치
+cfh sentry --live                        # 현재 누적 상태 스냅샷 (훅 설치 시)
+```
+
+3가지 감지: 연속 tool 에러 (3+) / 동일 input 반복 (3+) / 연속 빈 Read (2+). 실시간 훅은 threshold 넘는 순간 stderr 경고 — Claude가 다음 turn에 자기 출력으로 인지.
+
+실데이터 예: Edit 489회 호출 17 실패 (3.5%), 대부분 "File has not been read yet" → Read→Edit 순서 강제 컨벤션 신호.
+
+#### `cfh eval` — 스킬 행동 검증
+
+스킬마다 `evals/*.json` 케이스 정의. assertion 4종 (contains·not_contains·regex·judge).
+
+```bash
+cfh eval --list                          # 케이스 목록·정적 검증
+cfh eval tdd-first --dry-run             # 프롬프트 미리보기 (기본, LLM 호출 없음)
+cfh eval tdd-first --manual              # 사용자가 paste
+cfh eval tdd-first --executor claude     # claude CLI subprocess
+cfh eval tdd-first --baseline            # A/B (skill 활성 vs 안티-트리거 prefix)
+cfh eval tdd-first --variants vars.json  # description A/B/C 비교 (trace 점수, LLM 호출 없음)
+cfh eval --enable-judge                  # judge assertion 활성화 (LLM 호출, ~500토큰/assertion)
+cfh eval --report junit --output out.xml # CI 통합용 JUnit XML
+```
+
+**케이스 예시** (`skills/tdd-first/evals/happy-path.json`):
+```json
+{
+  "name": "fe-tdd-trigger-on-test-first",
+  "prompt": "TDD로 src/components/X.tsx 만들어줘",
+  "skill_should_trigger": "tdd-first",
+  "assertions": [
+    { "type": "contains", "value": "Phase" },
+    { "type": "regex", "value": "Intent\\s+Interview" },
+    { "type": "not_contains", "value": "TypeError" }
+  ]
+}
+```
+
+**A/B baseline (`--baseline`)**: 같은 케이스를 2번 (treatment + soft anti-trigger prefix) 실행 → diff (+1 helped / -1 regressed / 0 no diff). 누적 net effect로 스킬의 순효과 정량 측정.
+
+**Judge assertion (`--enable-judge`)**: LLM이 직접 응답 평가. string 매칭 한계 돌파 — "Phase 1 Intent Interview 문자열만 있으면 통과 → 실제 의도 검증 못 함" 문제 해결. 옵트인 default off (토큰 비용 ×2~3).
+
+**eval-history**: 텔레메트리 옵트인 시 `~/.claude/.cfh-logs/eval-history/<skill>/`에 자동 저장 → `cfh dashboard` trend 분석 토대.
+
+#### `cfh dashboard` — 통합 리포트
+
+```bash
+cfh dashboard                            # 30일 markdown 리포트
+cfh dashboard --output dash.md           # 파일 저장
+cfh dashboard --days 7 --match proj
+```
+
+섹션: Overview · Cost (transcript) · Tool failure sensor · Eval coverage · Eval trend.
+
+---
+
+### 2. 워크플로 캡처 (Workflow capture, 0.9.0 → 0.10.0)
+
+5개 작업 커맨드(`/cfh-plan`·`/cfh-tdd`·`/cfh-refactor`·`/cfh-debug`·`/cfh-review`)의 완료 보고에 자동 포함:
 
 ```
 🔄 Retro
-  효과 있었음 (계속할 것):
-    - <접근법·도구·순서 중 잘 작동한 것>
-  실패·삽질 (반복 금지):
-    - <헛수고였던 시도·잘못된 가정>
-  다음엔 바꿀 것:
-    - <개선 아이디어·후속 과제>
-```
+  효과 있었음: scoped pre-scan으로 broad scan 회피
+  실패·삽질: 처음에 zustand 통합 시도 → 폐기
+  다음엔 바꿀 것: 검증 결과 캐싱 별도 PR로
 
-### 📝 제안 커밋 블록 (코드 수정 시)
-
-```
-📝 제안 커밋
+📝 제안 커밋  (코드 수정이 있을 때만)
   메시지 초안: feat: add coupon validation to checkout
   스테이지 범위: + src/features/coupon/, ~ src/features/checkout/...
-                 (제외: .env·credentials.* 등 비밀파일 자동 제외)
-  분할 추천: 단일 커밋 / 또는 N개로 분할 (다른 모듈·관심사 혼재 시)
+  분할 추천: 단일 / 또는 N개 분할 (모듈·관심사 혼재 시)
   진행: yes / edit-msg / split-differently / no-commit
 ```
 
-**자동 commit 금지** — 제안만, 사용자 명시 yes 후에만 진행.
+**자동 commit 금지** — 제안만, 사용자 명시 yes 후에만. 메시지 컨벤션은 `git log -10`으로 추정 (Conventional Commits / Square-bracket scope / 자유형).
 
-**메시지 컨벤션 추정**: `git log -10 --pretty=format:"%s"`로 Conventional Commits / Square-bracket scope / 자유형 중 가장 빈번한 것 자동 채택.
+#### 3 도구 cascade — 영속성
 
-**분할 휴리스틱** (2개+ 신호 시 분할 제안): 다른 top-level 디렉터리 / 리팩터+기능 혼재 / 무관한 의존성 추가 / 5+ 파일 + 2+ 모듈.
+| 도구 | 대상 | 위치 |
+|---|---|---|
+| `/cfh-feedback` | 스킬 자체 의견 | `~/.claude/.cfh-logs/<skill>.jsonl` |
+| `/cfh-retro` | 작업 한 건 회고 | `~/.claude/.cfh-logs/retros/<file>.md` |
+| `/cfh-progress` | 프로젝트 한 개 진행 | `./PROGRESS.md` (git-tracked) |
 
-### 🪝 Stop 훅 자동 트리거
+PROGRESS.md는 4 섹션: 다음 단계 / 미해결 질문 / 결정 로그 / 세션 로그. 자동 생성·자동 commit 금지 — `init` 명시 호출 후에만.
 
-`~/.claude/settings.json`의 Stop 훅에 `cfh-retro-hook.sh`를 등록하면, **Retro 블록이 출력된 turn에서만** `/cfh-retro`가 자동 호출되어 회고를 `~/.claude/.cfh-logs/retros/<date>-<slug>.md`에 영구 기록합니다. 가벼운 대화엔 silent.
+#### Stop 훅 (옵트인 자동화)
 
+`~/.claude/settings.json`에 등록:
 ```json
 {
   "hooks": {
-    "Stop": [
-      {
-        "hooks": [
-          { "type": "command", "command": "bash ~/.claude/scripts/cfh-retro-hook.sh" }
-        ]
-      }
-    ]
+    "Stop": [{ "hooks": [
+      { "type": "command", "command": "bash ~/.claude/scripts/cfh-retro-hook.sh" },
+      { "type": "command", "command": "bash ~/.claude/scripts/cfh-progress-hook.sh" }
+    ]}]
   }
 }
 ```
 
-훅 스크립트는 4개 필터로 필요할 때만 발동:
-1. Retro 블록 패턴 존재 (`효과 있었음` + `Retro` 동시 매칭)
-2. 이미 저장됨/옵트아웃 상태가 아닐 것
-3. 직전 메시지가 `/cfh-retro` 자체 출력이 아닐 것
-4. Stop hook loop 방지
-
-### 5개 커맨드별 분할 전략
-
-| 커맨드 | 분할 방식 |
-|---|---|
-| `/cfh-plan` | 작업 단위가 단일이면 단일 커밋, 복합이면 위임 커맨드 별로 |
-| `/cfh-tdd` | **3분할 우선**: test (Phase 3) → feat (Phase 4) → refactor (Phase 5) |
-| `/cfh-refactor` | **PR 단위 이미 분할** (Step 5): 각 Small PR마다 별도 커밋 메시지 |
-| `/cfh-debug` | 보통 코드 수정 없음 (위임). DEBUG-LOG 추가만 별도 |
-| `/cfh-review` | REVIEW.md 자체 commit은 기본 no-commit (로컬 참고용) |
-
-상세 형식·휴리스틱은 `commands/references/retro-and-commit.md` 단일 출처.
-
-### `/cfh-feedback`과의 차이
-
-| | `/cfh-feedback` | `/cfh-retro` |
-|---|---|---|
-| 대상 | 스킬 자체에 대한 의견 | 작업 한 건의 회고 |
-| 저장 | `~/.claude/.cfh-logs/<skill>.jsonl` | `~/.claude/.cfh-logs/retros/<file>.md` |
-| 활용 | `cfh evolve`가 description 개선 | 후속 세션 회상·작업 패턴 분석 |
+각 훅이 자체 필터로 silent 종료 — 가벼운 대화엔 영향 없음. PROGRESS.md 없으면 progress 훅 자동 발동 안 함.
 
 ---
 
-## 비용 가시화 + 프로젝트 진행 노트 (0.10.0)
+### 3. 품질 컨벤션 (Quality conventions, 0.10.0 → 0.14.x)
 
-0.10.0의 두 신규 기능은 **"측정"과 "연속성"**의 갭을 메웁니다 — `cfh evolve` 이름이 약속하는 *측정 기반 진화*에 데이터를 공급하고, 세션 간 의도 drift를 줄입니다.
+#### Confidence Tagging
 
-### `cfh cost` — 토큰 사용량 집계
+스킬 출력에 근거 확실성 표기:
+- `[verified]` — 직접 확인 (코드·문서·사용자 답변)
+- `[inferred]` — 합리적 추론
+- `[guessed]` — 약한 추측, 사용자 검증 권장
 
-```bash
-cfh cost                              # 전체
-cfh cost --by command --days 7       # 최근 7일, 명령별
-cfh cost --by day --match my-proj    # 일자별, 특정 프로젝트
-cfh cost --by session                # 최근 20개 세션
-cfh cost --by model                  # 모델별
-cfh cost --json > usage.json         # 스크립팅
-```
+`cfh doctor --strict-confidence`로 옵트인 검사. 강제 lint 아닌 권장 컨벤션.
 
-**핵심 설계**:
-- **새 텔레메트리 수집 없음** — Claude Code의 기존 transcript(`~/.claude/projects/<slug>/<id>.jsonl`)를 read-only.
-- 별도 `cfh log --enable` 옵트인 불필요 (이미 사용자 자기 데이터).
-- 토큰 단위만 집계, 가격은 외부 (모델·테넌트마다 달라서).
-- 슬래시 커맨드 attribution: 가장 최근 user 메시지의 `/cfh-*` 패턴이 그 이후 assistant turn을 귀속.
+#### 추천 + 이유 패턴 (0.14.1+)
 
-#### 어떻게 동작하나 — 데이터 흐름 풀이
-
-1. **소스 발견**: `~/.claude/projects/<프로젝트-슬러그>/<세션-id>.jsonl`을 찾음. `--match my-proj`로 슬러그 부분 매칭(대소문자 무시).
-2. **세션별 파싱**: 각 jsonl은 한 줄 = 한 turn. assistant turn에서 `.message.usage`를 읽음:
-   - `input_tokens` — 새로 보낸 입력
-   - `cache_creation_input_tokens` — 5분/1시간 ephemeral 캐시 새로 작성
-   - `cache_read_input_tokens` — 캐시 적중 (대부분 여기로 들어감)
-   - `output_tokens` — 모델 생성 분
-3. **모델 필터**: `<synthetic>` 모델 turn(예: 시스템 메타 응답)은 LLM 호출이 아니므로 제외.
-4. **슬래시 커맨드 attribution**: user turn에서 `/cfh-*` 패턴 감지 → 그 이후 assistant turn을 그 커맨드에 귀속. 새 슬래시가 나올 때까지 유지. **휴리스틱이라 정확하지 않음** — 예: 사용자가 `/cfh-plan`을 띄운 뒤 다른 잡담을 길게 해도 그 잡담의 토큰까지 plan에 귀속.
-5. **집계**: 세션·일자·모델·커맨드 4축으로 dictionary에 누적.
-
-#### 4가지 view의 의미
-
-| `--by` | 답하는 질문 |
-|---|---|
-| `command` (기본) | "내 토큰 예산을 가장 많이 쓰는 슬래시 커맨드는?" — 비용 효율이 낮은 커맨드 식별 |
-| `day` | "최근 추세는? 특정 일에 spike 있었나?" — 작업 패턴 가시화 |
-| `model` | "Opus vs Sonnet vs Haiku 비율은?" — 모델 다운그레이드 판단 |
-| `session` | "어느 세션이 비용 폭주였나?" — 회귀 진단 시작점 |
-
-#### 실제 출력 예 (이 프로젝트의 실데이터)
+cfh 인터뷰의 안티 패턴은 "어떻게 생각하세요?" 빈 질문. 결정 비용을 사용자에게 떠넘김. 0.14.1부터 cfh-* 결정 지점에 **추천 + 이유 + 대안 트리거** 형식 의무화:
 
 ```
-📊 Cost telemetry — 4 sessions (last 30d, project~"claude-fe-harness")
+📌 추천: yes — Phase 3 실행
+   이유:
+     - [verified] Q1~Q4 답변 일관됨
+     - [verified] Project·Product 위험 신호 없음
+     - [inferred] tdd-first 위임 적합 — Q1 키워드 매칭
 
-  Total input (incl. cache):  772,879,313
-    cache read:               759,110,257    ← 98% 캐시 적중
-    cache creation:           13,722,158
-    fresh input:              46,898         ← 진짜 새로 보낸 것
-  Total output:               2,485,852
+다른 옵션:
+  - adjust — Q2 성공 기준이 모호하게 느껴질 때
+  - reclassify — "리팩터 아니라 신규 기능" 같은 이견
+  - grill — sub-branch 미해결이 많을 때 (/cfh-grill로)
 
-By slash command:
-
-command      input+cache  output     turns  sessions
------------  -----------  ---------  -----  --------
-/cfh-plan    119,532,002  321,024    326    1
-/cfh-review  27,108,122   207,886    202    1
+선택: yes / adjust / reclassify / revise-checks / grill
 ```
 
-이 결과로 두 가지가 즉시 보임:
-- **캐시 적중률 98%** — Claude Code의 prompt caching이 잘 동작 중. 대부분 토큰은 cache_read.
-- **`/cfh-plan`이 가장 비싼 커맨드** — 326턴 동안 119M 입력 — multi-phase 인터뷰가 길어서 누적이 큼. 이걸 정량적으로 처음 보는 순간.
+**적용 위치**: `/cfh-plan` · `/cfh-make` · `/cfh-debug` · `/cfh-review` · `/cfh-refactor` (Step 1·5) · `/cfh-team` · `/cfh-grill` (본질). 상세: `commands/references/recommendation-pattern.md`.
 
-#### 한계 — 정직한 한 줄
+#### SKILL.md schema lint (`cfh validate --strict`)
 
-- **Attribution은 휴리스틱**: "직전 user 메시지의 슬래시 커맨드"가 후속 turn을 흡수. 한 세션에 여러 커맨드를 섞으면 경계가 흐림.
-- **가격 환산 없음**: 토큰만 보여줌. 모델·테넌트·할인에 따라 달라 단가는 외부 가격표 참조.
-- **`<synthetic>` 제외**: 시스템 메타 응답은 카운트에서 빠짐 (의도된 동작 — 사용자가 쓴 토큰만).
-- **사용자가 자기 데이터 read-only**: 외부 전송 없음, 옵트인 게이트 불필요.
-
-**왜 가치 있나**: `cfh evolve`가 description의 정적 분석에 머무는 한계를 보완. "이 스킬이 비용 대비 가치 있나"를 처음으로 정량 답할 수 있게 됨.
-
-### `/cfh-progress` — 프로젝트 진행 노트
-
-3 도구의 cascade가 완성됩니다:
-
-| 도구 | 대상 | 위치 | 영속성 |
-|---|---|---|---|
-| `/cfh-feedback` | 스킬 자체 의견 | `~/.claude/.cfh-logs/<skill>.jsonl` | jsonl |
-| `/cfh-retro` | 작업 한 건 회고 | `~/.claude/.cfh-logs/retros/` | md |
-| `/cfh-progress` | 프로젝트 한 개 | `./PROGRESS.md` | md, **git-tracked** |
-
-세 도구는 **scope의 cascade**: feedback < retro < progress. 가장 작은 단위(스킬 한 개) → 작업 한 건 → 프로젝트 한 개. 각각이 답하는 질문이 다릅니다:
-
-- feedback: "이 스킬이 미발동했나? 잘못 떴나?"
-- retro: "이번 작업에서 무엇이 효과 있었나?"
-- progress: "이 프로젝트에서 어떤 결정을 했고 다음에 뭘 해야 하나?"
-
-#### 3가지 모드
-
-```bash
-/cfh-progress init      # 새 PROGRESS.md 생성 (이미 있으면 거절)
-/cfh-progress           # (기본 append) 직전 turn에서 결정·다음 단계 추출 → prepend
-/cfh-progress show      # 본문 + 진척률 한 줄 출력
-```
-
-#### PROGRESS.md 구조 — 4 섹션
-
-```markdown
----
-project: my-fe-app
-created: 2026-04-20T10:00:00Z
-last_updated: 2026-05-07T14:32:00Z
-sessions: 7
----
-
-# PROGRESS — my-fe-app
-
-## 다음 단계 (Next Up)
-- [ ] 쿠폰 캐싱 별도 PR
-- [x] checkout 페이지 쿠폰 검증 (완료)
-
-## 미해결 질문 (Open Questions)
-- ❓ 쿠폰 캐시 TTL — 24h vs 5min, 결제팀 확인 필요
-
-## 결정 로그 (Decision Log)
-### 2026-05-07 14:32 — 쿠폰 검증 zustand 통합 폐기
-**결정**: 별도 hook으로 분리, store 통합 안 함.
-**이유**: store 결합 시 다른 페이지 영향 큼.
-**대안**: store에 pendingValidation 필드 추가 — 검증 결과 외 다른 데이터까지 흐름 복잡해져 기각.
-**참조**: commit a3cd9f8
-
-## 세션 로그 (Session Log)
-### 2026-05-07 14:32 (session 26246d5f...)
-/cfh-plan → 쿠폰 검증 4시간 작업, 8 task 중 6 완료.
-```
-
-각 섹션의 역할:
-- **다음 단계**: 항상 최상단 — 다음 세션 시작 시 가장 먼저 읽힐 위치
-- **미해결**: ❓ 표시 — 누구·언제 해결 필요한지 명시
-- **결정 로그**: 결정/이유/대안/참조 4축 — 미래의 자기 또는 팀원이 "왜 이렇게 됐지"를 추적할 근거
-- **세션 로그**: 1세션 = 1~3줄 — 자세한 회고는 `~/.claude/.cfh-logs/retros/`에 따로 (PROGRESS는 요약, retros는 상세)
-
-#### append 모드의 흐름
-
-`/cfh-progress`(append)를 호출하면:
-
-1. **추출 대상 자동 감지** — 직전 assistant turn에서 다음을 찾음:
-   - "📝 제안 커밋", "결정", "Decision" → 결정 항목
-   - "다음 단계:", "Next:", 미완료 task list → 다음 단계
-   - "❓ Questions to Resolve" → 미해결 질문
-   - transcript 파일명 첫 8자 → 세션 ID
-2. **사용자에게 추출 결과 1차 확인** — "이대로 PROGRESS.md에 추가할까요?" yes/adjust
-3. **승인 후 prepend** — 결정 로그·세션 로그 최상단에 새 항목, 다음 단계는 끝에 append (이전 미완료 유지). frontmatter `last_updated`·`sessions` 갱신
-4. **commit 안 함** — 사용자에게 commit 권유만, 명시 yes 후 진행
-
-#### 원칙 — 왜 이렇게 보수적인가
-
-- **`init` 명시 호출 후에만 동작.** 자동 생성 안 함 — 사용자 모르게 PROGRESS.md가 git에 들어가지 않도록.
-- **append-only.** 이전 항목 수정·삭제 안 함, 정정은 새 항목으로. 의사결정 이력의 audit trail 유지.
-- **자동 commit 금지.** PROGRESS.md 갱신만, commit은 사용자 판단.
-- **민감 정보 자동 검출.** 키·토큰·내부 URL 의심 시 "마스킹할까요?" 한 번 물음.
-
-#### Stop 훅 옵트인 (`cfh-progress-hook.sh`)
-
-자동 트리거는 다음 **모두** 충족할 때만 발동:
-
-1. **`./PROGRESS.md` 존재** — 자동 생성 안 함
-2. **텔레메트리 옵트인** — `~/.claude/.cfh-logs/telemetry.json`의 `enabled:true`
-3. **직전 turn 신호** — `🔄 Retro` 블록 또는 `## 결정`/`## Decision` 섹션 존재
-4. **이미 처리되지 않음** — 직전 turn에 `PROGRESS.md 갱신됨`·`진척률:` 등의 출력 없음
-5. **Stop hook loop 방지** — `stop_hook_active=false`
-
-5단 필터 중 하나라도 빠지면 silent 종료. **PROGRESS.md 없으면 절대 발동 안 함** — 가벼운 대화·새 프로젝트에 영향 없도록.
-
-#### 한계 — 정직한 한 줄
-
-- **추출은 정규식 + 키워드 매칭**: assistant 출력에 "결정", "다음 단계:" 같은 신호가 있어야 인식. 무형식 자유 서술은 자동 추출 못 함.
-- **요약 품질은 직전 turn에 의존**: Retro 블록이 충실해야 의미 있는 항목 생성. 빈 Retro면 빈 progress 항목.
-- **append-only라 잘못된 항목도 남음**: 정정 항목으로 덮어 표시 (역사 보존).
-
-**왜 가치 있나**: half-clone·세션 종료 후 컨텍스트 손실에서 가장 큰 통증인 "결정·다음 단계가 어디 있는지"를 git-tracked 단일 파일로 해결. 팀원·다른 기계에서 즉시 인계 가능.
-
-상세 형식은 `commands/references/progress-template.md` 단일 출처.
-
-### 설치 권장 — Stop 훅 (옵트인)
-
-`~/.claude/settings.json`:
-
-```json
-{
-  "hooks": {
-    "Stop": [
-      {
-        "hooks": [
-          { "type": "command", "command": "bash ~/.claude/scripts/cfh-retro-hook.sh" },
-          { "type": "command", "command": "bash ~/.claude/scripts/cfh-progress-hook.sh" }
-        ]
-      }
-    ]
-  }
-}
-```
-
-두 훅 모두 자체 필터로 조건 안 맞으면 silent — 가벼운 대화엔 영향 없음.
-
----
-
-## 스킬 eval harness (0.10.0)
-
-`cfh evolve`가 description의 정적 분석에 머무르는 한계를 메우기 위한 **실행 기반 측정 도구**. 각 스킬마다 `evals/*.json` 케이스를 두고 발화 → 출력 → assertion으로 행동을 검증합니다.
-
-### 케이스 형식
-
-```json
-{
-  "name": "fe-tdd-trigger-on-test-first",
-  "prompt": "TDD로 src/components/CouponInput.tsx 만들어줘",
-  "skill_should_trigger": "tdd-first",
-  "assertions": [
-    { "type": "contains", "value": "Phase" },
-    { "type": "regex", "value": "Intent\\s+Interview|의도|목표" },
-    { "type": "not_contains", "value": "TypeError" }
-  ],
-  "tags": ["happy-path", "fe"]
-}
-```
-
-각 파일은 단일 객체 또는 객체 배열. 위치는 `~/.claude/skills/<skill>/evals/`. 패키지에는 `tdd-first`·`skill-author`의 reference 케이스가 동봉됨.
-
-### Assertion 타입 (3종)
-
-| type | 의미 |
-|---|---|
-| `contains` | 출력에 `value` 문자열 포함 |
-| `not_contains` | 출력에 `value` 없음 |
-| `regex` | 출력이 `value` 정규식과 매칭 |
-
-행동 기반 검증만 — 내부 토큰·class 검증 금지.
-
-### 케이스 해부 — 한 케이스가 무엇을 검증하나
-
-`tdd-first/evals/happy-path.json`의 첫 케이스로 **실제 검증 흐름**을 풀어봅니다:
-
-```json
-{
-  "name": "fe-tdd-trigger-on-test-first",
-  "prompt": "TDD로 src/components/CouponInput.tsx 만들어줘. 테스트 먼저 작성하면서.",
-  "skill_should_trigger": "tdd-first",
-  "assertions": [
-    { "type": "contains", "value": "Phase" },
-    { "type": "regex", "value": "Intent\\s+Interview|의도|목표" },
-    { "type": "not_contains", "value": "TypeError" }
-  ]
-}
-```
-
-`--executor claude`로 돌리면:
-
-1. **Claude에 `prompt` 전송** — "TDD로 src/components/CouponInput.tsx 만들어줘…"
-2. 응답을 받아 **4가지 검증** (`skill_should_trigger` 1개 + assertions 3개):
-   - 응답에 `tdd-first` 등장? (`skill_should_trigger`) — 스킬이 트리거됐다는 신호
-   - 응답에 `Phase` 포함? (`contains`) — Phase 1·2·3 등 단계 안내가 있어야 함
-   - 응답에 `Intent Interview` 또는 `의도`/`목표` 매칭? (`regex`) — Phase 1 인터뷰 진입 확인
-   - 응답에 `TypeError` **없음**? (`not_contains`) — 에러 폭주 없음
-3. **4개 모두 통과해야 ✅ pass.** 하나라도 빠지면 ❌ fail + 어느 assertion이 깨졌는지 보고.
-
-스킬이 정상이라면 응답은 "Phase 1 Intent Interview를 시작합니다. Q1: 목표는…" 같은 형태 → 4 assertion 모두 만족.
-
-### 동봉된 reference 케이스 (4개)
-
-패키지에 다음 케이스가 동봉돼 있어 사용자가 자기 스킬용 evals를 작성할 때 참고할 수 있습니다:
-
-#### `tdd-first/evals/happy-path.json` — 정상 트리거 시나리오
-
-| 케이스 | 발화 | 검증 의도 |
-|---|---|---|
-| `fe-tdd-trigger-on-test-first` | "TDD로 .tsx 만들어줘" | FE + TDD → tdd-first 활성, Phase 1 Intent Interview 진입 |
-| `fe-tdd-with-jsx-context` | "useAuth 훅 TDD로 하고 싶어요" | hook + TDD → Phase 0 Scope Narrowing의 Q1이 먼저 떠야 함 |
-
-#### `tdd-first/evals/anti-trigger.json` — **인접 스킬 충돌 회귀 테스트**
-
-```json
-{
-  "name": "no-trigger-on-backend-tdd",
-  "prompt": "FastAPI 엔드포인트 TDD로 짜고 싶어요",
-  "skill_should_trigger": "tdd-general",
-  "assertions": [
-    { "type": "not_contains", "value": "RTL" },
-    { "type": "not_contains", "value": "userEvent" },
-    { "type": "not_contains", "value": "getByRole" },
-    { "type": "regex", "value": "tdd-general|stack-neutral|Arrange-Act-Assert" }
-  ]
-}
-```
-
-**검증 의도**: 백엔드(Python FastAPI) TDD 발화에 **tdd-first가 잘못 발동하는 회귀**를 잡음.
-- 응답에 `RTL`·`userEvent`·`getByRole`(FE 관용구) 등장하면 즉시 fail — tdd-first가 잘못 떴다는 신호
-- 대신 `tdd-general`·`stack-neutral`·`Arrange-Act-Assert`가 등장해야 pass
-
-이게 **인접 스킬 간 description drift 회귀**의 가장 빠른 그물망입니다. tdd-first description을 수정한 PR에서 이 케이스가 깨지면 백엔드 발화까지 흡수하는 trigger로 변했다는 뜻.
-
-#### `skill-author/evals/happy-path.json` — 명시 호출 + 편집 모드
-
-| 케이스 | 발화 | 검증 의도 |
-|---|---|---|
-| `skill-author-explicit-create` | "스킬 만들고 싶어요. HIPAA…" | 종류가 명시(skill)됐으니 asset-factory 우회, **skill-author 직진** + Phase 1 Q1 |
-| `skill-author-on-existing-edit` | "기존 tdd-first description 다듬어줘" | 편집 모드 — Phase 1 인터뷰 없이 description만 수정 |
-
-### `cfh trace` vs `cfh eval` — 오해하기 쉬운 차이
-
-`cfh eval`은 **트리거 검출이 아닙니다**. 두 도구의 역할이 다릅니다:
-
-| 도구 | 입력 | 측정 | LLM 호출 | 비용 |
-|---|---|---|---|---|
-| `cfh trace "<발화>"` | 발화 | **어느 스킬이 뜰지** 키워드 점수로 미리보기 | 없음 | 0 |
-| `cfh eval --dry-run` | 케이스 파일 | 케이스 형식 유효성 + 프롬프트 미리보기 | 없음 | 0 |
-| `cfh eval --executor claude` | 케이스 파일 | **실제 응답이 기대 패턴 맞는가** (트리거 + 행동) | 케이스당 1회 | 토큰 |
-| `cfh eval --baseline` | 케이스 파일 | 스킬 활성 vs 비활성 차이 (A/B 순효과) | 케이스당 2회 | 토큰 ×2 |
-
-`trace`는 description 키워드만 보고 **"어떤 스킬이 트리거 후보인가"**를 정적으로 판단. `eval`은 실제로 발화를 던져서 **"트리거됐고, 행동도 기대대로인가"**를 검증. 양쪽 다 필요 — trace는 빠르고 싸고, eval은 깊지만 토큰 소비.
-
-### 한계 — 정직한 한 줄
-
-assertion은 **단순 문자열·정규식 매칭**입니다. 의미 검증은 안 함:
-
-- "Phase 1 Intent Interview" 문자열만 있으면 통과 → 실제 Q1 질문 내용이 의도대로인지는 **사람이 확인**해야 함.
-- 스킬이 잘못된 내용을 자신 있게 말해도 형식 키워드만 맞으면 pass.
-- 깊은 의미 정합성 검증은 LLM-judge 패턴이 필요 (향후 작업).
-
-따라서 현재 evals의 역할은 **회귀 탐지의 1차 그물망**: description 수정 후 트리거가 안 잡히거나 인접 스킬과 충돌하는 회귀를 빠르게 잡는 것. 깊은 행동 정합성은 사람 리뷰 + retro 데이터로 보완.
-
-### 실행 모드
-
-```bash
-cfh eval --list                       # 케이스 목록·정적 검증
-cfh eval tdd-first --dry-run          # 프롬프트·assertion만 출력 (기본)
-cfh eval tdd-first --manual           # 사용자가 claude에 붙여넣고 결과 paste
-cfh eval tdd-first --executor claude  # claude CLI subprocess (토큰 소비)
-cfh eval --json                       # 스크립팅용
-```
-
-**기본은 `--dry-run`** — 의도치 않은 토큰 소비 방지. 실제 실행은 명시 플래그 필요. `--executor claude` 사용 후 `cfh cost`로 비용 사후 확인 가능.
-
-### A/B baseline mode (`--baseline`)
-
-같은 케이스를 두 번 돌려 **스킬의 순효과**를 측정합니다:
-
-| 모드 | 프롬프트 |
-|---|---|
-| Treatment | 그대로 |
-| Baseline | 앞에 `Do NOT invoke skill <name>. Use general knowledge only.` prepend |
-
-각 케이스 결과:
-- `+1` skill helped — treatment pass, baseline fail
-- `-1` skill regressed — treatment fail, baseline pass
-- `0` no diff — 둘 다 같은 결과
-
-```bash
-cfh eval tdd-first --baseline --executor claude
-# →
-# T/B    diff           name
-# pass/fail  ⬆ +1 helped     fe-tdd-trigger-on-test-first
-# pass/fail  ⬆ +1 helped     fe-tdd-with-jsx-context
-# fail/pass  ⬇ -1 regressed  no-trigger-on-backend-tdd
-#
-# A/B Summary:
-#   Treatment pass rate: 2/3
-#   Baseline pass rate:  1/3
-#   Net effect: +1
-#   Cost (approx): 4,231 chars across 6 LLM calls
-```
-
-**한계 (반드시 알 것)**:
-- Soft baseline은 instruction-following에 의존. Claude가 명령을 무시하면 false negative.
-- Hard baseline (skill 디렉터리 isolate)은 후속.
-- 통계적 유의성은 케이스 수에 따름 — N=3은 신호일 뿐, 회귀 게이트로 쓰지 말 것.
-
-**종료 코드**: regressed > 0이면 exit 1 → CI에서 회귀 차단 가능.
-
-### CI 통합
-
-```yaml
-# .github/workflows/skill-eval.yml
-on: [pull_request]
-jobs:
-  eval:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-      - run: npm install -g @han-kyeon/claude-skills
-      - run: cfh install
-      - run: cfh eval --list                # 정적 검증, 토큰 소비 없음
-```
-
-`--executor claude`까지 CI에서 돌리려면 ANTHROPIC API 키와 모델 액세스가 필요 — 비용 동의 후 별도 워크플로 권장.
-
-### 0.10.0의 측정 cascade
-
-| 도구 | 측정 대상 | 비용 |
-|---|---|---|
-| `cfh cost` (0.10.0) | 실제 사용 중 발생한 토큰 | 0 (read-only) |
-| `cfh eval` (0.10.0) | 가상 시나리오에서의 행동 | dry-run 0 / executor 토큰 소비 |
-| `cfh evolve` (0.3.0) | description 정적 분석 + **eval 구조 인식 (0.10.0)** | 0 |
-| `cfh sentry` (0.10.0) | tool 호출 실패·loop·empty Read 감지 | 0 (read-only) |
-
-cascade: evolve(정적+eval) → eval(케이스) → cost(실사용) + sentry(tool 안전망). "이 스킬이 여전히 가치 있나?"를 처음으로 정량 답할 수 있게 됩니다.
-
----
-
-## evolve가 eval 구조를 읽음 (0.10.0)
-
-`cfh evolve <skill>`는 0.10.0부터 정적 description 분석에 더해 **`evals/` 디렉터리 구조**도 함께 본 후 후속 제안을 만듭니다.
-
-### 무엇이 추가됐나
-
-```bash
-cfh evolve tdd-first
-```
-
-기존 출력 (description·trigger·logs)에 더해:
-
-```
-ℹ [eval-coverage] 3 case(s) defined (2 #happy-path, 1 #anti-trigger), 9 assertions
-ℹ [eval-diversity] all cases use a single assertion type — adding "not_contains" or "regex" can catch different failure modes
-```
-
-또는 evals/ 없는 스킬은:
-
-```
-ℹ [eval-coverage] no evals/ directory — consider adding case files to enable cfh eval. each skill benefits from at least 1 happy-path + 1 anti-trigger case.
-```
-
-### 검출되는 패턴
-
-| 신호 | 의미 |
-|---|---|
-| **evals/ 부재** | 스킬에 케이스 0개 — 회귀 그물망 없음 |
-| **케이스 단 1개** | happy-path만 있고 anti-trigger 없으면 인접 스킬 충돌 못 잡음 |
-| **anti-trigger 부재** | description drift 회귀 못 잡음 → 인접 스킬 흡수 위험 |
-| **assertion 타입 단일** | contains만 있으면 false negative 패턴 못 잡음 |
-| **skill_should_trigger가 자기 자신 아님** | 케이스가 다른 스킬을 검증할 뿐, 자기 발동 검증은 빠짐 |
-| **eval 파일 파싱 실패** | JSON 깨짐 — 즉시 fix 필요 (warn) |
-
-### 왜 가치 있나
-
-`cfh evolve`가 약속하는 "evolution"의 가장 큰 갭이었음 — description만 보고 "트리거 키워드가 부족합니다" 같은 정적 제안은 했지만, **실제 케이스 기반 회귀 그물망이 있는지**를 못 봤음. 이제 evolve가 evals/ 부재를 발견하면 사용자에게 추가를 권장 → 측정 인프라 정착의 시작.
-
-### 한계
-
-- **케이스 *내용* 평가는 안 함** — 케이스 수·태그·assertion 타입만 봄. "이 케이스가 좋은 케이스인가"는 사람 판단.
-- **실행 결과는 미반영** — 마지막 `--executor claude` 결과가 어땠는지 모름. 향후 작업 (eval 결과 영속화 → evolve가 trend 분석).
-- **자동 케이스 생성 안 함** — "anti-trigger 추가 권장"까지만, 어떤 케이스 추가할지는 사람이 작성.
-
----
-
-## cfh sentry — Tool failure sensor (0.10.0)
-
-`cfh sentry`는 Claude Code transcript에서 **tool 호출 실패 패턴**을 감지합니다. Production agent의 가장 흔한 신뢰 누수가 "조용히 망가진 tool 호출"이라는 NeuralWired 분석을 반영한 안전망.
-
-### 무엇을 감지하나
-
-3가지 패턴:
-
-1. **Tool errors** — `tool_result.is_error: true`로 끝난 호출
-2. **Repeated identical calls** — 같은 tool에 같은 input을 반복 (잠재 loop)
-3. **Empty reads** — `Read` tool이 사실상 빈 결과 반환 (≤2 chars)
-
-### 사용
-
-```bash
-cfh sentry                                # 전체
-cfh sentry --days 7                       # 최근 7일
-cfh sentry --match my-project             # 프로젝트 부분 매칭
-cfh sentry --tool Edit                    # 특정 tool만
-cfh sentry --json > sentry.json           # 스크립팅
-```
-
-### 실제 출력 (이 프로젝트의 실데이터)
-
-```
-🚨 Tool failure sensor — 4 sessions (last 30d, project~"claude-fe-harness")
-
-  Total tool calls:    1,492
-  Errors:              24 (1.6%)
-  Empty reads:         0
-  Repeated identical:  4
-
-Per tool (sorted by errors):
-
-tool   calls  errors  empty  repeats  err%
------  -----  ------  -----  -------  -----
-Edit   489    17      —      1        3.5%
-Bash   210    5       —      2        2.4%
-Read   181    1       —      —        0.6%
-
-Recent errors (top 5):
-  Edit  [26246d5f]
-    input:  {"file_path":"...cfh-refactor.md","old_…
-    error:  <tool_use_error>File has not been read yet. Read it first…
-```
-
-3.5%가 Edit에서 실패 — 대부분 "File has not been read yet" 패턴(Edit 전에 Read 안 함). **사람이 보고 패턴을 인지**해야 다음 세션부터 Read→Edit 순서를 강제하는 워크플로 개선 가능.
-
-### Loop detection 휴리스틱
-
-같은 tool에 **거의 같은 input**(top-level 키 + 문자열 200자 이내 매칭)을 연속 호출하면 loop 의심:
-
-- ✅ 잡힘: `Edit /x` 같은 old_string·new_string으로 3번 → "왜 같은 edit을 또 하지?" 신호
-- ✅ 잡힘: `Bash "git status"` 연속 호출 → 의도된 polling일 수도, 헛수고일 수도
-- ❌ 잡히지 않음: `Read /a` → `Read /b` → `Read /a` (다른 파일 사이에 있어 패턴 깨짐)
-
-**의도된 retry vs 실패 loop의 구분은 사람 판단**. sentry는 신호이지 결론 아님.
-
-### 출력 형식 — 4 view
-
-| 표시 | 의미 |
-|---|---|
-| `Total tool calls` | 모든 assistant turn의 tool_use 합 |
-| `Errors` | `is_error: true` 받은 호출 (절대값 + %) |
-| `Per tool` 표 | tool별 호출/에러/empty/repeats 분해 — 어느 tool이 가장 깨지는지 |
-| `Recent errors` 샘플 | 최근 5개 에러의 tool·input·에러 메시지 |
-| `Recent repeated calls` | loop 의심 호출 + 반복 횟수 |
-
-### 무엇에 쓰나
-
-1. **Workflow 개선의 출발점**: Edit 실패율 높음 → "Read 먼저 → Edit" 강제 컨벤션 도입
-2. **회귀 진단**: 특정 commit 이후 Bash 실패율 spike → 새 hook이 tool 환경 망가뜨림
-3. **CI 통합 가능**: PR diff 후 sentry 돌려 새 실패율 N% 초과면 fail (수동 임계값)
-
-### 한계 — 정직한 한 줄
-
-- **Loop 신호는 false positive 가능**: 의도된 polling(예: `until <ready>; do sleep; done`)도 잡힘. 사람 판단 필요.
-- **Empty Read 임계값은 임의**: 2 chars 이하만 empty로 봄. 실제 빈 파일과 거의 빈 파일의 구분 부정확.
-- **사용자 자기 데이터 read-only**: 외부 전송 없음, 옵트인 게이트 불필요 (cost와 동일).
-- **자동 차단 안 함**: 보고만, 자동 fix·자동 retry 안 함 — 사용자 판단을 신뢰.
-
----
-
-## Confidence Tagging 컨벤션 (0.10.0)
-
-스킬 출력에 **근거의 확실성**을 명시적으로 표기하는 권장 컨벤션. LLM 에이전트의 가장 흔한 신뢰 누수인 "알고 있는 것 / 추론한 것 / 추측한 것의 미구분"을 가리는 약한 그물망.
-
-### 권장 마커 (3 단계)
-
-| 마커 | 의미 |
-|---|---|
-| `[verified]` | 코드·문서·사용자 답변에서 직접 확인 |
-| `[inferred]` | 직접 보지 않았지만 합리적 추론 |
-| `[guessed]` | 근거 약한 추측 — 사용자 검증 권장 |
-
-### Before vs After
-
-```
-Before:
-- React 18.3.1 사용
-- Vitest + MSW 환경
-- strict mode 작성
-
-After:
-- [verified] React 18.3.1 (package.json 확인)
-- [verified] Vitest 5.x (vite.config.ts setup)
-- [inferred] MSW 가능성 (테스트에서 fetch mock 발견)
-- [guessed] strict mode 선호 — tsconfig 미확인
-```
-
-→ 사용자가 `[guessed]` 부분만 빠르게 검증 가능.
-
-### 적용 위치
-
-**적용 권장**:
-- 스캔·분석 결과 (Pre-scan, Project Profile, Blast Radius)
-- 추천·제안의 근거
-- `/cfh-plan`의 Project Alignment·Product Impact 자동 추론 섹션
-- `/cfh-review`의 Critical/High 지적
-
-**적용 비권장**:
-- 사용자 질문 (질문은 답변 자리, 자기 추측 끼어들 일 없음)
-- 작업 완료 보고 (실제 변경 결과는 fact)
-- 에러 메시지·tool 호출 결과 (그대로)
-
-### 강제성 — 약하게
-
-이 컨벤션은 **권장**이지 강제 아님:
-- 모든 출력에 마커 붙이면 노이즈
-- LLM 출력 자동 lint 어려움 — `[verified]`라고 표시했지만 실제론 추론인 경우 있음
-- 사용자 톤 선호 차이
-
-대신: **스킬 작성 시 가이드로 권장**, 정직성 우선 프로젝트(의료·결제·법적)에서 명시 채택.
-
-### `cfh doctor --strict-confidence` (옵트인 체크)
-
-```bash
-cfh doctor --strict-confidence
-```
-
-기본 doctor에는 없는 추가 체크 — 각 스킬 SKILL.md에 confidence tagging 가이드 또는 마커 사용이 있는지 검사 후 info 수준 경고. 누락은 fail이 아니라 **인지 신호**.
-
-### 한계
-
-- LLM이 마커를 일관되게 붙이리란 보장 없음 — 컨벤션일 뿐, 자동 강제 아님
-- 마커 정확도는 LLM의 자기 인식에 의존
-- 스킬마다 채택 정도가 달라 일관된 사용자 경험 어려움
-
-목적은 **완벽한 정확성이 아니라 사용자에게 압박 지점 신호 제공**. 100%는 아니어도 70%만 맞아도 가치 있음.
-
-상세 가이드: `commands/references/confidence-tagging.md`.
-
----
-
-## 측정 cascade 완성 (0.11.0)
-
-0.10.0이 측정 도구를 만들었다면, 0.11.0은 **그 도구들을 엮음**. 4가지 신규 기능이 측정 → 행동 루프를 닫습니다.
-
-### 1. `cfh dashboard` — 한 화면에 다 보기
-
-```bash
-cfh dashboard                                # stdout, 30일
-cfh dashboard --days 7 --match my-proj
-cfh dashboard --output dashboard.md          # 파일 저장
-```
-
-**보여주는 것** (markdown):
-- **Overview**: 스킬 수, evals 커버리지 %, 텔레메트리 상태
-- **Cost**: 총 토큰, 캐시 적중률, top 10 명령별 cost
-- **Tool failure sensor**: 호출/에러/empty/repeat 표
-- **Eval coverage**: 스킬별 케이스 수 + 마지막 실행 시각
-- **Eval trend**: 스킬별 최근 5회 결과 (영속화 활성 시)
-
-**왜 가치 있나**: 0.10.0에서 만든 도구들을 사용자가 따로따로 호출해야 했던 마찰 해소. 한 번의 `cfh dashboard`로 프로젝트 전체 건강도가 markdown으로 → README나 PROGRESS.md에 붙여넣기 가능.
-
-### 2. `cfh eval --variants <file>` — description A/B 자동 비교
-
-스킬 description을 어떻게 손댈지 데이터로 결정:
-
-```json
-[
-  { "name": "current",  "description": "...React/Vue... Do NOT trigger backend." },
-  { "name": "broader",  "description": "...any TDD work..." },
-  { "name": "stricter", "description": "...Only React. Do NOT trigger fastapi." }
-]
-```
-
-```bash
-cfh eval tdd-first --variants variants.json
-```
-
-**동작**:
-1. 각 케이스 prompt × 각 variant description → trace 점수 계산
-2. 케이스별 winner 표시 + 변형별 누적 점수 + 추천
-
-**핵심 설계**: **LLM 호출 없음**. trace의 키워드 매칭만 사용 → 토큰 0, 빠름.
-
-**한계**:
-- 키워드 매칭만 — 의미 평가 안 함
-- 진짜 행동 비교는 SKILL.md 임시 swap 후 `--executor claude` 따로 돌려야 함
-- 스킬에 evals 케이스가 풍부해야 신호도 풍부
-
-**왜 가치 있나**: description 튜닝의 추측이 데이터로 변함. "react를 더 강조해야 하나, 백엔드 anti-trigger를 추가해야 하나?"를 케이스별 점수로 바로 답.
-
-### 3. `cfh eval --report junit` — CI 통합
-
-```bash
-cfh eval --executor claude --report junit --output junit.xml
-```
-
-**XML 구조**:
-- `<testsuites>` = 모든 스킬
-- `<testsuite name="<skill>">` = 한 스킬
-- `<testcase name="<case>">` = 한 케이스 (pass: 빈 / fail: `<failure>` / error: `<error>` / skip: `<skipped>`)
-- A/B 모드: treatment 결과 + baseline diff을 `<system-out>`에
-
-**GitHub Actions 통합 예**:
-```yaml
-- run: cfh install
-- run: cfh eval --executor claude --report junit --output junit.xml
-- uses: dorny/test-reporter@v1
-  with:
-    name: Skill evals
-    path: junit.xml
-    reporter: jest-junit
-```
-
-**종료 코드**: fail/error/regressed 있으면 exit 1 → 회귀 PR 차단.
-
-### 4. Eval 결과 영속화 — evolve trend의 토대
-
-`--executor claude` 또는 `--manual` 실행 후, **텔레메트리 옵트인** 상태면 자동 저장:
-
-```
-~/.claude/.cfh-logs/eval-history/<skill>/<timestamp>.json
-```
-
-**저장 내용**: 메타데이터(timestamp, mode, summary) + assertion 결과만. 출력 본문은 저장 안 함 (≈5~20KB/run).
-
-**활용**:
-- `cfh dashboard`의 Eval trend 섹션이 시계열 표시
-- 향후 `cfh evolve`가 trend 분석 ("3주 전엔 통과했는데 지금 fail" 신호)
-
-**저장 안 하는 경우**: `--dry-run`, `--list`, 텔레메트리 비활성화.
-
-### 0.10.0 → 0.11.0 cascade
-
-| 단계 | 도구 | 역할 |
-|---|---|---|
-| 1. 측정 | `cfh cost` (0.10.0) | 실 사용 토큰 |
-| 2. 검증 | `cfh eval` (0.10.0) | 케이스 기반 행동 |
-| 3. **튜닝** | `cfh eval --variants` (0.11.0) | description 후보 비교 |
-| 4. 영속화 | eval-history (0.11.0) | trend 데이터 축적 |
-| 5. 통합 보기 | `cfh dashboard` (0.11.0) | 한 화면 |
-| 6. CI 통합 | `cfh eval --report junit` (0.11.0) | PR 회귀 차단 |
-| 7. 안전망 | `cfh sentry` (0.10.0) | tool 호출 신뢰도 |
-
-**0.11.0의 핵심 가치**: 0.10.0 도구가 있어도 **사용자가 매일 활용하긴 어려웠던** 마찰을 해소. dashboard로 가시화, junit으로 CI 통합, variants로 description tuning 자동화, history로 trend 축적.
-
----
-
-## Cost 회귀 + DX 폴리시 (0.12.0)
-
-0.11.0이 측정 cascade를 완성했다면, 0.12.0은 **일상 작업의 마찰**을 정리. 5개 항목, 큰 기능 없지만 마찰 큰 부분 제거.
-
-### 1. `cfh cost --since-commit <hash>` — 회귀 진단
-
-특정 commit 이후 **토큰 사용 변화**를 정량 비교:
-
-```bash
-cfh cost --since-commit abc1234 --match my-project
-```
-
-```
-📈 Cost since-commit comparison
-  Commit:    cc1350d
-  Timestamp: 2026-04-29T04:38:10Z
-
-  Sessions:  3 (before) → 1 (after)
-  Input+cache:  556M → 360M    (-195M, -35.2%)
-  Output:       1.7M → 1.2M    (-523K, -29.9%)
-
-Top changes by command:
-  /cfh-plan    448M → 119M    (-329M)  702→326 turns
-  /cfh-review  0    → 171M    (+171M)  0→621 turns
-
-✅ 의미 있는 토큰 감소 (-35.2%)
-```
-
-**동작**: `git show -s --format=%cI <hash>`로 commit 시점 추출 → session jsonl을 mtime으로 before/after 분리 → 명령별 변화량 + ±20% 임계 판정.
-
-**한계**: session mtime 기반이라 commit과 무관하게 단순 시간 분리. N=4 세션 비교는 신호 약함 — 의미 있는 변화 보려면 같은 패턴 반복 필요.
-
-### 2. `cfh diff --skills-vs-evals` — staleness 감지
-
-description 수정됐는데 evals 안 바뀐 스킬 자동 발견:
-
-```bash
-cfh diff --skills-vs-evals
-```
-
-```
-🕒 Skills vs evals staleness check
-
-  Fresh:    2 skills (evals updated after SKILL.md)
-  Stale:    1 skills (SKILL.md updated after evals — review evals)
-  No evals: 5 skills
-
-  ⚠ Stale:
-    • tdd-first   SKILL.md 2.1d newer than happy-path.json (3 cases)
-
-  ℹ No evals/:
-    • asset-factory, debug-investigator, harness-factory, ...
-```
-
-**왜 가치 있나**: 0.11.0 eval 측정 인프라가 정착하려면 evals가 description과 동기 — 이 도구가 동기 깨짐을 자동 감지.
-
-**한계**: mtime fragile (git pull로 바뀜) — 의미 있는 변경 vs typo 구분 못 함. 신호이지 결론 아님.
-
-### 3. `cfh new skill <name> --from-existing <other>` — 스킬 fork
-
-기존 스킬을 빠르게 변형:
-
-```bash
-cfh new skill our-tdd --from-existing tdd-first
-# → ~/.claude/skills/our-tdd/ 생성 (전체 디렉터리 복사)
-# → frontmatter:
-#     name: our-tdd
-#     description: TODO update for our-tdd — was: ...
-# → .cfh-manifest.json 자동 제거 → user-authored 분류
-```
-
-**적용**: 우리 팀만의 TDD 스타일, 기존 스킬 변형 실험. progressive disclosure — `cfh new skill foo` (빈 스캐폴드) vs `--from-existing` (작동하는 시작점).
-
-**한계**: 현재 `kind: skill`만 지원. description 자동 변경은 prefix뿐 — 의미 변형은 사람이 수정.
-
-### 4. `cfh watch [--doctor]` — 자동 감시
-
-스킬 편집 중 즉시 피드백:
-
-```bash
-cfh watch                  # 변경 시 validate
-cfh watch --doctor         # validate + doctor (느림, 더 철저)
-```
-
-**동작**: `~/.claude/skills`, `~/.claude/commands`, 프로젝트 로컬까지 fs.watch로 감시 → 500ms debounce 후 validate 재실행. Ctrl+C로 종료.
-
-**제외**: `.cfh-manifest.json`, `.cfh-logs/` (피드백 루프·로그 변경 무시).
-
-**한계**: fs.watch는 OS별 차이 — Linux의 recursive 옵션이 일부 케이스 누락 가능. 작업 중 즉시 피드백 정도로 사용, CI 검증은 별도 명령.
-
-### 5. `cfh validate --strict` — schema 린트
-
-SKILL.md frontmatter를 **schema 기반**으로 더 엄격히 검증:
-
-```bash
-cfh validate                # 기본 (현 동작 그대로)
-cfh validate --strict       # schema + 알 수 없는 필드 경고
-```
-
-**Schema (0.12.0)**:
+옵트인 frontmatter 엄격 검증:
 - `name`: kebab-case, 1~63자, dir 이름과 일치
 - `description`: 20~1024자
-- `allowed_tools` / `license` / `version` / `deps`: optional, 타입 검증
+- 알 수 없는 필드 → 경고 (CI 정책 권장)
 
-**`--strict`의 추가 체크**: 알 수 없는 frontmatter 필드 경고 (forward-compat 유지). CI에서 정책으로 활성화 권장.
+#### `cfh diff --skills-vs-evals` (0.12.0)
 
-**왜 옵트인인가**: 기존 사용자 SKILL.md에 임의 필드 들어있을 수 있음 — 강제 적용 시 false positive 위험.
-
-### 0.10.0 → 0.11.0 → 0.12.0 누적
-
-| 단계 | 도구 | 추가된 가치 |
-|---|---|---|
-| 측정 | cost·eval·sentry | 데이터 수집 |
-| 측정 cascade (0.11.0) | dashboard·variants·junit·history | 데이터 활용·시각화 |
-| **DX 폴리시 (0.12.0)** | cost --since-commit·diff --skills-vs-evals·watch·--from-existing·--strict | **일상 마찰 제거** |
-
-다음 0.13.0은 **Semantic eval (LLM-judge)** — string 매칭 한계 돌파.
+description이 evals보다 새로운 스킬 (staleness) 자동 감지. mtime 기반. drift 1차 그물망.
 
 ---
 
-## Semantic eval — LLM-judge (0.13.0)
+### 4. 인터뷰 도구 (Inquiry — grill-me, 0.14.1~0.14.8)
 
-assertion이 단순 string 매칭으로는 잡을 수 없는 **의미 검증**을 LLM judge에 위임. 0.10.0 eval의 한계 ("Phase 1 Intent Interview 문자열만 있으면 통과 → 실제 Q1 내용이 의도대로인지 검증 못 함")를 메우는 마지막 조각.
+`/cfh-grill [topic]` — mattpocock의 [grill-me](https://github.com/mattpocock/skills/blob/main/skills/productivity/grill-me/SKILL.md) 어댑테이션. **결정 트리를 한 가지씩** 파는 인터뷰.
 
-### Judge assertion — 4번째 타입
+#### 핵심 원칙 (8 패치로 정제)
 
-기존 3종(`contains`/`not_contains`/`regex`)에 `judge` 추가:
-
-```json
-{
-  "type": "judge",
-  "criterion": "응답이 사용자에게 의도 질문을 먼저 하고, 코드부터 작성하지 않는가",
-  "model": "claude-haiku-4-5"
-}
-```
-
-| 필드 | 의미 |
+| 원칙 | 동작 |
 |---|---|
-| `criterion` | 판정 기준 (≤500자, yes/no로 답할 수 있게 구체적으로) |
-| `model` (선택) | 판정 LLM (기본 Haiku — 싸고 빠름) |
+| 한 질문 / 한 turn | TURN BOUNDARY 명시 — 질문 후 즉시 응답 종료 |
+| 항상 추천 + 이유 | "어떻게 생각하세요?" 빈 질문 금지 |
+| 사용자 의도 우선 | 코드는 *현재 상태*, 사용자는 *미래 의도* — 결정은 항상 사용자에게 (원본 "explore codebase instead" 의도적 deviation) |
+| 깊이 무제한 | 라운드 cap·시간 박스 없음. mattpocock "relentlessly" 정신 |
+| Ambiguous 응답 = 대기 | "OK"·Enter·짧은 응답·침묵은 동의로 해석 금지, 명시 답변만 진행 신호 |
+| 명시적 위임 | `/cfh-plan(grill)` → handoff 블록 + 명시 명령. 자동 흡수 안 함 |
 
-### 동작
+#### 3 Phase
 
-`--enable-judge` 옵트인 시:
-1. eval이 보통처럼 prompt 실행 → assistant 응답 수집
-2. judge assertion마다 별도 LLM 호출 (Haiku):
-   ```
-   Response to evaluate: """<output>"""
-   Criterion: <criterion>
-   Reply: YES: <reason> or NO: <reason>
-   ```
-3. `^YES` → pass, `^NO` → fail, 그 외 → unparseable error
+| Phase | 행동 |
+|---|---|
+| Phase 0 | 인자 또는 사용자 답변으로 grill 대상 확정 (자동 흡수 안 함) |
+| Phase 1 | 결정 트리 enumerate (FE/BE/refactor 카테고리별 템플릿) + 사용자 가지치기 기회 |
+| Phase 2 | 순차 인터뷰 — 매 질문 추천+이유, TURN BOUNDARY 후 답변 대기 |
+| Phase 3 | 수렴 — 트리 소진 / 사용자 "그만" / 추측 영역 진입 시 종료 |
 
-### 옵트인 + 비용 추정
+#### 호출 경로
 
 ```bash
-cfh eval tdd-first --executor claude --enable-judge
+/cfh-grill 쿠폰 검증 plan                # 신규 기능 (greenfield)
+/cfh-grill src/legacy/payment 리팩터       # 기존 코드 대상 (mini Pre-scan)
+/cfh-grill auth flow 재설계              # 추상 목표 (greenfield)
+/cfh-grill                               # 인자 없음 → "이 grill의 plan·목표는?" 질문
 ```
 
-```
-💡 Judge assertions enabled — 2 assertion(s) across 4 case(s).
-   Estimated extra LLM calls: 2 (single mode)
-   Rough cost: ~1,000 tokens (Haiku-class).
-   Verify after via: cfh cost --days 1
-```
+`/cfh-plan` Phase 2 approach card에서 `(grill)` 옵션 → handoff 블록 + 명령 출력 → 사용자가 그 명령 실행.
 
-`--enable-judge` 없으면 judge assertion이 있어도 **LLM 호출 안 함** + 사용자에게 안내. 실수로 토큰 소비 방지.
+상세: `skills/grill-me/SKILL.md` (provenance 블록), `skills/grill-me/references/decision-tree.md`.
 
-### 4가지 assertion의 위계
+---
 
-```
-적합 신호                          → 적합 assertion
-─────────────────────────────────────────────
-특정 키워드 등장                   → contains      (free)
-특정 키워드 없음 (anti-pattern)    → not_contains  (free)
-패턴 매칭                          → regex         (free)
-의미·태도·구조 적합성              → judge         (LLM, ~500토큰)
-```
+### 5. CI / DX 통합 (0.11.0 → 0.12.0)
 
-**Cascade**: 가능한 한 free 도구로 잡고, 진짜 의미 검증 필요한 부분만 judge — 비용 최소화.
-
-### 예제 케이스
-
-`skills/tdd-first/evals/semantic-judge.json` 동봉:
-
-```json
-{
-  "name": "semantic-tdd-flow-quality",
-  "prompt": "TDD로 src/utils/parsePhone.ts 만들어줘",
-  "assertions": [
-    { "type": "contains", "value": "Phase" },
-    {
-      "type": "judge",
-      "criterion": "응답이 사용자에게 입력·예외·반환 의도 질문을 먼저 하고 코드부터 작성하지 않는가"
-    },
-    {
-      "type": "judge",
-      "criterion": "응답이 RTL 같은 FE 관용구를 쓰지 않고 순수 함수 단위 테스트 톤을 유지하는가"
-    }
-  ]
-}
-```
-
-string 매칭으론 잡기 어려운 의도 충실성 검증.
-
-### A/B baseline + judge 결합
-
-```bash
-cfh eval tdd-first --executor claude --baseline --enable-judge
-```
-
-A/B doubles judge calls — 2 assertions × 2 (treatment + baseline) = 4 LLM calls per case.
-
-판정이 baseline에서 NO이고 treatment에서 YES면 **스킬이 의미 측면에서 도움**을 주고 있다는 정량 신호.
-
-### 한계 — 정직한 한 줄
-
-- **Judge 자체가 LLM**: 판정도 비결정적. 같은 입력 → 약간 다른 verdict 가능
-- **Haiku가 항상 정확하지 않음**: 미묘한 criterion은 Sonnet/Opus 필요할 수도 (`--judge-model` override)
-- **토큰 비용**: assertion당 ~500 토큰. 케이스 10개에 judge 3개씩 + A/B = 60회 호출. 일상 CI에선 부담
-- **Verdict 파싱 실패**: judge가 "Yes, definitely" 같이 답하면 못 잡음. 표준 형식 강제하지만 100% 보장 안 됨
-- **자동 차단 안 함**: judge fail은 보고만, SKILL.md 수정은 사람 판단
-
-### 권장 사용 패턴
-
-1. **개발 중**: `--dry-run` 또는 `--executor claude` (judge 없이) — 빠르게 회귀 확인
-2. **PR 직전 1회**: `--enable-judge --baseline` — 의미·트리거 정합성 종합 검증
-3. **주간 점검**: dashboard + judge eval-history trend — 의미 정합성 시계열 추적
-
-### 0.10.0 → 0.13.0 누적
-
-| 단계 | 추가 |
+| 기능 | 무엇 |
 |---|---|
-| 측정 (0.10.0) | cost · eval (string assertion) · sentry · evolve+evals |
-| 측정 cascade (0.11.0) | dashboard · variants · junit · history |
-| DX 폴리시 (0.12.0) | since-commit · skills-vs-evals · from-existing · watch · --strict |
-| **Semantic (0.13.0)** | **judge assertion** — string 매칭 한계 돌파 |
+| `cfh eval --report junit` | JUnit XML 출력 → GitHub Actions·GitLab CI·Jenkins 표준 |
+| `cfh cost --since-commit <hash>` | 특정 commit 이후 토큰 변화. ±20% 임계 자동 판정 |
+| `cfh watch [--doctor]` | 파일 변경 시 validate/doctor 자동 재실행 (fs.watch + 500ms debounce) |
+| `cfh new skill <name> --from-existing <other>` | 기존 스킬 fork — frontmatter TODO 마커 + manifest 자동 제거 |
+| `cfh validate --strict` | schema 엄격 검증 (kebab-case·길이·알 수 없는 필드 경고) |
 
-다음 0.14.0은 **Sentinel mode** — `cfh sentry --watch` 실시간 모니터링.
+---
+
+### 6. Project/Product 축 평가 (0.8.0)
+
+`/cfh-review`와 `/cfh-plan`이 코드 품질 축 외에 **프로젝트 건강성·프로덕트 임팩트** 축도 평가합니다.
+
+| 축 | 의미 |
+|---|---|
+| **Project Health** | 코드베이스 장기 건강성 — 기술 부채 방향·모듈 경계 침식·의존성 정당성·migration 정렬 |
+| **Product Impact** | 사용자·비즈니스 가치 — 사용자 체감·실패 UX·메트릭·롤백 안전성·80% 대안 |
+
+`/cfh-review` (Medium+ diff): 기본 5 에이전트(Convention·Logic·Test·Performance·Security) + 2개 추가(Project Health · Product Impact) = 7개. Step 2.5에서 제외 인터뷰.
+
+`/cfh-plan` Phase 2 approach card: 두 축 추론 섹션 자동 포함 (새 질문 없이 Q1~Q4 + Pre-scan으로 추론).
+
+CLAUDE.md에 제품 컨텍스트나 migration 정보가 없으면 "ℹ 추론 기반 분석" 명시 — 사용자에게 신뢰도 신호.
+
+---
+
+### 0.15.0 정리 — 1.0.0 후보 단계
+
+0.8.0~0.14.x의 measurement·quality·grill 누적이 0.15.0에서 **stable consolidation** 됨. 다음 작업 후보:
+- 외부 사용자 evals/feedback 1~2주 누적
+- judge prompt·eval-history 포맷·hook 스펙 안정성 검증
+- Deprecation policy 문서화
+→ **1.0.0** (4~6주 후 예상)
+
+**Context Offload Subagent (7번째 패턴)는 작업에서 제외** — Opus 추론 깊이 손실 + Claude 4.7 토큰 효율 개선으로 ROI 약화 판단.
 
 ---
 
@@ -2212,10 +1406,12 @@ cfh list                # 커스텀 스킬은 그대로 user-authored로 남음
 │   ├── frontmatter.js           # 미니멀 YAML 파서 (zero deps)
 │   ├── cost.js                  # transcript 토큰 집계 + since-commit (0.10.0+)
 │   ├── eval.js                  # skill eval + variants + junit + history (0.10.0+)
-│   ├── sentry.js                # tool 호출 실패 sensor (0.10.0)
+│   ├── sentry.js                # tool 호출 실패 sensor + --live + --install-hook (0.10.0+)
 │   ├── dashboard.js             # 통합 markdown 리포트 (0.11.0)
 │   ├── watch.js                 # 파일 변경 감시 (0.12.0)
 │   └── paths.js                 # 경로 헬퍼
+├── scripts/
+│   └── cfh-sentry-hook.js       # PostToolUse 훅 — 실시간 tool 실패 감지 (0.14.0)
 ├── skills/
 │   ├── refactoring-strategy/
 │   ├── tdd-first/                # FE-friendly TDD
@@ -2225,6 +1421,9 @@ cfh list                # 커스텀 스킬은 그대로 user-authored로 남음
 │   │   └── evals/                # eval 케이스 (0.10.0)
 │   ├── harness-factory/          # 메타: 팀 생성
 │   ├── debug-investigator/       # 메타: 이슈 조사 (0.8.0)
+│   ├── grill-me/                 # 결정 트리 walk + 추천+이유 (0.14.1)
+│   │   ├── references/decision-tree.md
+│   │   └── evals/
 │   └── asset-factory/            # 메타: 자산 dispatcher (0.4.0+)
 ├── commands/
 │   ├── cfh-review.md, cfh-tc.md, cfh-refactor.md, cfh-tdd.md
@@ -2239,11 +1438,13 @@ cfh list                # 커스텀 스킬은 그대로 user-authored로 남음
 │   ├── cfh-feedback.md           # /cfh-feedback → 사용 피드백 (0.6.0)
 │   ├── cfh-retro.md              # /cfh-retro → 작업 회고 영구 기록 (0.9.0)
 │   ├── cfh-progress.md           # /cfh-progress → 프로젝트 진행 노트 (0.10.0)
+│   ├── cfh-grill.md              # /cfh-grill → 결정 트리 깊이 파기 (0.14.1)
 │   ├── cfh-guide.md              # /cfh-guide → 사용 가이드
 │   └── references/
-│       ├── retro-and-commit.md      # 5개 커맨드 공유 Retro+Commit 블록 형식 (0.9.0)
-│       ├── progress-template.md     # PROGRESS.md 표준 형식 (0.10.0)
-│       └── confidence-tagging.md    # [verified]/[inferred]/[guessed] 컨벤션 (0.10.0)
+│       ├── retro-and-commit.md       # 5개 커맨드 공유 Retro+Commit 블록 형식 (0.9.0)
+│       ├── progress-template.md      # PROGRESS.md 표준 형식 (0.10.0)
+│       ├── confidence-tagging.md     # [verified]/[inferred]/[guessed] 컨벤션 (0.10.0)
+│       └── recommendation-pattern.md # 추천+이유 컨벤션 (0.14.1)
 └── templates/
     ├── skill/{SKILL.md, references/example.md}
     ├── command.md

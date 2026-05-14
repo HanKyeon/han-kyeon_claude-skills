@@ -1,0 +1,27 @@
+[
+  {
+    "name": "grill-explicit-trigger",
+    "prompt": "이 쿠폰 검증 plan을 grill해줘. 결정 트리 깊이 파봐.",
+    "skill_should_trigger": "grill-me",
+    "assertions": [
+      { "type": "regex", "value": "결정 트리|decision tree|Decision tree" },
+      { "type": "contains", "value": "추천" },
+      { "type": "regex", "value": "이유|rationale|reason" },
+      { "type": "not_contains", "value": "TypeError" }
+    ],
+    "tags": ["happy-path", "explicit"],
+    "notes": "명시적 grill 요청 — 트리 enumeration + 추천+이유 패턴 확인"
+  },
+  {
+    "name": "grill-after-cfh-plan",
+    "prompt": "cfh-plan으로 접근법 카드 만들었는데 (grill) 옵션 골랐어. 깊이 들어가자.",
+    "skill_should_trigger": "grill-me",
+    "assertions": [
+      { "type": "regex", "value": "Phase 0|context absorption|기존 컨텍스트" },
+      { "type": "not_contains", "value": "Q1~Q4 다시 답해주세요" },
+      { "type": "contains", "value": "추천" }
+    ],
+    "tags": ["happy-path", "delegated"],
+    "notes": "cfh-plan에서 위임된 케이스 — Phase 0이 기존 컨텍스트 흡수하고 Q1~Q4 재질문 안 함"
+  }
+]

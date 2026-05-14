@@ -75,7 +75,7 @@
 - (b) 명시 호출만 → **command 확정**
 - (c) 둘 다 → **skill 권장 + 짝 커맨드 생성** 옵션
 
-#### 분류 결과 공개
+#### 분류 결과 공개 (추천+이유 패턴)
 
 ```
 🎯 분류 결과
@@ -85,11 +85,20 @@ Q1 반복: <답변>
 Q2 협업: <답변>
 Q3 트리거: <답변 or N/A>
 
-→ **<skill | command | team | agent>** 로 생성을 권장합니다.
-근거: <한 줄>
+📌 추천: <skill | command | team | agent> 생성
+   이유:
+     - [verified] Q1 답이 "<인용>" — 반복 작업 신호
+     - [verified] Q2 답이 "<인용>" — 단일/협업 분기 결정
+     - [inferred] Q3 트리거 명확/모호 → skill vs command 분기
+     - [guessed] (필요 시) — 사용자 확인 권장
 
-이대로 진행할까요?
+다른 옵션:
+  - <대안 종류> — 사용자가 <조건>이면 적합 (예: "처음엔 command로 시작, 정착하면 skill로")
+
+선택: yes / <대안> / 다시 분류 / skip — 그냥 인라인으로
 ```
+
+상세 추천 패턴: `commands/references/recommendation-pattern.md`.
 
 사용자 승인 후에만 Phase 2.
 
