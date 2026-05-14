@@ -6,6 +6,7 @@ coverage/
 .vscode/
 .idea/
 .claude/settings.local.json
+audit/
 
 # Ignore all root-level .md files by default — scratch notes, review drafts,
 # session logs. Tracked docs are whitelisted below.
