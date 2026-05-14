@@ -38,19 +38,19 @@ cfh list
 === Global (~/.claude) ===
 
 Skills (C:\Users\<you>\.claude\skills):
-  asset-factory            managed@0.15.0
-  debug-investigator       managed@0.15.0
-  harness-factory          managed@0.15.0
-  refactoring-strategy     managed@0.15.0
-  skill-author             managed@0.15.0
-  tdd-first                managed@0.15.0
-  tdd-general              managed@0.15.0
+  asset-factory            managed@0.15.4
+  debug-investigator       managed@0.15.4
+  harness-factory          managed@0.15.4
+  refactoring-strategy     managed@0.15.4
+  skill-author             managed@0.15.4
+  tdd-first                managed@0.15.4
+  tdd-general              managed@0.15.4
 
 Commands (C:\Users\<you>\.claude\commands):
   cfh-debug, cfh-feedback, cfh-guide, cfh-make, cfh-new,
   cfh-plan, cfh-progress, cfh-refactor, cfh-retro, cfh-review,
   cfh-tc, cfh-tc-gen, cfh-tdd, cfh-tdd-gen, cfh-team, cfh-trace
-                                          (모두 managed@0.15.0)
+                                          (모두 managed@0.15.4)
 ```
 
 Claude Code를 새 세션으로 시작하거나 `/agents`·`/`로 확인하면 커맨드가 떠야 합니다.
