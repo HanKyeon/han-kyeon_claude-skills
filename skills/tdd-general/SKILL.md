@@ -15,15 +15,21 @@ commands: [/cfh-tdd-gen, /cfh-tc-gen]
 # TDD-General Workflow
 
 
-## 트리거 조건 (1.0 컨벤션 — 본문 참고용, frontmatter description이 권위)
+## 트리거 조건 (1.0급 컨벤션 — 본문 참고용, frontmatter description이 권위)
 
 ```
-TRIGGER:  framework-agnostic TDD — '백엔드 TDD', 'library TDD', 'pure function TDD',
-          'TDD without React'.
-SKIP:     React/Vue 컴포넌트 → tdd-first (FE-specific RTL 관용구).
+TRIGGER:  non-FE intent TDD (새로 만든다) — '백엔드 TDD', 'library TDD',
+          'pure function TDD', 'TDD without React', 'CLI TDD',
+          'mobile TDD', 'embedded TDD', 'ML 학습 step TDD'.
+SKIP:     React/Vue 컴포넌트 → tdd-first.
+          기존 non-FE 파일 *보강*만 (artifact mode) → /cfh-tc-gen 명시 호출 권장.
+INTENT vs ARTIFACT (0.17.0 Track 8):
+  intent (새 모듈·핸들러·CLI 명령) → tdd-general 자동 트리거
+  artifact (기존 *.go·*.py·*.swift 보강) → 자동 트리거 약함, /cfh-tc-gen 명시 호출 권장
 EXAMPLES:
   - 'FastAPI 엔드포인트 TDD로' → tdd-general의 Arrange-Act-Assert 가이드
   - 'CLI 도구 TDD' → table-driven test 권장
+  - '기존 retry.go 테스트 보강' → /cfh-tc-gen 라우팅 권장 (intent 아님)
 ```
 `tdd-first`의 5 Phase 구조를 그대로 따르되, **테스트 라이브러리·관용구가 stack-neutral**한 버전입니다. 백엔드 서비스·CLI·라이브러리·순수 함수·데이터 파이프라인 등 React/Vue가 끼지 않는 영역에서 사용합니다.
 

@@ -1,20 +1,52 @@
 <s>
-이 커맨드는 `tdd-first` 스킬을 활성화하여 **테스트 주도 개발 워크플로**를 시작합니다.
+이 커맨드는 `tdd-first` 스킬을 활성화하여 **FE 컴포넌트 intent 모드 TDD 워크플로**를 시작합니다 (테스트→구현 순서, 새로 짜는 코드 대상).
 스킬이 자동 트리거되지 않았다면 지금 `~/.claude/skills/tdd-first/SKILL.md`를 읽고 그 5 Phase에 따라 진행하세요.
+
+**🔀 잘못 진입하셨다면** (stack × mode 매트릭스, 0.17.0):
+
+|   | **intent** (새로) | **artifact** (기존) |
+|---|---|---|
+| **FE** | `/cfh-tdd` ← 여기 | `/cfh-tc` |
+| **non-FE** | `/cfh-tdd-gen` | `/cfh-tc-gen` |
+
+- 기존 FE 파일 테스트 추가·보강이면 → `/cfh-tc <path>`
+- 백엔드/라이브러리/CLI/mobile/embedded/ML 새 자산 TDD라면 → `/cfh-tdd-gen <목적>`
+- 기존 백엔드 파일 테스트 추가·보강이면 → `/cfh-tc-gen <path>`
 </s>
 
 <invocation>
-TDD 워크플로를 시작합니다.
+FE 컴포넌트 *intent* 모드 TDD 워크플로를 시작합니다. **새 컴포넌트·훅·유틸 작성 — 테스트 먼저, 구현 나중.**
 
-**대상**: `$ARGUMENTS`
+**입력**: `$ARGUMENTS` — *목적* 또는 *새로 만들 파일명*. 미존재 OK.
 
-- 파일 경로가 주어졌고 **존재한다면**: Test-Fill 모드로 전환 (`/cfh-tc` 커맨드 권장)
-- 파일 경로가 주어졌고 **존재하지 않는다면**: TDD 모드로 진행 (신규 작성)
+- 목적 (예: "쿠폰 검증 컴포넌트") → Phase 1 Intent Interview 진입
+- 새 파일 경로 (예: "src/components/CouponInput.tsx" — *아직 없는*) → 같은 흐름
+- 기존 파일 경로 (이미 존재) → **Track 8 deprecation warning**: "/cfh-tc는 기존 파일 대상입니다. 새 컴포넌트면 /cfh-tdd, 보강이면 /cfh-tc를 사용하세요. (0.17.x deprecation — 향후 자동 차단)" 후 사용자 yes 시 진행, 아니면 종료
 - 비어있다면 사용자에게 "무엇을 새로 만드시겠습니까?"를 질문
 
 </invocation>
 
 <workflow>
+
+## Phase 0a — Stack misroute suggestion (Track 9, 0.18.0)
+
+Scope Narrowing 전에 *입력 받은 직후* stack 신호를 자가 평가. **opposite stack 신호가 강하면** 아래 형식으로 대안 제안 (강제 X — 사용자 명시 `switch` 후만 분기):
+
+```
+   📌 이대로 진행: tdd-first (FE 컴포넌트 TDD intent)
+        이유: /cfh-tdd 명시 호출 — 사용자가 FE 컨텍스트 의도
+
+   💡 **더 적합해 보이는 대안 — /cfh-tdd-gen**
+        신호:
+          - [<verified|inferred>] <키워드 — 발화/인자에서 인용>
+          - [<...>] <키워드 2>
+          - [verified|inferred] cfh trace top-1 = <skill>
+        대안 사용 시: /cfh-tdd-gen "<same utterance>"
+
+   진행: yes / switch / explain
+```
+
+판정 룰·키워드 휴리스틱·confidence marker·explain 모드 상세는 `commands/references/soft-routing.md` 참조. **자가검증 — 신호가 약하면 (`[guessed]`만) 이 블록 출력 안 함** (정책 § 0 명시 분기 유지).
 
 ## Phase 0 — Scope Narrowing (Phase 1 전 필수)
 

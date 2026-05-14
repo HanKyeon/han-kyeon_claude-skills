@@ -24,7 +24,7 @@ npm install -g @han-kyeon/claude-skills
 cfh install
 ```
 
-끝. 두 번째 줄이 `~/.claude/skills/`와 `~/.claude/commands/`에 번들된 **8개 스킬 + 19개 슬래시 커맨드 + 4개 reference 파일 + JSON Schema 파일**을 복사합니다 (0.16.3 — **audit-driven polish patch**: multi-stack pre-scan + debug FE 키워드 병기 + a11y default alternatives + cfh-tc-gen mobile/embedded/ML 확장).
+끝. 두 번째 줄이 `~/.claude/skills/`와 `~/.claude/commands/`에 번들된 **8개 스킬 + 19개 슬래시 커맨드 + 5개 reference 파일 + JSON Schema 파일**을 복사합니다 (0.18.0 — **Track 7·8·9 3 사이클 polish 적용**: audit-driven (0.16.3) + TDD/TC mode 분기 (0.17.0) + Soft routing suggestion (0.18.0)).
 
 > 🧭 **정책 anchor**: FE/non-FE **명시 분기 유지**. `cfh-tdd`/`cfh-tc`/`cfh-refactor`는 FE 전용, `-gen` suffix는 **non-FE 전반** (BE/library/CLI/mobile/embedded/ML). 자세한 자산별 매트릭스는 [`DESC_CFL.md` § 8](./DESC_CFL.md) 또는 [`PLAN.md` § 1](./PLAN.md).
 
@@ -42,20 +42,20 @@ cfh list
 === Global (~/.claude) ===
 
 Skills (C:\Users\<you>\.claude\skills):
-  asset-factory            managed@0.16.3  →  [/cfh-make]
-  debug-investigator       managed@0.16.3  →  [/cfh-debug]
-  grill-me                 managed@0.16.3  →  [/cfh-grill]
-  harness-factory          managed@0.16.3  →  [/cfh-team]
-  refactoring-strategy     managed@0.16.3  →  [/cfh-refactor, /cfh-refactor-gen]
-  skill-author             managed@0.16.3  →  [/cfh-new]
-  tdd-first                managed@0.16.3  →  [/cfh-tdd, /cfh-tc]
-  tdd-general              managed@0.16.3  →  [/cfh-tdd-gen, /cfh-tc-gen]
+  asset-factory            managed@0.18.0  →  [/cfh-make]
+  debug-investigator       managed@0.18.0  →  [/cfh-debug]
+  grill-me                 managed@0.18.0  →  [/cfh-grill]
+  harness-factory          managed@0.18.0  →  [/cfh-team]
+  refactoring-strategy     managed@0.18.0  →  [/cfh-refactor, /cfh-refactor-gen]
+  skill-author             managed@0.18.0  →  [/cfh-new]
+  tdd-first                managed@0.18.0  →  [/cfh-tdd, /cfh-tc]
+  tdd-general              managed@0.18.0  →  [/cfh-tdd-gen, /cfh-tc-gen]
 
 Commands (C:\Users\<you>\.claude\commands):
   cfh-debug, cfh-feedback, cfh-grill, cfh-guide, cfh-make, cfh-new,
   cfh-plan, cfh-progress, cfh-refactor, cfh-refactor-gen, cfh-retro,
   cfh-review, cfh-tc, cfh-tc-gen, cfh-tdd, cfh-tdd-gen, cfh-team, cfh-trace
-                                          (모두 managed@0.16.3)
+                                          (모두 managed@0.18.0)
 ```
 
 Claude Code를 새 세션으로 시작하거나 `/agents`·`/`로 확인하면 커맨드가 떠야 합니다.
@@ -2237,11 +2237,34 @@ cfh 인터뷰·옵션 제시·dispatch 결정에 **빈 질문 금지** 컨벤션
 8. `cfh-tc-gen` IO 카테고리 일반화 (embedded·mobile·ML) + 스택 가정 표 확장
 - `tests/contract/meta-asset-axes.test.js` — a11y default 회귀 영구 차단
 
-### 향후 사이클
+### 0.17.0 — Track 8: TDD/TC mode 분기 (적용 완료)
 
-- **0.17.0 (Track 8)** — TDD/TC mode 분기 (intent×artifact 매트릭스). `/cfh-tc`는 *기존 파일 한정*, `/cfh-tdd`는 *새 자산*. 1.0.x deprecation 1 사이클 동반
-- **0.18.0 (Track 9)** — Soft routing suggestion. 사용자 발화가 다른 stack 신호 강할 때 **bold + 💡로 대안 명령 제안** (강제 X — yes/switch/explain 선택). 정확도 ≥ 80% 미달 시 reject
-- **1.0 promotion** — 사용자 명시 판단. 자동 게이트 아님. 외부 사용자 1~2명 1~2주 데이터 누적 + 안정성 체크리스트 검토 후 결정
+`/cfh-tc`·`/cfh-tc-gen`은 **기존 파일 대상 (artifact mode)**으로 한정. 새 컴포넌트·모듈은 `/cfh-tdd`·`/cfh-tdd-gen` (intent mode). **stack × mode 2×2 매트릭스**:
+
+|   | **intent** (새로) | **artifact** (기존) |
+|---|---|---|
+| **FE** | `/cfh-tdd` | `/cfh-tc` |
+| **non-FE** | `/cfh-tdd-gen` | `/cfh-tc-gen` |
+
+deprecation 1 사이클 동반 — 기존 발화 0.17.x 동안 정상 작동 + warning. 향후 자동 차단.
+
+### 0.18.0 — Track 9: Soft routing suggestion (적용 완료)
+
+stack 분기를 *제안*으로 활용 — 강제 X. 사용자가 호출한 명령은 default 그대로 진행, opposite stack 신호 강할 때만 **bold + 💡로 대안 제안**:
+
+```
+   📌 이대로 진행: tdd-first (FE 컴포넌트 TDD)
+   💡 **더 적합해 보이는 대안 — /cfh-tdd-gen** — 신호: <인용>
+   진행: yes / switch / explain
+```
+
+대상 페어: `/cfh-tdd ↔ /cfh-tdd-gen`, `/cfh-tc ↔ /cfh-tc-gen`, `/cfh-refactor ↔ /cfh-refactor-gen`. `/cfh-plan` Phase 2에 stack signal 포함. 휴리스틱 상세: `commands/references/soft-routing.md`.
+
+### 다음 단계 — 1.0 promotion 게이트
+
+- 외부 사용자 1~2명 1~2주 데이터 누적 (Phase 0.3)
+- 안정성 체크리스트 검토 후 사용자 명시 판단으로 promotion
+- 다음 audit run (입력 확장 + 범위 확장) 결과 정합성 확인
 
 상세: [`PLAN.md`](./PLAN.md).
 

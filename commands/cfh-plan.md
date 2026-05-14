@@ -132,15 +132,27 @@ Phase 1의 정보(목표 + scoped 스캔 결과 + Q2~Q4)를 근거로 Claude가 
 
 아래 카테고리 중 하나로 분류하고 근거를 공개:
 
-| 분류 | 신호 | 권장 경로 |
+| 분류 | 신호 | 권장 경로 (stack signal 포함, Track 9 0.18.0) |
 |---|---|---|
-| **신규 기능** | 대상 파일 없음 / 새 모듈 / 요구사항 중심 | `/cfh-tdd` 위임 또는 직접 TDD |
-| **버그 수정** | 재현 가능 / 특정 시나리오 실패 | 재현 테스트 작성 → 최소 수정 |
-| **리팩터** | 대상 파일 존재 / 행동 보존 / 구조 개선 | `/cfh-refactor` 위임 |
-| **테스트 보강** | 구현 있음 / 커버리지 부족 | `/cfh-tc` 위임 (Test-Fill Mode) |
-| **PR 리뷰** | diff 대상 / 머지 전 점검 | `/cfh-review` 위임 |
+| **신규 기능** | 대상 파일 없음 / 새 모듈 / 요구사항 중심 | FE → `/cfh-tdd` · non-FE → `/cfh-tdd-gen` (intent mode) |
+| **버그 수정** | 재현 가능 / 특정 시나리오 실패 | 재현 테스트 작성 → 최소 수정 (stack에 따라 `/cfh-tc(-gen)`) |
+| **리팩터** | 대상 파일 존재 / 행동 보존 / 구조 개선 | FE → `/cfh-refactor` · non-FE → `/cfh-refactor-gen` |
+| **테스트 보강** | 구현 있음 / 커버리지 부족 | FE → `/cfh-tc` · non-FE → `/cfh-tc-gen` (artifact mode, Track 8) |
+| **PR 리뷰** | diff 대상 / 머지 전 점검 | `/cfh-review` 위임 (stack-aware 7 서브에이전트) |
 | **탐색·분석** | 코드 이해 / 의사결정 근거 수집 | 직접 조사 + 리포트 |
 | **복합** | 위 중 2개+ 섞임 | 순서 제시 후 단계별 위임 |
+
+**Stack signal 포함 추론** (Phase 2 approach card에 의무 출력, Track 9 0.18.0):
+
+```
+📦 Stack signal
+  - [<confidence>] <신호 — 발화/인자에서 인용 (예: 'API handler' → BE, '.tsx' → FE)>
+  - [<...>] <신호 2>
+  - 결론: <FE | non-FE | mixed> 컨텍스트로 가정. <권장 sub-command 페어>.
+  - 다른 stack이면 사용자가 명시 정정해 주세요.
+```
+
+상세 휴리스틱·키워드 매트릭스는 `commands/references/soft-routing.md`. 신호 약하면 (`[guessed]`만) "stack 미상 — 사용자 명시 필요" 표시.
 
 ### 접근법 카드 템플릿 (0.8.0 확장)
 

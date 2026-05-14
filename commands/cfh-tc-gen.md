@@ -17,11 +17,25 @@ React/Vue 컴포넌트는 `/cfh-tc`(FE-friendly RTL)로 가세요.
 </s>
 
 <target>
-대상: `$ARGUMENTS`
+대상: `$ARGUMENTS` — **기존** non-FE 파일/디렉토리 경로 (0.17.0 Track 8 — artifact mode only).
 
-- 파일 경로 (예: `src/services/auth.ts`, `app/api/users.py`): 해당 파일의 테스트 작성
+- 파일 경로 (예: `src/services/auth.ts`, `app/api/users.py`, `internal/retry/policy.go`): 해당 파일의 테스트 작성·보강
 - 디렉토리 경로 (예: `src/services/`): 하위 모든 파일
-- **아무 것도 안 주면**: 사용자에게 "TDD로 새 코드 작성인가요? 기존 코드 테스트 보강인가요?"를 먼저 질문 — 후자면 이 커맨드, 전자면 `/cfh-tdd-gen` 안내
+- **파일 미존재** → **deprecation warning** (Track 8 1.0.x 사이클):
+  ```
+  !  /cfh-tc-gen은 기존 파일 대상입니다 (artifact mode).
+     새 코드 TDD는 /cfh-tdd-gen <목적>을 사용하세요.
+     (0.17.x deprecation warning — 향후 자동 차단)
+  ```
+  사용자 명시 yes 후만 진행. 그 외 종료.
+- **빈 입력** → "어느 파일을 보강하시겠습니까? (경로)"를 질문
+
+### Stack × Mode 매트릭스 (0.17.0)
+
+|   | **intent** (새로) | **artifact** (기존) |
+|---|---|---|
+| **FE** | `/cfh-tdd` | `/cfh-tc` |
+| **non-FE** | `/cfh-tdd-gen` | `/cfh-tc-gen` ← 여기 |
 </target>
 
 <scope_narrowing>
@@ -36,17 +50,29 @@ React/Vue 컴포넌트는 `/cfh-tc`(FE-friendly RTL)로 가세요.
 
 </scope_narrowing>
 
+<soft_suggestion>
+
+## Phase 0a — Stack misroute suggestion (Track 9, 0.18.0)
+
+입력 받은 직후 stack 신호 자가 평가. opposite(`/cfh-tc`) 신호가 강하면 (`[verified]`/`[inferred]` 2+) 다음 형식으로 제안 (강제 X):
+
+```
+   📌 이대로 진행: tdd-general artifact mode (non-FE 기존 파일 보강)
+   💡 **더 적합해 보이는 대안 — /cfh-tc** — 신호: <인용>
+   진행: yes / switch / explain
+```
+
+상세는 `commands/references/soft-routing.md`. 신호 약하면 출력 안 함.
+
+</soft_suggestion>
+
 <mode_detection>
 
-## Mode 결정
+## Mode — Artifact only (0.17.0 Track 8)
 
-| Mode | 조건 | 절차 |
-|---|---|---|
-| **TDD Mode** | 대상 파일 미존재 또는 사용자가 "신규 작성" | `/cfh-tdd-gen` 안내 (이 커맨드는 보강용) |
-| **Test-Fill Mode** | 대상 파일 이미 존재, 테스트 보강 | Phase 0(현재 동작 파악)부터 시작. Characterization Test 접근 |
-| **Hybrid Mode** | 기존 파일 있으나 리팩터링 예정 | Phase 0로 현재 동작 고정 → 신규 부분만 TDD |
+이 커맨드는 **기존 non-FE 파일** 테스트 추가·보강을 owning합니다. TDD Mode 분기는 0.17.0에서 **제거**됨 — 새 코드는 `/cfh-tdd-gen <목적>`을 사용하세요.
 
-Mode 불명확 시 사용자 질문 후 진행.
+기존 파일 + 리팩터링 예정인 경우 (이전 Hybrid Mode): Phase 0(현재 동작 파악) → 신규 부분만 `/cfh-tdd-gen`으로 분리 진행 권장.
 
 </mode_detection>
 

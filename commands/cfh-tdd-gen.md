@@ -1,27 +1,46 @@
 <s>
-**`-gen` suffix 컨벤션 (1.0)**: suffix 없는 `/cfh-tdd`는 FE(React/Vue) 치중, `-gen` suffix는 **BE·스택 중립** 의미. 이 컨벤션은 `cfh-tc` ↔ `cfh-tc-gen`에도 동일 적용.
+**`-gen` suffix 컨벤션 (1.0급)**: suffix 없는 `/cfh-tdd`는 FE(React/Vue) 치중, `-gen` suffix는 **non-FE 전반** — BE/library/CLI/mobile/embedded/ML. 이 컨벤션은 `cfh-tc` ↔ `cfh-tc-gen`에도 동일 적용.
 
-이 커맨드는 `tdd-general` 스킬을 활성화하여 **framework-agnostic TDD 워크플로**를 시작합니다.
-React/Vue·Testing Library 가정이 적용되지 않는 영역(백엔드 서비스, CLI, 라이브러리, 순수 함수, 데이터 파이프라인)에 적합합니다.
-스킬이 자동 트리거되지 않았다면 지금 `~/.claude/skills/tdd-general/SKILL.md`를 읽고 5 Phase에 따라 진행하세요.
+이 커맨드는 `tdd-general` 스킬을 활성화하여 **non-FE intent 모드 TDD 워크플로**를 시작합니다 (테스트→구현 순서, 새로 짜는 코드 대상).
+React/Vue·Testing Library 가정이 적용되지 않는 영역에 적합합니다.
 
-**🔀 잘못 진입하셨다면**:
-- React/Vue 컴포넌트 TDD라면 → `/cfh-tdd` (FE-friendly RTL 관용구 적용)
-- 기존 코드 테스트만 보강이라면 → `/cfh-tc` (FE) 또는 `/cfh-tc-gen` (백엔드)
+**🔀 잘못 진입하셨다면** (stack × mode 매트릭스, 0.17.0):
+
+|   | **intent** (새로) | **artifact** (기존) |
+|---|---|---|
+| **FE** | `/cfh-tdd` | `/cfh-tc` |
+| **non-FE** | `/cfh-tdd-gen` ← 여기 | `/cfh-tc-gen` |
+
+- React/Vue 컴포넌트 *새로* 짜시면 → `/cfh-tdd <목적>`
+- 기존 non-FE 파일 테스트 추가·보강이면 → `/cfh-tc-gen <path>`
+- 기존 FE 파일이면 → `/cfh-tc <path>`
 </s>
 
 <invocation>
-Framework-agnostic TDD 워크플로를 시작합니다.
+Non-FE *intent* 모드 TDD 워크플로를 시작합니다. **새 BE handler·라이브러리 API·CLI 명령·mobile/embedded 모듈·ML 학습 step 작성 — 테스트 먼저, 구현 나중.**
 
-**대상**: `$ARGUMENTS`
+**입력**: `$ARGUMENTS` — *목적* 또는 *새로 만들 모듈명*. 미존재 OK.
 
-- 파일 경로 주어졌고 **존재한다면**: 기존 코드 보강 모드 권장 → `/cfh-tc-gen` 안내
-- 파일 경로 주어졌고 **존재하지 않는다면**: TDD 모드로 진행 (신규 작성)
+- 목적 (예: "결제 API idempotency key 적용") → Phase 1 Intent Interview 진입
+- 새 파일/모듈 경로 (예: "internal/retry/policy.go" — *아직 없는*) → 같은 흐름
+- 기존 파일 경로 (이미 존재) → **Track 8 deprecation warning**: "/cfh-tdd-gen은 신규 작성 대상입니다. 기존 파일 보강이면 /cfh-tc-gen을 사용하세요. (0.17.x deprecation — 향후 자동 차단)" 후 사용자 yes 시 진행, 아니면 종료
 - 비어있다면 사용자에게 "어떤 모듈·함수·엔드포인트를 새로 만드시겠습니까?"를 질문
 
 </invocation>
 
 <workflow>
+
+## Phase 0a — Stack misroute suggestion (Track 9, 0.18.0)
+
+입력 받은 직후 stack 신호 자가 평가. opposite(`/cfh-tdd`) 신호가 강하면 (`[verified]`/`[inferred]` 2+) 다음 형식으로 제안 (강제 X):
+
+```
+   📌 이대로 진행: tdd-general (non-FE intent)
+   💡 **더 적합해 보이는 대안 — /cfh-tdd** — 신호: <인용>
+   진행: yes / switch / explain
+```
+
+상세는 `commands/references/soft-routing.md`. 신호 약하면 출력 안 함.
 
 ## Phase 0 — Scope Narrowing
 

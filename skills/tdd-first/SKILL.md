@@ -15,15 +15,20 @@ commands: [/cfh-tdd, /cfh-tc]
 # TDD-First Workflow
 
 
-## 트리거 조건 (1.0 컨벤션 — 본문 참고용, frontmatter description이 권위)
+## 트리거 조건 (1.0급 컨벤션 — 본문 참고용, frontmatter description이 권위)
 
 ```
-TRIGGER:  React/Vue/FE 컴포넌트 + TDD 키워드 — '테스트 먼저', '테스트부터',
-          '컴포넌트 TDD', 'TDD로 .tsx 만들어줘'.
-SKIP:     백엔드(FastAPI/Express/Django), CLI, 라이브러리, 순수 함수는 tdd-general.
+TRIGGER:  React/Vue/FE 컴포넌트 + TDD intent (새로 만든다) — '테스트 먼저',
+          '테스트부터', '컴포넌트 TDD', 'TDD로 .tsx 만들어줘', '새 컴포넌트'.
+SKIP:     백엔드/CLI/라이브러리/순수 함수 → tdd-general.
+          기존 FE 파일 *보강*만 (artifact mode) → /cfh-tc 명시 호출 권장.
+INTENT vs ARTIFACT (0.17.0 Track 8):
+  intent (새 컴포넌트·훅) → tdd-first 자동 트리거
+  artifact (기존 *.tsx 보강) → 자동 트리거 약함, /cfh-tc 명시 호출 권장
 EXAMPLES:
   - 'TDD로 src/components/CouponInput.tsx 만들어줘' → Phase 1 Intent Interview
   - 'useAuth 훅 TDD로 시작' → Phase 0 Scope Narrowing 7 질문
+  - '기존 UserList.tsx 테스트 보강' → /cfh-tc 라우팅 권장 (intent 아님)
 ```
 새 기능·버그 수정·리팩터링을 **테스트 먼저 작성**하여 진행하는 5단계 워크플로입니다. AI와 사용자가 **테스트라는 공통 목표**를 공유하여 의도 정렬을 극대화합니다.
 

@@ -27,25 +27,56 @@ TDD 철학(의도 기반 테스트)과 오버핏 방지 원칙을 지킵니다.
 
 </scope_narrowing>
 
+<soft_suggestion>
+
+## Phase 0a — Stack misroute suggestion (Track 9, 0.18.0)
+
+입력 받은 직후 stack 신호 자가 평가. opposite(`/cfh-tc-gen`) 신호가 강하면 (`[verified]`/`[inferred]` 2+) 다음 형식으로 제안 (강제 X):
+
+```
+   📌 이대로 진행: tdd-first artifact mode (FE 기존 파일 보강)
+   💡 **더 적합해 보이는 대안 — /cfh-tc-gen** — 신호: <인용>
+   진행: yes / switch / explain
+```
+
+상세 휴리스틱·키워드 매트릭스·confidence marker는 `commands/references/soft-routing.md`. 신호 약하면 (`[guessed]`만) 출력 안 함.
+
+</soft_suggestion>
+
 <mode_detection>
 
-## Mode 결정
+## Mode — Artifact only (0.17.0 Track 8)
 
-작업 시작 전 **모드를 명확히** 하세요:
+이 커맨드는 **기존 FE 파일**(`.tsx`·`.vue`·`.jsx`·기존 훅) 테스트 추가·보강을 owning합니다. TDD Mode 분기는 0.17.0에서 **제거**됨 — 새 컴포넌트는 `/cfh-tdd <목적>`을 사용하세요.
 
-| Mode | 조건 | 절차 |
+### Input 존재 검증
+
+작업 시작 전 `$ARGUMENTS` 경로 확인:
+
+- **파일 존재** → 정상 진행 (Test-Fill / Characterization 접근)
+- **파일 미존재** → **deprecation warning** (Track 8 1.0.x 사이클):
+  ```
+  !  /cfh-tc는 기존 파일 대상입니다 (artifact mode).
+     새 컴포넌트는 /cfh-tdd <목적>을 사용하세요.
+     (0.17.x deprecation warning — 향후 자동 차단)
+  ```
+  사용자 명시 yes 후만 진행. 그 외 종료.
+- **빈 입력** → "어느 파일을 보강하시겠습니까? (경로)"를 질문
+
+### Stack × Mode 매트릭스 (0.17.0)
+
+|   | **intent** (새로) | **artifact** (기존) |
 |---|---|---|
-| **TDD Mode** | 대상 파일이 **아직 존재하지 않음** 또는 사용자가 "새 기능 작성 중" | Phase 1부터 Intent Interview로 시작 |
-| **Test-Fill Mode** | 대상 파일이 **이미 존재** (기존 코드 테스트 보강) | Phase 0(현재 동작 파악)부터 시작. Characterization Test 접근 |
-| **Hybrid Mode** | 기존 파일이 있으나 **리팩터링 예정** | Phase 0로 현재 동작 고정 → Phase 1~5로 신규 설계 테스트 |
-
-**중요**: Mode가 불명확하면 사용자에게 질문하고 답변 받을 때까지 진행 금지.
+| **FE** | `/cfh-tdd` | `/cfh-tc` ← 여기 |
+| **non-FE** | `/cfh-tdd-gen` | `/cfh-tc-gen` |
 
 </mode_detection>
 
 <tdd_mode>
 
-## TDD Mode — 5 Phase
+> ⚠️ **(0.17.0 Track 8 deprecated)** 이 섹션은 *과거 호환* 자료로만 유지됩니다. 새 컴포넌트 TDD는 `/cfh-tdd <목적>`이 owning합니다. 이 섹션은 자동 진입 안 되며, 사용자가 `--mode=tdd`로 명시 호출하거나 deprecation warning 통과 후 yes한 경우에만 진행. 향후 (다음 major) 자동 차단 예정.
+
+## TDD Mode — 5 Phase (과거 호환)
 
 ### Phase 1: Intent Interview (질문 단계)
 

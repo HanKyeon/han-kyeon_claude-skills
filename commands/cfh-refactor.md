@@ -17,6 +17,19 @@
 
 <workflow>
 
+## Phase 0a — Stack misroute suggestion (Track 9, 0.18.0)
+
+입력 받은 직후 stack 신호 자가 평가. opposite(`/cfh-refactor-gen`) 신호가 강하면 (`[verified]`/`[inferred]` 2+) 다음 형식으로 제안 (강제 X):
+
+```
+   📌 이대로 진행: refactoring-strategy FE 가이드 (queryKey·tsc·RTL)
+   💡 **더 적합해 보이는 대안 — /cfh-refactor-gen** — 신호: <인용>
+   진행: yes / switch / explain
+```
+
+상세는 `commands/references/soft-routing.md`. 신호 약하면 출력 안 함.
+
+
 ## Step 1 — Scope Narrowing (사용자 질문, 추천+이유 패턴 적용)
 
 `refactoring-strategy/references/scope-narrowing.md`의 8 질문을 **3~4개씩 묶지 말고 한 번에 한 질문**으로 순차 수행 (0.14.1+ grill-me 컨벤션):
