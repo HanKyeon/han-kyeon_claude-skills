@@ -90,16 +90,19 @@ Phase 0가 끝나면 가능한 한 많은 결정 지점을 enumerate. **최소·
 ```
 🌳 Decision tree (grill 후보 — FE 기능 예시)
 
-1. State 위치                            ← unresolved
-2. Data flow                             ← blocked by #1
-3. Error UX                              ← blocked by #2
-4. Loading UX                            ← blocked by #2
-5. Validation 위치                       ← unresolved
-6. Caching TTL                           ← unresolved
-7. Accessibility (ARIA)                  ← unresolved
-8. 회귀 테스트 전략                       ← blocked by #1·#5
+1. State 위치                  ← unresolved   사유: 새 컴포넌트가 사용자 입력 보관
+2. Data flow                   ← blocked by #1  사유: 부모-자식 props 흐름 결정 필요
+3. Error UX                    ← blocked by #2  사유: 검증 실패 시 사용자 피드백
+4. Loading UX                  ← blocked by #2  사유: 비동기 검증 fetch 진행 상태
+5. Validation 위치              ← unresolved   사유: client·server 어디서 검증할지
+6. 회귀 테스트 전략              ← blocked by #1·#5  사유: unit·integration 결정
 
-📌 추천 walk 순서: 1 → 5 → 2 → 3·4 → 7 → 8
+제외된 후보 (자가검증):
+  - Caching TTL — Q3 out-of-scope에 "성능 최적화 제외" 명시됨
+  - Accessibility (ARIA) — 사용자 Q3에 "이번 PR은 a11y 별도" 명시
+  - 코드 splitting — 단일 컴포넌트 추가, 영향 없음
+
+📌 추천 walk 순서: 1 → 5 → 2 → 3·4 → 6
    이유: #1·#5가 독립 root. 나머지는 의존 chain.
 
 **Default = 전체 walk** — 단, default는 *사용자가 명시 확인*해야 발효. LLM이 자체적으로 default 적용 금지.
@@ -264,7 +267,8 @@ unresolved 노드 남아있으면 Step 1로 회귀 (다음 turn에서).
 - **사용자 의도 우선.** 결정은 항상 사용자에게 묻기. 코드는 추천 이유의 컨텍스트로만 (선택적).
 - **명확한 답변 필수.** "OK"/Enter/짧은 응답/침묵은 *ambiguous* — default 동의로 해석 금지. 사용자가 의도를 명시 표현할 때까지 대기. 어디든 적용 (Phase 0·1·2·3 모두).
 - **자가검증 원칙 (slot ≠ purpose).** 모든 결정 노드·"다른 옵션 B/C"·sub-decision은 *형식 슬롯이 있어서*가 아니라 **사용자 plan에 실제 영향을 주기 때문에** 등장해야 함. 슬롯 채우기 = 빈 질문 = 금지. 구체 적용:
-  - **Phase 1 enumerate**: 각 노드가 이 plan에 실제 영향 주는지 자가검증. "decision-tree.md 템플릿에 있어서"는 제외 사유. 의심스러우면 default 제외 (사용자가 "그것도 봐야 해" 하면 그때 추가).
+  - **Phase 1 enumerate**: 각 노드 옆에 *"이 plan에서 이 결정이 왜 필요한가"* 한 줄 사유 표기 (트리 카드 출력 시). 사유가 *"이 카테고리 표준이라서"·"템플릿에 있어서"*밖에 안 나오면 **제외**. 의심스러우면 default 제외.
+  - **Phase 1 트리 카드에 "제외된 후보 (자가검증)" 섹션 표기**: 어떤 카테고리 후보를 어떤 사유로 제외했는지 사용자에게 가시화. 자가검증을 블랙박스로 두지 않음. 사용자가 "어, X도 봐야 하지 않나?" 하면 가지 추가 가능 (결정 번복 보장).
   - **Phase 2 Step 1 질문 전**: [verified]·[inferred] 근거 없이 [guessed]만으로 추천을 만들어야 한다면, 질문하지 말고 Phase 3 종료 보고의 "미해결 — 정보 부족"으로 옮김. 무리해서 [guessed] 질문 강행 금지.
   - **"다른 옵션 B/C"**: 실제 trade-off 있을 때만 제시. 추천이 압도적이면 "다른 옵션: 없음 — 단일 선택지 명확" 명시. 가짜 대안 강제 채우기 금지.
   - **Sub-decision 추가**: 사용자 답이 *새 결정 분기를 명시적으로 열었을 때* 또는 blocking 결정일 때만 트리에 추가. "A로 갈게" 답에서 "그럼 A의 세부 X·Y·Z도…" 자동 파생 금지.
