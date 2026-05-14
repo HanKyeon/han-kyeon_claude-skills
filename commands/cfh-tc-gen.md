@@ -68,16 +68,19 @@ Mode 불명확 시 사용자 질문 후 진행.
 - **Python**: pytest/unittest, pytest fixtures, requests-mock, factory_boy, conftest.py
 - **Go**: 표준 `testing` 패키지, testify, httptest, golden file 패턴
 - **Rust**: `#[cfg(test)]`, `#[test]`, mockall, integration tests in `tests/`
-- **Java/Kotlin**: JUnit 5, Mockito, MockMvc, AssertJ
+- **Java/Kotlin (server)**: JUnit 5, Mockito, MockMvc, AssertJ
+- **iOS/Swift**: XCTest, XCTestExpectation, OHHTTPStubs, swift-snapshot-testing
+- **Android (Kotlin/Java)**: instrumented JUnit (`androidx.test`), Robolectric, MockK, Espresso (UI)
+- **Embedded C/C++**: Unity, CMock, fff (fake function framework), Ceedling
 - **공통**: 파일 위치·네이밍 컨벤션 (인접 `*_test.*` vs `tests/`)
 
 ### Phase 2: 테스트 시나리오 설계 (우선순위 순)
 
 **Priority 1 — Core**: 기본 happy path, 주요 입력·출력 매핑
-**Priority 2 — IO**: HTTP 요청·응답 / DB 쿼리 / 파일 읽기·쓰기 / 외부 API 모킹
+**Priority 2 — IO**: 도메인별 — *서버*: HTTP / DB / 파일 / 외부 API mock · *embedded*: 센서·GPIO·디바이스 IO·타이머 인터럽트 · *mobile*: 터치 이벤트·permission·deep link · *ML*: GPU 컨텍스트·디스크 캐시·rng seed
 **Priority 3 — Edge**: 빈 입력 / null·undefined / 경계값 / 매우 큰 값 / 동시성
 **Priority 4 — Error**: throw·panic / 에러 응답 / 재시도·timeout / circuit breaker
-**Priority 5 — Integration**: 실제 의존성과의 통합 (test container·in-memory DB)
+**Priority 5 — Integration**: 실제 의존성과의 통합 (test container·in-memory DB·simulator)
 
 ### Phase 3: 테스트 코드 작성
 
@@ -117,7 +120,7 @@ expect(result).toEqual(...)
 ### 의존성 처리
 
 - **의존성 주입(DI) 우선** — mock 라이브러리 사용 전에 함수 시그니처에 의존성을 인자로 받도록 설계 가능한지 확인
-- **외부 IO만 mock** — HTTP / DB / 파일 / 시간 / 환경변수 / 랜덤
+- **외부 IO만 mock** — HTTP / DB / 파일 / 시간 / 환경변수 / 랜덤 / (embedded) GPIO·센서 / (mobile) permission·deep link / (ML) GPU 컨텍스트·rng seed
 - **격리된 test container 권장** (Docker testcontainers·in-memory DB·local file system)
 
 ### Table-driven 테스트
@@ -136,7 +139,7 @@ expect(result).toEqual(...)
 
 ### 모킹 경계
 
-- **항상 mock**: HTTP·DB·파일 IO·시간 (`Date.now`·`time.time`)·랜덤·환경변수·process.env
+- **항상 mock**: HTTP·DB·파일 IO·시간 (`Date.now`·`time.time`)·랜덤·환경변수·process.env / (도메인별) GPIO·센서·터치·permission·deep link·GPU 컨텍스트·rng seed
 - **DI 우선, 어쩔 수 없을 때만 mock**: 동일 모듈 내 다른 함수
 - **금지**: 표준 라이브러리 mock (수정 안 됨), 같은 함수의 다른 호출 mock (테스트가 구현에 결합)
 

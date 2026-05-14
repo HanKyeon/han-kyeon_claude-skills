@@ -24,7 +24,9 @@ npm install -g @han-kyeon/claude-skills
 cfh install
 ```
 
-끝. 두 번째 줄이 `~/.claude/skills/`와 `~/.claude/commands/`에 번들된 **8개 스킬 + 19개 슬래시 커맨드 + 4개 reference 파일 + JSON Schema 파일**을 복사합니다 (0.16.1 — `/cfh-refactor-gen` 신설 patch).
+끝. 두 번째 줄이 `~/.claude/skills/`와 `~/.claude/commands/`에 번들된 **8개 스킬 + 19개 슬래시 커맨드 + 4개 reference 파일 + JSON Schema 파일**을 복사합니다 (0.16.3 — **audit-driven polish patch**: multi-stack pre-scan + debug FE 키워드 병기 + a11y default alternatives + cfh-tc-gen mobile/embedded/ML 확장).
+
+> 🧭 **정책 anchor**: FE/non-FE **명시 분기 유지**. `cfh-tdd`/`cfh-tc`/`cfh-refactor`는 FE 전용, `-gen` suffix는 **non-FE 전반** (BE/library/CLI/mobile/embedded/ML). 자세한 자산별 매트릭스는 [`DESC_CFL.md` § 8](./DESC_CFL.md) 또는 [`PLAN.md` § 1](./PLAN.md).
 
 > **1.0 변경 요약**: CLI surface가 subcommand 중심으로 정리됨 — `cfh feedback` (구 evolve+log) · `cfh stats` (구 dashboard+cost+sentry summary) · `cfh check` (구 validate+doctor) · `cfh dev eval` (구 eval, maintainer namespace) · `cfh sentry live`/`cfh sentry hook install` (구 --live/--install-hook). 구 명령은 deprecation warning + 1 사이클 alias 유지 (2.0 제거). `cfh install --link` 제거 (dev: `npm link` 사용). 상세 매핑은 [README "Migration Guide"](./README.md) + [docs/deprecation-policy.md](./docs/deprecation-policy.md).
 
@@ -40,20 +42,20 @@ cfh list
 === Global (~/.claude) ===
 
 Skills (C:\Users\<you>\.claude\skills):
-  asset-factory            managed@0.16.2  →  [/cfh-make]
-  debug-investigator       managed@0.16.2  →  [/cfh-debug]
-  grill-me                 managed@0.16.2  →  [/cfh-grill]
-  harness-factory          managed@0.16.2  →  [/cfh-team]
-  refactoring-strategy     managed@0.16.2  →  [/cfh-refactor, /cfh-refactor-gen]
-  skill-author             managed@0.16.2  →  [/cfh-new]
-  tdd-first                managed@0.16.2  →  [/cfh-tdd, /cfh-tc]
-  tdd-general              managed@0.16.2  →  [/cfh-tdd-gen, /cfh-tc-gen]
+  asset-factory            managed@0.16.3  →  [/cfh-make]
+  debug-investigator       managed@0.16.3  →  [/cfh-debug]
+  grill-me                 managed@0.16.3  →  [/cfh-grill]
+  harness-factory          managed@0.16.3  →  [/cfh-team]
+  refactoring-strategy     managed@0.16.3  →  [/cfh-refactor, /cfh-refactor-gen]
+  skill-author             managed@0.16.3  →  [/cfh-new]
+  tdd-first                managed@0.16.3  →  [/cfh-tdd, /cfh-tc]
+  tdd-general              managed@0.16.3  →  [/cfh-tdd-gen, /cfh-tc-gen]
 
 Commands (C:\Users\<you>\.claude\commands):
   cfh-debug, cfh-feedback, cfh-grill, cfh-guide, cfh-make, cfh-new,
   cfh-plan, cfh-progress, cfh-refactor, cfh-refactor-gen, cfh-retro,
   cfh-review, cfh-tc, cfh-tc-gen, cfh-tdd, cfh-tdd-gen, cfh-team, cfh-trace
-                                          (모두 managed@0.16.2)
+                                          (모두 managed@0.16.3)
 ```
 
 Claude Code를 새 세션으로 시작하거나 `/agents`·`/`로 확인하면 커맨드가 떠야 합니다.
@@ -2219,11 +2221,38 @@ cfh 인터뷰·옵션 제시·dispatch 결정에 **빈 질문 금지** 컨벤션
 
 ---
 
-## 10. 다음에 읽을 것
+## 10. 0.16.3 patch + 향후 사이클
+
+### 0.16.3 audit-driven polish (이번 patch)
+
+8-agent cross-domain audit (`audit/`) + grasp 자기 검증 결과 8 항목 일괄 적용. 모두 위험 낮음·BREAKING 0.
+
+1. `/cfh-feedback debug-investigator` · `/cfh-feedback cfh-review` — target 식별자 정정
+2. `skill-author` Pre-scan 9 stack 인식 (Python·Rust·Go·Java·Kotlin·PHP·Ruby)
+3. `cfh-progress` 이름 추출 6 stack 우선순위
+4. `debug-investigator` FE 키워드 병기 (hydration mismatch·white screen·INP regression)
+5. `cfh-guide` TDD 라우팅 row 분리 (tdd-first FE / tdd-general non-FE)
+6. 메타 자산 `a11y` default → alternatives 7종 (consistency·idempotency·latency·fairness 등)
+7. `tdd-general` worked example 다양화 (data pipeline·distributed retry·Rust ParseError)
+8. `cfh-tc-gen` IO 카테고리 일반화 (embedded·mobile·ML) + 스택 가정 표 확장
+- `tests/contract/meta-asset-axes.test.js` — a11y default 회귀 영구 차단
+
+### 향후 사이클
+
+- **0.17.0 (Track 8)** — TDD/TC mode 분기 (intent×artifact 매트릭스). `/cfh-tc`는 *기존 파일 한정*, `/cfh-tdd`는 *새 자산*. 1.0.x deprecation 1 사이클 동반
+- **0.18.0 (Track 9)** — Soft routing suggestion. 사용자 발화가 다른 stack 신호 강할 때 **bold + 💡로 대안 명령 제안** (강제 X — yes/switch/explain 선택). 정확도 ≥ 80% 미달 시 reject
+- **1.0 promotion** — 사용자 명시 판단. 자동 게이트 아님. 외부 사용자 1~2명 1~2주 데이터 누적 + 안정성 체크리스트 검토 후 결정
+
+상세: [`PLAN.md`](./PLAN.md).
+
+---
+
+## 11. 다음에 읽을 것
 
 - **[README.md](./README.md)** — 전체 레퍼런스, FAQ, 디렉터리 구조, CI 통합, 시나리오 가이드
+- **[PLAN.md](./PLAN.md)** — 0.16.3 → 1.0급 polish 마일스톤 + 자산별 매트릭스 (Track 7·8·9)
+- **[PROGRESS.md](./PROGRESS.md)** — 결정 로그·미해결 질문·다음 단계 (세션 인계 노트)
 - **[DESC_CFL.md](./DESC_CFL.md)** — Confluence 페이스트용 종합 가이드 (이 문서와 중복되나 외부 공유용)
-- **[preview.md](./preview.md)** — 외부 평가자 피드백 + 채택 결정 로그
 - `~/.claude/skills/skill-author/SKILL.md` — 스킬 작성 메타-스킬의 6 Phase (Pre-scan + 조건부 follow-up + Sanity check + (z) 모르겠음 fallback)
 - `~/.claude/skills/harness-factory/SKILL.md` — 팀 생성 메타-스킬 + 6 패턴 (Pre-scan + 기본 6Q + Deep-dive 3지선 + Sanity R1~R8)
 - `~/.claude/skills/asset-factory/SKILL.md` — Dispatcher 2 Phase + 분류 트리 (0.5.0 goal-first)

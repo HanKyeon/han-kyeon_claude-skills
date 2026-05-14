@@ -81,7 +81,7 @@ classification:
   reason: <분류 근거>
 phase1_hints:
   Q1_task_type_candidates: <자동 추려진 후보 1~2개>
-    # 예: 사용자가 "보안·성능·a11y 관점에서 리뷰" 말하면 (c) Expert Pool이 유력
+    # 예: 사용자가 "여러 축에서 리뷰" 말하면 (c) Expert Pool이 유력 (도메인별 축: FE a11y·타입 / BE consistency·idempotency·latency 등)
     # 사용자가 "생성 → 검증" 말하면 (d) Producer-Reviewer가 유력
   Q2_io: (모름 — harness-factory가 질문)
   Q3_axes: <asset-factory에서 식별한 축 후보 — 있다면>

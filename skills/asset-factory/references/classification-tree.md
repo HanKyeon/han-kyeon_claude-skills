@@ -94,7 +94,7 @@ Q2로 진행.
 ### 판단 기준
 
 - **팀 필요**: 아래 중 하나라도 해당
-  - 같은 입력을 서로 다른 관점에서 평가 (보안·성능·a11y·타입 등)
+  - 같은 입력을 서로 다른 관점에서 평가 (도메인별 축: FE a11y·타입·UX / BE consistency·idempotency·latency / ML fairness·robustness 등)
   - 생성과 검증이 분리되어야 함 (Producer-Reviewer)
   - 단계별 역할이 명확히 다름 (Analyst → Builder → QA)
   - 동적 경로 결정이 필요 (Supervisor)

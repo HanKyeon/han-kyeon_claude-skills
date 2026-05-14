@@ -2,17 +2,18 @@
 name: debug-investigator
 description: |
   Use this skill when the user describes a symptom or error but does NOT yet
-  know the root cause — keywords: "원인 모르겠다", "뭐가 잘못됐는지", "이상한데",
-  "stack trace", "exception", "production error", "500 에러", "배포 후 깨짐",
-  "버전 올린 뒤 안 됨", "regression after deploy", "p95 spike", "메모리 누수",
-  "CPU 치솟아", "장애 났다", "인시던트", "incident", "디버깅 도와줘",
-  "같이 조사하자", "원인 찾아보자". Activates the `/cfh-debug` 5-phase
-  evidence-driven investigation (Evidence → Context → Hypotheses → Verification →
-  Fix Plan). Supports bug / incident / performance / regression types. Do NOT
-  trigger when the user already knows the root cause and just wants to write
-  a fix (use `/cfh-tdd` or `/cfh-plan`), for routine refactoring
-  (use `/cfh-refactor`), for writing new features (use `/cfh-tdd` or
-  `/cfh-tdd-gen`), or for simple one-shot questions without investigation need.
+  know the root cause. Keywords (stack-neutral, FE/BE 양쪽 명시):
+  공통: "원인 모르겠다", "stack trace", "exception", "메모리 누수", "디버깅 도와줘".
+  BE: "500 에러", "production error", "배포 후 깨짐", "인시던트", "incident",
+  "latency regression (e.g., p95 spike)".
+  FE: "hydration mismatch", "white screen", "render loop", "INP regression",
+  "CLS regression", "Core Web Vitals 떨어짐".
+  Activates `/cfh-debug` 5-phase evidence-driven investigation (Evidence →
+  Context → Hypotheses → Verification → Fix Plan). Supports
+  bug / incident / performance / regression. Do NOT trigger when the user
+  already knows root cause (use `/cfh-tdd` or `/cfh-plan`), routine refactor
+  (use `/cfh-refactor`), new features (use `/cfh-tdd(-gen)`), or simple
+  one-shot questions.
 commands: [/cfh-debug]
 ---
 
@@ -22,12 +23,23 @@ commands: [/cfh-debug]
 ## 트리거 조건 (1.0 컨벤션 — 본문 참고용, frontmatter description이 권위)
 
 ```
-TRIGGER:  증상은 알지만 원인을 *모르는* 상황 — '원인 모르겠다', 'stack trace',
-          '500 에러', '배포 후 깨짐', 'p95 spike', '인시던트'.
+TRIGGER:  증상은 알지만 원인을 *모르는* 상황 — FE·BE 양쪽 명시.
+  공통:    '원인 모르겠다', 'stack trace', '메모리 누수', 'CPU 치솟아', '디버깅 도와줘'
+  BE/서버: 'production error', '500 에러', '배포 후 깨짐', '인시던트',
+          'latency/perf regression (e.g., p95 spike)'
+  FE/웹:   'hydration mismatch', 'white screen', 'render loop', 'INP regression',
+          'CLS regression', 'Core Web Vitals 떨어짐'
 SKIP:     원인 *알고* 있고 수정만 — tdd-* 또는 cfh-plan. 루틴 리팩터 → refactoring-strategy.
-EXAMPLES:
+
+EXAMPLES (FE):
+  - 'hydration mismatch 보고 받았는데 어디서 깨졌는지 모름' → Phase 0 Evidence (browser console·Sentry breadcrumb·React DevTools)
+  - 'INP regression — 어느 페이지에서 시작인지 추적' → Phase 1 Context (Lighthouse history·Core Web Vitals trend)
+  - 'white screen — production만 발생' → Phase 2 Hypotheses (env diff·CSP·sourcemap)
+
+EXAMPLES (BE — 현행 유지):
   - '배포 후 500 에러 — 원인 모름' → 5 Phase Evidence-driven investigation
-  - 'p95 spike' → Performance 가설 prioritization
+  - 'p95 spike — 가설 prioritization' → Performance 트랙
+  - 'p95 latency 회귀 의심' → 동상
 ```
 **원인이 불분명한 증상·에러**에서 출발해 체계적으로 근본 원인을 찾는 조사 스킬입니다. 이 스킬은 `commands/cfh-debug.md`의 5 Phase 워크플로를 활성화하는 **자동 트리거 진입점**입니다.
 

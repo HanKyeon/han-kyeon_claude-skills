@@ -68,7 +68,15 @@ Phase 2 이후에 초반 답변이 틀렸다고 판단되면 아래 트리거로
 
 ## Phase 0 — Pre-scan
 
-인터뷰 시작 전에 `CLAUDE.md`, `package.json`, `~/.claude/skills/`, `./.claude/skills/`를 훑어 Phase 1의 답변 초안을 만듭니다. 사용자는 "맞음/틀림"만 확인하면 됩니다 (→ `references/pre-scan.md`).
+인터뷰 시작 전에 `CLAUDE.md` + 프로젝트 manifest + `~/.claude/skills/`, `./.claude/skills/`를 훑어 Phase 1의 답변 초안을 만듭니다. 사용자는 "맞음/틀림"만 확인하면 됩니다 (→ `references/pre-scan.md`).
+
+**Multi-stack manifest 인식** (파일 존재 신호만 사용 — 외부 dep 추가 0):
+- `package.json` (Node) · `pyproject.toml` · `setup.py` · `setup.cfg` (Python)
+- `Cargo.toml` (Rust) · `go.mod` (Go)
+- `pom.xml` (Java — Maven) · `build.gradle{,.kts}` (Kotlin/Java — Gradle)
+- `composer.json` (PHP) · `Gemfile` (Ruby)
+
+존재하는 파일을 발견하면 해당 stack의 컨벤션·테스트 러너·라이브러리 안티패턴을 Phase 1 답변 초안에 반영. 매니페스트 없으면 *"스택 미상"*으로 표기하고 Q1·Q2에서 사용자에게 직접 확인.
 
 **출력**: Pre-scan 카드
 ```

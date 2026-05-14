@@ -1,8 +1,10 @@
 # @han-kyeon/claude-skills
 
-> A **framework** for authoring, installing, and orchestrating Claude Code skills, slash commands, and team agents. FE/BE friendly starter assets + general-purpose meta-skills (skill authoring, team factory, asset dispatcher, decision-tree grilling).
+> A **framework** for authoring, installing, and orchestrating Claude Code skills, slash commands, and team agents. FE/non-FE friendly starter assets + general-purpose meta-skills (skill authoring, team factory, asset dispatcher, decision-tree grilling).
 >
-> **버전 0.16.0 — 1.0.0-rc1 후보.** CLI surface가 1.0 contract로 정리됨 (`cfh feedback` / `cfh stats` / `cfh check` / `cfh dev eval` / `cfh sentry <sub>`). 구 명령은 1.0.x 동안 alias + deprecation warning. 상세: [Migration Guide](#migration-guide-0x--10) · [Deprecation Policy](./docs/deprecation-policy.md).
+> **버전 0.16.3 — 1.0급 안정성 polish 진행 중.** CLI surface가 1.0급 contract로 정리됨 (`cfh feedback` / `cfh stats` / `cfh check` / `cfh dev eval` / `cfh sentry <sub>`). 구 명령은 alias + deprecation warning. 상세: [Migration Guide](#migration-guide-0x--016x) · [Deprecation Policy](./docs/deprecation-policy.md).
+>
+> 🧭 **정책 anchor**: **명시성 > 일반성. FE/BE 명시 분기 강하게 유지.** suffix 없는 명령(`/cfh-tdd`·`/cfh-tc`·`/cfh-refactor`)은 FE 전용, `-gen` suffix(`/cfh-tdd-gen` 등)는 **non-FE 전반** (BE/library/CLI/mobile/embedded/ML). 추상화로 *합치는* 것 거부 — FE/BE 색채는 의도된 사용 신호.
 
 ---
 
@@ -14,7 +16,7 @@
 # 1. (30초) 설치 + 확인
 npm install -g @han-kyeon/claude-skills
 cfh install
-cfh list                 # 8 skills + 19 commands 보이면 성공
+cfh list                 # 8 skills + 19 commands + mapping (→ /cfh-*) 보이면 성공
 
 # 2. Claude Code 세션 시작 (또는 재시작)
 ```
@@ -1735,9 +1737,9 @@ cfh validate --target ./.my-sandbox
 
 ---
 
-## Migration Guide (0.x → 1.0)
+## Migration Guide (0.x → 0.16.x)
 
-1.0은 명령 이름·subcommand 구조 정리가 핵심 BREAKING. **모든 구 명령은 1 사이클(1.0.x 동안) alias 유지**, 2.0에서 제거됩니다. 자동화 스크립트는 1.0에서 즉시 수정 불필요.
+0.16.x cycle은 명령 이름·subcommand 구조 정리가 핵심. **모든 구 명령은 한 사이클 동안 alias 유지** — 자동화 스크립트는 즉시 수정 불필요. 1.0급 안정성 도달 후 사용자 판단으로 1.0 promotion 시점에 alias 제거 단계 시작.
 
 ### 이름 변경 요약
 
@@ -1783,10 +1785,37 @@ CI에서 1.0.x 동안 `--legacy` 통과 후 1.1+ 시점에 제거 권장.
 
 상세 정책: [`docs/deprecation-policy.md`](docs/deprecation-policy.md).
 
-- 1.0.x: 구 명령·플래그가 작동하며 stderr에 deprecation warning 출력
-- 2.0.0: 구 명령·플래그 제거
+- 0.16.x: 구 명령·플래그가 작동하며 stderr에 deprecation warning 출력
+- 1.0 promotion 후 한 사이클: alias 일괄 제거 (사용자 판단으로 시점 결정)
 
-자동화 스크립트는 1.0.x 동안 무수정 작동. 2.0 전에 신 명령으로 migration 권장.
+자동화 스크립트는 0.16.x 동안 무수정 작동. 1.0 promotion 전에 신 명령으로 migration 권장.
+
+### 0.16.3 patch — audit-driven polish
+
+8 항목 일괄 적용 (PLAN § 7):
+
+| Track | 변경 |
+|---|---|
+| 7.1 | `/cfh-feedback debug-investigator` · `/cfh-feedback cfh-review` — 잘못된 target 식별자 정정 |
+| 7.2a | `skill-author` Pre-scan 9 stack (pyproject·Cargo·go.mod·pom·gradle·composer·Gemfile) |
+| 7.2b | `cfh-progress` 이름 추출 6 stack regex 우회 (외부 dep 0) |
+| 7.3 | `debug-investigator` FE 키워드 병기 (hydration mismatch·white screen·INP regression) |
+| 7.4 | `cfh-guide` TDD 라우팅 row 분리 (tdd-first FE / tdd-general non-FE) |
+| 7.5 | 메타 자산 `a11y` default → alternatives 7종 병기 |
+| 7.6 | `tdd-general` worked example 다양화 (data pipeline·distributed retry·Rust ParseError) |
+| 7.7 | `cfh-tc-gen` IO 카테고리 일반화 (embedded·mobile·ML) + 스택 가정 표 확장 |
+| 7.8.3 | `tests/contract/meta-asset-axes.test.js` — a11y default 회귀 영구 차단 |
+
+### 향후 사이클 미리보기
+
+| 마일스톤 | 범위 | 베이킹 |
+|---|---|---|
+| **0.17.0** | Track 8 — TDD/TC mode 분기 (intent×artifact 매트릭스) | 0.16.3 release 후 1~2주 |
+| **0.18.0** | Track 9 — Soft routing suggestion (bold 강조, 강제 X) | 0.17.0 release 후 2주+ |
+| **0.18.x+** | 다음 audit run 결과 + 외부 사용자 feedback | 사이클마다 1~2주 |
+| **1.0.0** | (사용자 판단 — 자동 게이트 아님) | — |
+
+상세: [`PLAN.md`](./PLAN.md).
 
 ---
 

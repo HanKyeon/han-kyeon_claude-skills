@@ -42,7 +42,7 @@
 |---|---|
 | **Pipeline** | Q1 "단계가 명확한 선형 변환" + Q2 "한 방향 흐름" |
 | **Fan-out / Fan-in** | Q1 "큰 입력을 독립 부분으로 분할" + Q5 "병렬 가능" |
-| **Expert Pool** | Q1 "같은 입력을 여러 축에서 평가" + Q3 "축이 명확 (보안·성능·a11y·타입)" |
+| **Expert Pool** | Q1 "같은 입력을 여러 축에서 평가" + Q3 "축이 명확" (FE: a11y·타입·UX / BE: consistency·idempotency·latency / ML: fairness·robustness — 도메인별 3~5개) |
 | **Producer-Reviewer** | Q4 "실패 비용 큼" + Q1 "검증 중심" (테스트 통과만 하는 가짜 구현 위험) |
 | **Supervisor** | Q1 "런타임에 경로가 결정" + Q5 "다이내믹 분기" |
 | **Hierarchical Delegation** | Q5 "10+ 에이전트" + Q3 "여러 도메인 분할" |

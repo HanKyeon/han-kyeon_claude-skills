@@ -718,7 +718,7 @@ REVIEW.md: <경로>
 다음 단계:
 - 지적 반영 → /cfh-plan "<목표>"
 - 회귀 테스트 보강 → /cfh-tdd 또는 /cfh-tc
-- 이번 리뷰 흐름 피드백 → /cfh-feedback review-orchestrator "<comment>"
+- 이번 리뷰 흐름 피드백 → /cfh-feedback cfh-review "<comment>"
 ```
 
 **Retro·Commit 블록 형식**: `commands/references/retro-and-commit.md` 단일 출처. **/cfh-review는 보고 중심**이라 코드 수정 commit은 보통 위임된 커맨드에서 처리 — 여기선 REVIEW.md 자체의 commit 여부만 다룸 (대부분 no-commit이 기본).

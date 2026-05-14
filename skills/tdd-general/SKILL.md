@@ -73,7 +73,9 @@ Phase 5: Refactor + Intent Preservation (리팩터링 + Phase 1 답변 재확인
 
 ## 스택별 Test Outline 예시
 
-### Node.js (vitest/jest)
+> 도메인 *다양화*: tdd-general이 stack 외에도 *문제 영역*도 stack-agnostic임을 worked example로 보여줍니다. Node 1 anchor + 다른 3 영역으로 분산.
+
+### Node.js (vitest/jest) — coupon validator (익숙한 도메인 anchor)
 
 ```js
 describe('validateCoupon', () => {
@@ -94,56 +96,95 @@ describe('validateCoupon', () => {
 });
 ```
 
-### Python (pytest)
+### Python (pytest) — data pipeline transform
 
 ```python
-class TestValidateCoupon:
-    def test_returns_valid_for_unexpired_code(self):
-        # Arrange
-        code = "SUMMER2026"
-        # Act
-        result = validate_coupon(code)
-        # Assert
-        assert result.valid is True
+class TestNormalizeUserRecord:
+    """ETL stage — raw user record를 분석 가능한 형태로 정규화."""
 
-    @pytest.mark.parametrize("input_value, expected_reason", [
-        ("", "empty"),
-        (None, "null"),
-        ("   ", "whitespace"),
+    def test_returns_normalized_for_well_formed_record(self):
+        # Arrange
+        raw = {"email": "  Alice@EXAMPLE.com ", "joined": "2024-01-15T10:00:00Z"}
+        # Act
+        result = normalize_user_record(raw)
+        # Assert
+        assert result.email == "alice@example.com"
+        assert result.joined.year == 2024
+
+    @pytest.mark.parametrize("raw, expected_error", [
+        ({"email": None}, "missing-email"),
+        ({"email": "no-at-sign"}, "invalid-email"),
+        ({"email": "ok@ok.com", "joined": "not-a-date"}, "invalid-joined"),
     ])
-    def test_rejects_invalid_inputs(self, input_value, expected_reason):
-        result = validate_coupon(input_value)
-        assert result.valid is False
-        assert result.reason == expected_reason
+    def test_rejects_malformed_records(self, raw, expected_error):
+        with pytest.raises(NormalizationError) as exc:
+            normalize_user_record(raw)
+        assert exc.value.code == expected_error
 ```
 
-### Go
+### Go — distributed retry policy
 
 ```go
-func TestValidateCoupon(t *testing.T) {
-    t.Run("happy path", func(t *testing.T) {
-        result := ValidateCoupon("SUMMER2026")
-        if !result.Valid {
-            t.Errorf("expected valid=true, got %v", result)
+func TestShouldRetry(t *testing.T) {
+    t.Run("returns true for transient 5xx after first attempt", func(t *testing.T) {
+        decision := ShouldRetry(RetryContext{
+            StatusCode: 503, AttemptCount: 1, ElapsedMs: 200,
+        })
+        if !decision.Retry {
+            t.Errorf("expected retry=true for 503 on first attempt")
+        }
+        if decision.BackoffMs < 100 {
+            t.Errorf("expected exponential backoff ≥ 100ms, got %d", decision.BackoffMs)
         }
     })
-    t.Run("edge cases", func(t *testing.T) {
+    t.Run("gives up after max attempts", func(t *testing.T) {
         cases := []struct {
-            name  string
-            input string
+            name    string
+            ctx     RetryContext
+            wantOk  bool
         }{
-            {"empty", ""},
-            {"whitespace", "   "},
+            {"max attempts reached", RetryContext{StatusCode: 503, AttemptCount: 5}, false},
+            {"timeout budget exhausted", RetryContext{StatusCode: 503, AttemptCount: 1, ElapsedMs: 30000}, false},
+            {"non-retryable 4xx", RetryContext{StatusCode: 400, AttemptCount: 1}, false},
         }
         for _, tc := range cases {
             t.Run(tc.name, func(t *testing.T) {
-                result := ValidateCoupon(tc.input)
-                if result.Valid {
-                    t.Errorf("expected valid=false for %s", tc.name)
+                if got := ShouldRetry(tc.ctx); got.Retry != tc.wantOk {
+                    t.Errorf("got retry=%v, want %v", got.Retry, tc.wantOk)
                 }
             })
         }
     })
+}
+```
+
+### Rust (cargo test) — library API surface
+
+```rust
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parses_well_formed_version() {
+        let v = Version::parse("1.2.3-beta+build.42").unwrap();
+        assert_eq!(v.major, 1);
+        assert_eq!(v.pre_release, Some("beta".to_string()));
+    }
+
+    #[test]
+    fn rejects_malformed_with_typed_error() {
+        // table-driven via const slice
+        let cases: &[(&str, ParseError)] = &[
+            ("", ParseError::Empty),
+            ("not-a-version", ParseError::InvalidFormat),
+            ("1.2", ParseError::IncompleteSemver),
+            ("1.2.3.4", ParseError::TooManySegments),
+        ];
+        for (input, expected) in cases {
+            assert_eq!(Version::parse(input).unwrap_err(), *expected, "input={}", input);
+        }
+    }
 }
 ```
 

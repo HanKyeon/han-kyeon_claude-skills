@@ -406,7 +406,8 @@ cfh evolve tdd-first                      # 특정 스킬만
 | 말하면 | 발동 |
 |---|---|
 | "리팩터링", "refactor", "cleanup" | `refactoring-strategy` |
-| "TDD", "테스트 먼저", "test-driven" | `tdd-first` |
+| "TDD (FE 컴포넌트)" — '테스트 먼저', 'TDD로 .tsx', '컴포넌트 TDD' | `tdd-first` (FE-friendly RTL·MSW) |
+| "TDD (BE / 라이브러리 / CLI)" — 'TDD without React', '백엔드 TDD', 'pure function TDD' | `tdd-general` (stack-neutral AAA·table-driven) |
 | "스킬 만들", "create a skill" | `skill-author` |
 | "팀 에이전트", "agent team", "build a harness" | `harness-factory` |
 | "자동화해줘", "뭔가 만들고 싶은데", "automate this" | `asset-factory` (dispatcher) |

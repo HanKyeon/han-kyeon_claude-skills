@@ -419,7 +419,7 @@ git은 조사 과정을 되돌릴 수 있게 해주지 않으므로, **Phase별 
 - 회귀 테스트부터 → /cfh-tdd 또는 /cfh-tc-gen <파일>
 - (장애 경우) Post-mortem → POSTMORTEM.md 초안 작성
 - 조사 과정 공유 → DEBUG-LOG.md 또는 Issue 업데이트
-- 이번 조사 흐름 피드백 → /cfh-feedback debug-investigation "<comment>"
+- 이번 조사 흐름 피드백 → /cfh-feedback debug-investigator "<comment>"
 ```
 
 **Retro·Commit 블록 형식**: `commands/references/retro-and-commit.md` 단일 출처. **/cfh-debug는 조사 중심**이라 본격 코드 수정 커밋 제안은 보통 없음. 위임받은 `/cfh-plan`·`/cfh-tdd`가 자기 종료 시 커밋 블록을 출력. 조사 단계에서 발생한 문서 추가만 여기서 제안.
