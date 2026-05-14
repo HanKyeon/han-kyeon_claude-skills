@@ -5,7 +5,7 @@ node_modules/
 coverage/
 .vscode/
 .idea/
-.claude/settings.local.json
+.claude/
 audit/
 
 # Ignore all root-level .md files by default — scratch notes, review drafts,

@@ -1,1743 +1,383 @@
 # @han-kyeon/claude-skills
 
 > A **framework** for authoring, installing, and orchestrating Claude Code skills, slash commands, and team agents. FE/non-FE friendly starter assets + general-purpose meta-skills (skill authoring, team factory, asset dispatcher, decision-tree grilling).
->
-> **버전 0.16.3 — 1.0급 안정성 polish 진행 중.** CLI surface가 1.0급 contract로 정리됨 (`cfh feedback` / `cfh stats` / `cfh check` / `cfh dev eval` / `cfh sentry <sub>`). 구 명령은 alias + deprecation warning. 상세: [Migration Guide](#migration-guide-0x--016x) · [Deprecation Policy](./docs/deprecation-policy.md).
->
-> 🧭 **정책 anchor**: **명시성 > 일반성. FE/BE 명시 분기 강하게 유지.** suffix 없는 명령(`/cfh-tdd`·`/cfh-tc`·`/cfh-refactor`)은 FE 전용, `-gen` suffix(`/cfh-tdd-gen` 등)는 **non-FE 전반** (BE/library/CLI/mobile/embedded/ML). 추상화로 *합치는* 것 거부 — FE/BE 색채는 의도된 사용 신호.
 
 ---
 
 ## 5분 시작 (Quick Win)
 
-방금 설치하신 분을 위한 **첫 5분 흐름**입니다. 설치만 했다면 아래 5단계로 핵심 가치를 빠르게 체험하실 수 있습니다.
-
 ```bash
-# 1. (30초) 설치 + 확인
+# 1. 설치
 npm install -g @han-kyeon/claude-skills
-cfh install
-cfh list                 # 8 skills + 19 commands + mapping (→ /cfh-*) 보이면 성공
-
-# 2. Claude Code 세션 시작 (또는 재시작)
+cfh install                  # ~/.claude/skills + ~/.claude/commands 복사
+cfh list                     # 8 skills + 19 commands + mapping (→ /cfh-*) 확인
 ```
 
-세션이 열리면 **대화창에 차례로 입력**:
+Claude Code 새 세션 시작 후 대화창에 차례로 입력:
 
 ```
 (1) /cfh-guide overview
    → 이 도구가 무엇을 하는지 30초 안에 파악
 
 (2) /cfh-trace "이 코드 리팩터링하고 싶어"
-   → 어떤 스킬이 자동 트리거되는지 점수로 미리보기 (refactoring-strategy가 떠야 함)
+   → 어떤 스킬이 자동 트리거되는지 점수로 미리보기
 
 (3) "TDD로 src/utils/foo.ts 짜고 싶어"
-   → tdd-first 스킬 자동 활성화. Phase 0 Scope Narrowing부터 시작.
-   → 답변 끝까지 따라가지 않고 중간에 빠져나와도 OK — 발동 흐름만 체감
+   → tdd-first 자동 활성화. 5 Phase 진행
 
 (4) /cfh-make 팀 PR 응답 검증을 자동화하고 싶어
-   → asset-factory dispatcher가 3 분류 질문으로 skill/command/team 중 무엇이 맞는지 결정
+   → asset-factory dispatcher — skill/command/team 분류
 
 (5) /cfh-plan 막연한 작업 — 어디부터 시작할지 모름
    → 목표·성공 기준·제약 받고 접근법 카드 제안
 
 (6) /cfh-feedback tdd-first "인터뷰 중 어색했던 점 짧게"
-   → 피드백은 `~/.claude/.cfh-logs/`에만 저장 (외부 전송 없음).
-   → `cfh feedback` (구 cfh evolve)이 이 기록을 분석해 스킬 개선 제안을 만듭니다.
+   → ~/.claude/.cfh-logs/에만 저장 (외부 전송 없음)
 ```
 
-추가로 터미널에서 한 번 확인:
+터미널에서 한 번 확인:
 
 ```bash
-cfh stats --days 7         # 통합 markdown 리포트 (cost + sentry + eval coverage + trend)
-cfh check                  # 모든 health checks (schema lint + skill 진단)
+cfh stats --days 7           # cost + sentry + eval 통합 markdown 리포트
+cfh check                    # schema lint + skill 진단 모두
 ```
 
-위 6단계만 거치면 이 패키지의 **4대 핵심**(자동 트리거 / dispatcher / 자산 작성 / 피드백 루프)을 모두 만져보신 셈입니다. 다음은 [표준 사용법](#표준-사용법) 섹션이나 본인 상황에 맞는 [시나리오 가이드](#언제-무엇을-쓰나--시나리오-가이드)로 가시면 됩니다.
-
-> 익숙해지시면 `cfh-guide`·`cfh-trace`·`cfh-make`·`cfh-plan`·`cfh-feedback` 5개 슬래시 커맨드만 기억하셔도 95% 커버됩니다.
+익숙해지면 `cfh-guide`·`cfh-trace`·`cfh-make`·`cfh-plan`·`cfh-feedback`·`cfh-grill` 5개 슬래시 커맨드만 기억해도 95% 커버됩니다.
 
 ---
 
 ## 무엇을 하는 라이브러리인가
 
-Claude Code는 세션 시작 시 아래 경로를 자동 스캔합니다:
+이 패키지는 Claude Code를 위한 **인프라 + 자산 묶음**입니다.
 
-- `~/.claude/skills/<name>/SKILL.md` — 사용자 전역 스킬
-- `~/.claude/commands/<name>.md` — 사용자 전역 슬래시 커맨드
-- `<project>/.claude/agents/<name>.md` — 프로젝트 서브에이전트
-- `<project>/.claude/skills/<name>/SKILL.md` — 프로젝트 스킬
-- `<project>/.claude/commands/<name>.md` — 프로젝트 슬래시 커맨드
+- **인프라 (framework-agnostic)**: install·update·list·new·generate·adopt·diff·check·trace CLI · feedback·stats·dev eval · asset-factory dispatcher · skill-author·harness-factory 메타-skill · grill-me 결정 트리 인터뷰 · cfh-plan 작업 dispatcher
+- **자산 (FE/non-FE 명시 분기)**:
+  - **FE 전용**: `tdd-first` (RTL·MSW), `/cfh-tdd`·`/cfh-tc`·`/cfh-refactor`
+  - **non-FE 전반** (`-gen` suffix): `tdd-general` (AAA·table-driven), `/cfh-tdd-gen`·`/cfh-tc-gen`·`/cfh-refactor-gen` — BE/library/CLI/mobile/embedded/ML 모두 커버
+  - **stack-neutral**: `debug-investigator` (FE/BE 양쪽 키워드), `grill-me`, `refactoring-strategy` (FE/BE 컨텍스트 분기)
 
-이 라이브러리는 위 경로에 **깔끔하게 설치·관리·검증·확장**할 수 있는 CLI + 스킬 세트입니다. 세 가지 역할:
-
-1. **Installer** — 패키지에 번들된 스킬·커맨드를 `~/.claude/`에 복사/심볼릭.
-2. **Authoring framework** — `cfh new`로 스캐폴드, `cfh validate`로 검증. 사용자가 작성한 스킬은 `cfh update`에서 **절대 덮어쓰지 않음** (manifest 기반 보호).
-3. **Team-agent factory** — `cfh generate <preset>` 또는 `/harness` 슬래시 커맨드로 프로젝트 `.claude/agents/` + `.claude/skills/`에 **6가지 아키텍처 패턴** 기반 에이전트 팀을 찍어냄.
+**한 문장**: 프로젝트별·팀별 Claude Code 사용 패턴을 자산화·관리·진화시키는 도구.
 
 ---
 
-## 빠른 시작
+## 개발자 일상에서 — 어떻게 쓰이나
 
-```bash
-# 1. 설치
-npm install -g @han-kyeon/claude-skills
+기능 카탈로그가 아니라 *내가 일하는 흐름이 어떻게 달라지는지*. 4 가지 전형 상황:
 
-# 2. 번들 스킬·커맨드를 ~/.claude에 설치
-cfh install
+### 1. 모호한 요구사항 받았을 때 — `/cfh-plan`
 
-# 3. Claude Code 재시작 후 아래를 대화에 던져보기
-#    (자동 트리거) "리팩터링 도와줘"  → refactoring-strategy 발동
-#    (자동 트리거) "TDD로 시작하자"   → tdd-first 발동
-#    (수동 호출)   /cfh-refactor src/components/Button.tsx
-#    (수동 호출)   /cfh-tdd src/utils/format.ts
-#    (수동 호출)   /cfh-review develop      (PR 리뷰)
-#    (메타)        /cfh-new skill my-auth-flow  (새 스킬 대화형 작성)
-#    (메타)        /cfh-team                (팀 에이전트 자동 생성)
-#    (유틸)        /cfh-trace "리뷰 좀"     (발화가 어느 스킬을 트리거할지 시뮬레이션)
-#    (dispatcher) /cfh-make                (무엇을 만들지 모를 때 — 자산 분류부터)
-#    (dispatcher) /cfh-plan                (작업 목표를 상의하고 접근법부터 — 명시 호출만)
-#    (dispatcher) /cfh-debug               (버그·장애·성능·회귀 조사 — 증거 주도)
+> "결제 페이지에 쿠폰 검증 추가" 같은 요구사항. 어디서 시작할지 막막.
+
 ```
+/cfh-plan 결제 페이지에 쿠폰 검증 추가
+```
+
+- Phase 1: Q1~Q4 (목표·성공 기준·제약·긴급도) — Claude가 *바로 코드 안 짜고 멈춰서 묻기*
+- Phase 2: 접근법 카드 — 추천 + 이유 + 다른 옵션 + Project/Product 축
+- Phase 3: 적합한 sub-command로 위임 (tdd/tc/refactor/debug)
+
+→ 막연한 작업이 *3단계 명확한 계획*으로 변환. *Claude Code가 기본으로 안 하는 멈춤*.
+
+### 2. 설계 검증 필요할 때 — `/cfh-grill`
+
+> "이 plan이 정말 맞는가?" 머릿속만으로는 위험 신호 못 잡음.
+
+```
+/cfh-grill 쿠폰 검증 plan
+또는: /cfh-plan Phase 2 카드에서 (grill) 옵션 선택
+```
+
+- Phase 1: 결정 트리 enumerate — State 위치·에러 UX·캐싱·검증 위치 등 + *제외된 후보* 가시화 (자가검증)
+- Phase 2: 한 가지씩 *깊이* 인터뷰. 매 질문 추천 + 이유 + 대안. 한 번에 하나만.
+- Phase 3: 트리 walk 후 *의도 정렬*된 plan 완성
+
+→ mattpocock grill-me의 *relentless* 정신 + 자가검증(slot ≠ purpose)·ambiguous 응답 대기 등 cfh 어댑테이션.
+
+### 3. 새 기능·새 모듈 시작 — `/cfh-tdd` / `/cfh-tdd-gen`
+
+> "테스트 먼저 짜고 싶은데 의도 정리부터 막힘."
+
+```
+/cfh-tdd 쿠폰 검증 컴포넌트            # FE — RTL·MSW
+/cfh-tdd-gen 결제 API idempotency       # non-FE — Arrange-Act-Assert
+```
+
+- Phase 1: Intent Interview 6 질문 — Happy path / Edge / Error / Out of scope / 관찰 방법
+- Phase 2~5: 실패 테스트 → 구현 → 리팩터 + *AI 오버핏 방지 구조 디펜스*
+- stack에 따라 자동 분기 — FE/non-FE 도구·관용구 다름
+
+→ 테스트→구현 순서 강제. AI가 *테스트 통과만을 위한 hardcode*하는 패턴 차단.
+
+### 4. 레거시 리팩터링 — `/cfh-refactor` / `/cfh-refactor-gen`
+
+> "기존 코드 정리하고 싶은데 어디부터·어디까지?"
+
+```
+/cfh-refactor src/legacy/checkout       # FE — queryKey·tsc·RTL
+/cfh-refactor-gen internal/retry        # non-FE — DB schema·migration·Strangler Fig
+```
+
+- Step 1: Scope Narrowing 8 질문 + 추천+이유 패턴
+- Step 2~3: Project Profile + Blast Radius 분석 (string 참조·queryKey·DB schema·event topic 등)
+- Step 4: Safety Net (Characterization Test 자동 권장)
+- Step 5: Small PR 분할 (Vertical / Horizontal / Scaffolding / Adapter / Strangler Fig)
+
+→ "한 PR에 너무 많이"·"안전망 없이 리팩터" 같은 흔한 실패 패턴 차단.
+
+### 부가 시나리오
+
+- **PR 리뷰**: `/cfh-review develop` → 규모별 1~7 서브에이전트 병렬 → `REVIEW.md`
+- **원인 모를 버그**: 발화에 `500 에러`·`hydration mismatch` 등 → `debug-investigator` 자동 → 5-Phase 증거 기반 조사
+- **자산 만들기**: `/cfh-new skill <name>` (skill + mirror command 자동) / `/cfh-make` (자산 종류 분류 dispatcher) / `/cfh-team` (멀티 에이전트 팀 + orchestrator skill)
+- **세션 인계**: `/cfh-progress` — `./PROGRESS.md`에 결정 로그·미해결·다음 단계 누적
 
 ---
 
-## 표준 사용법
-
-`@han-kyeon/claude-skills`의 공식 "이렇게 쓰세요" 플로우입니다. 다음 섹션의 시나리오 가이드와 커맨드 선택 가이드는 이 표준 안에서 움직입니다. 처음이시면 이 섹션만 먼저 훑고 시작하셔도 됩니다.
-
-### 3 원칙
-
-#### 원칙 1 — 프로젝트 로컬 우선
-
-팀·프로젝트 고유 규약은 **항상 `./.claude/`에 작성**하고 git에 커밋합니다. 개인 취향(네이밍·테스트 스타일)만 `~/.claude/` 전역에 둡니다. 런타임에서도 프로젝트 로컬이 전역을 이깁니다.
-
-- ✅ `cfh new skill payment-rules --project`
-- ✅ `cfh generate reviewer-team` (기본이 프로젝트 로컬)
-- ❌ 팀 규약을 전역(`~/.claude/`)에만 두기 — 팀원이 못 봄, git 추적 안 됨
-
-#### 원칙 2 — 자산 작성 전에 분류
-
-무엇을 만들지 확정되지 않은 상태로 `cfh new` 스캐폴드부터 찍지 않습니다. 다음 우선순위로 진입하세요.
-
-1. 확정됨(skill / command / team) → `/cfh-new`, `/cfh-team`, `cfh generate` 직접
-2. 모호함 → `/cfh-make`로 3 분류 질문 먼저
-3. 일회성 작업 → 스킬 만들지 말고 Claude에게 바로 요청
-
-#### 원칙 3 — 보호는 명시적으로
-
-번들 스킬을 편집하셨다면 반드시 `cfh adopt`로 **user-authored 전환을 명시**하세요. 그렇지 않으면 `cfh update`가 덮어쓸 수 있습니다.
-
-- `cfh diff <name>` — 내가 뭘 바꿨는지 먼저 확인
-- `cfh adopt <name>` — 보호 확정 (y/N 확인 있음)
-- `cfh doctor` — 주기적으로 고아 manifest·트리거 충돌 점검
-
----
-
-### 생명주기 5 단계
-
-#### 단계 1 — 셋업 (설치 직후 1회)
-
-```bash
-npm install -g @han-kyeon/claude-skills
-cfh install                      # 번들 4 스킬 + 8 커맨드 설치
-cfh doctor                       # 초기 상태 점검
-cfh list                         # 설치 확인
-```
-
-**확인 기준**: `cfh doctor` 결과에 error가 없을 것. warning은 이 단계에서 모두 허용.
-
-**선택**: 심볼릭 링크 방식이면 `cfh install --link` — npm update 시 자동 반영. 단, 커스터마이징은 불가.
-
----
-
-#### 단계 2 — 프로젝트 온보딩 (새 프로젝트 진입 시 1회)
-
-```bash
-cd <project>
-cfh list --project               # 프로젝트 로컬 기존 자산 확인
-```
-
-**선택지 분기**:
-
-- 프로젝트에 이미 `.claude/`가 있음 → 기존 자산을 **편집·확장** (새로 만들지 않음). `cfh doctor`로 상태 확인.
-- 프로젝트에 `.claude/`가 없음 → 아래 중 **필요한 것만** 생성:
-  - 팀 규약·도메인 규칙을 Claude가 자동 적용해야 함 → `/cfh-new skill our-conventions --project`
-  - PR 리뷰를 다축(보안·성능·a11y·타입)으로 하고 싶음 → `cfh generate reviewer-team`
-  - 실패 비용 크고 TDD 오버핏 우려 → `cfh generate producer-reviewer`
-  - 뭘 만들지 모름 → `/cfh-make`로 분류부터
-
-**마무리**:
-```bash
-cfh validate                     # 생성된 자산 검증
-git add .claude
-git commit -m "chore: add Claude Code harness"
-```
-
-이 단계 이후 팀원들은 `git pull` + Claude Code 재시작만 하면 됩니다.
-
----
-
-#### 단계 3 — 데일리 (매 작업)
-
-작업 성격별로 **시나리오 가이드(다음 섹션) 중 하나를 고르는 것**이 기본 동작입니다. 막막하시면 아래 3개 중 하나로 시작:
-
-- `/cfh-guide overview` — 이 도구의 전체 그림을 대화로 받기
-- `/cfh-make <한 줄 요구사항>` — **재사용 자산** 만들기(skill/command/team) — dispatcher가 분류해 메타-스킬로 위임
-- `/cfh-plan <작업 목표>` — **실제 작업** 시작 — 목표 캡처·접근법 상의 후 전용 커맨드로 위임 또는 직접 실행 (명시 호출 전용)
-
-**자동 트리거를 신뢰**: "리팩터링해줘", "TDD로 시작", "스킬 만들어줘" 같은 발화만으로도 해당 스킬이 자동 활성화됩니다. 명시적 슬래시 커맨드는 자동 트리거가 안 뜨거나 특정 인자를 넘기고 싶을 때 사용합니다.
-
-**하지 말아야 할 것**:
-- 매번 `cfh install`·`cfh update` 실행 — 설치는 1회, 갱신은 단계 4에서.
-- Claude 대화 밖에서 SKILL.md 직접 열어 편집 — 대신 `/cfh-new` 또는 `/cfh-make`로 인터뷰 통해 설계.
-
----
-
-#### 단계 4 — 주기 점검 (주 1회 또는 패키지 업데이트 후)
-
-```bash
-npm update -g @han-kyeon/claude-skills
-cfh update                       # managed 항목만 갱신 (user-authored는 자동 보호)
-cfh doctor                       # 새 오류·trigger 충돌 감지
-```
-
-**옵트인 하신 경우 추가**:
-```bash
-cfh evolve                       # 사용 로그 + 정적 분석 기반 개선 제안
-```
-
-**확인 기준**:
-- `cfh update` 후 "skipped N user-authored" 메시지 — 내 스킬이 그대로인지 확인
-- `cfh doctor`에서 새로 생긴 warning이 있다면 원인 추적 (업스트림 변경 때문인지)
-- `cfh evolve` 제안 중 공감되는 것만 골라 SKILL.md 수동 편집
-
----
-
-#### 단계 5 — 장기 관리 (분기·반기)
-
-이 시점에는 사용자 편집·생성 자산이 쌓여 있습니다. 정리 타이밍입니다.
-
-```bash
-cfh list                         # 전체 현황 — managed/user-authored/user-modified 분포 확인
-cfh diff <편집한 번들 스킬>       # 어떤 파일을 바꿨는지
-cfh adopt <편집한 번들 스킬>      # user-authored로 영구 전환 (update에서 제외)
-cfh remove <안 쓰는 스킬>         # 정리
-```
-
-**팀 공유·아카이빙**:
-- 프로젝트 로컬 `.claude/`에 팀 공유 가치가 있다면 git commit + PR
-- 개인 전역 `~/.claude/`에서 팀 공유 가치 있는 것은 `cfh new skill <name> --project`로 **재작성**하여 프로젝트로 이동 (카피만 이동해도 되지만, 원칙 1에 따라 프로젝트 컨텍스트로 새로 설계하는 것이 더 나음)
-
----
-
-### 핵심 체크포인트 — 멈추고 확인해야 할 순간
-
-**① 새 스킬 작성 직전**
-```bash
-cfh trace "<이 스킬이 떠야 할 대표 발화>"
-```
-- 기존 스킬이 먼저 떠오르면 description이 겹치는 것 — 새로 만들지 말고 기존 확장 검토.
-- 아무것도 안 뜨면 정상. 새 스킬 작성 진행.
-
-**② PR 올리기 직전**
-```bash
-/cfh-review develop
-```
-- Critical·High 지적 해소하지 않으면 머지 금지 (내부 가이드).
-- `Questions to Resolve`가 있으면 모호한 의도 — 리뷰어에게 묻기 전에 본인이 먼저 답해두기.
-
-**③ 대규모 리팩터 직전**
-- `Safety net(테스트)` 존재 여부 확인. 없으면 **Step 5 진행 전 반드시 Characterization Test 작성** (`/cfh-refactor`가 자동으로 안내합니다).
-- 작은 PR로 쪼갤 수 없는 변경이면 범위가 잘못됐다는 신호 — Scope 재질문.
-
-**④ 팀(에이전트 팀) 도입 직전**
-- Q4 실패 비용이 (c) 운영 장애/데이터 손실이면 **Producer-Reviewer 강제** (단일 팀이 생성·검증을 겸하면 오버핏 위험).
-- 에이전트 5개 넘으면 Hierarchical 재편 검토 — 1 레벨로 나열하면 관리 비용이 작업 비용 초과.
-
----
-
-### 한 장 요약
-
-```
-설치 (1회)          → cfh install → cfh doctor → cfh list
-프로젝트 진입 (1회)  → cd <proj> → cfh list --project → 필요 자산 생성 → git commit
-매 작업             → 시나리오 가이드 또는 /cfh-make → /cfh-* 실행
-주 1회              → cfh update → cfh doctor → (옵션) cfh evolve
-분기·반기           → cfh diff → cfh adopt → cfh remove → 팀 공유 정리
-
-원칙:
-  1. 프로젝트 로컬 우선 (팀 공유는 ./.claude/ + git)
-  2. 자산 작성 전에 분류 (/cfh-make 또는 확정된 엔트리로)
-  3. 보호는 명시적으로 (cfh adopt로 user-authored 전환)
-```
-
----
-
-## 언제 무엇을 쓰나 — 시나리오 가이드
-
-본인의 상황에 맞는 시작점을 찾으실 수 있도록 전형적인 8가지 시나리오를 정리했습니다. 상황이 복합적이거나 어느 것도 맞지 않으시면 `/cfh-make`로 시작하시면 Claude가 분류해드립니다.
-
-### 1. 신규 기능 개발
-
-**상황**: 새 기능을 처음부터 설계·구현. 요구사항은 있지만 테스트도 코드도 아직 없음.
-
-**추천 흐름 (FE)**:
-```
-1. /cfh-tdd src/features/newFeature.ts
-   → Phase 0 범위 좁히기 (7 질문) → Phase 1 의도 인터뷰 (6 질문)
-   → Phase 2 테스트 아웃라인 승인 → Phase 3 실패 테스트 커밋
-   → Phase 4 최소 구현 → Phase 5 리팩터 + 의도 보존 체크
-
-2. (선택) 도메인 규칙이 복잡하면 시작 전에
-   /cfh-new skill our-payment-rules --project
-   → 팀·도메인 규약을 스킬로 미리 내려두면 이후 Claude가 자동 적용
-
-3. 기능 완성 후
-   /cfh-review develop
-   → diff 규모 기반 1~5 서브에이전트로 자체 PR 리뷰
-```
-
-**추천 흐름 (BE — Node·Python·Go)**:
-```
-1. /cfh-tdd-gen src/api/users/createUser.ts
-   → tdd-general 스킬: framework-agnostic 5 Phase
-   → Test Outline은 Arrange-Act-Assert 또는 given-when-then
-   → 스택별 관용구 자동 적용 (vitest/pytest/go test)
-
-2. (선택) /cfh-new skill our-api-conventions --project
-   → 응답 형식·에러 처리·검증 컨벤션을 스킬로
-
-3. PR 전 /cfh-review develop
-   → stack_kind=backend-* 감지 시 SQL injection·N+1·트랜잭션 등 BE 안티패턴으로 분석
-```
-
-**언제 팀을 만드나**: 실패 비용이 크거나(결제·인증·의료) 테스트 오버핏이 우려되는 경우 `cfh generate producer-reviewer`로 생성자·검증자 인격 분리.
-
----
-
-### 2. UI 개발
-
-**상황**: React/Vue 컴포넌트, 인터랙션, 접근성.
-
-**추천 흐름**:
-```
-1. 컴포넌트 구현 (자유 작성 또는 /cfh-tdd로 TDD)
-
-2. /cfh-tc src/components/Button/Button.tsx
-   → 파일 존재 감지 → Test-Fill Mode 또는 TDD Mode 자동 선택
-   → Testing Library 쿼리 우선순위(getByRole > getByLabelText > …)
-   → userEvent 기반, a11y 테스트 포함
-
-3. PR 전 /cfh-review develop
-   → Medium+ diff면 Convention·Logic·Test·Performance·Security 5축
-```
-
-**팀 옵션**: UI 전용 다축 리뷰 원하시면 `cfh generate reviewer-team` (security/perf/a11y/types). 특히 접근성이 중요한 프로젝트에서 유용합니다.
-
-**장기 투자**: 디자인 시스템·네이밍 규약이 있으면 `/cfh-new skill our-ui-patterns --project`로 스킬화 — 매번 설명 반복하실 필요 없어집니다.
-
----
-
-### 3. 테스트 코드 개발 (기존 코드 보강)
-
-**상황**: 구현은 이미 있고, 테스트 커버리지가 부족함.
-
-**FE 추천 흐름**:
-```
-1. /cfh-tc src/legacy/validateCoupon.ts
-   → Test-Fill Mode 자동 전환 (파일 존재 감지)
-   → Phase 0 현재 동작 관찰 (Characterization Test 접근)
-   → Priority 1~5 시나리오 설계 (Core → Async → Edge → A11y → Integration)
-
-2. 테스트 작성 중 버그 발견 시
-   → `// BUG:` 주석만 달고 수정은 별도 PR (Characterization 원칙)
-```
-
-**BE 추천 흐름**:
-```
-1. /cfh-tc-gen src/services/auth.ts
-   → tdd-general 기반 — 스택 감지(Node/Python/Go/...) 후 관용구 적용
-   → Priority 1~5 (Core → IO → Edge → Error → Integration)
-   → DI 우선·외부 IO만 mock·private 메서드 직접 호출 금지
-
-2. test container·in-memory DB 검토 (격리된 통합 테스트)
-```
-
-**자동 트리거**: "테스트 보강해줘" / "커버리지 올리고 싶어" 같은 발화만으로 `tdd-first`(FE) 또는 `tdd-general`(BE) 스킬이 뜹니다 — 스택 컨텍스트로 자동 분기.
-
----
-
-### 4. TDD 개발
-
-**상황**: 설계를 테스트로 먼저 표현하고 싶음. 오버핏 방지가 중요.
-
-**추천 흐름 (FE)**:
-```
-1. /cfh-tdd src/utils/format.ts
-   → Phase 0 범위 좁히기 → Phase 1 의도 인터뷰 (6 질문)
-   → Phase 2 describe/it 제목 승인 → Phase 3 실패 테스트
-   → Phase 4 최소 구현 (테스트 수정 금지, hard-code 분기 금지)
-   → Phase 5 리팩터 + 의도 보존 체크 (Phase 1 답변 재확인)
-
-2. 오버핏 위험 구간이면 팀 구성
-   cfh generate producer-reviewer
-   → Producer 에이전트는 구현, Reviewer 에이전트는 스펙 대비 검증
-```
-
-**추천 흐름 (BE — Node·Python·Go)**:
-```
-1. /cfh-tdd-gen src/services/auth.ts
-   → tdd-general 5 Phase (framework-agnostic)
-   → Test Outline은 Arrange-Act-Assert 또는 given-when-then
-   → table-driven 테스트 권장 (it.each·parametrize·t.Run+slice)
-   → DI 우선·외부 IO만 mock·private 메서드 직접 호출 금지
-
-2. 시간·랜덤·환경변수 등은 모두 인자로 주입
-   → Date.now·time.time·os.environ 직접 사용 금지
-```
-
-**자동 트리거**: "TDD" / "테스트 먼저" / "red-green" 발화 → `tdd-first` 자동.
-
-**오버핏 방지 5룰**: 테스트 잠금 / Writer·Implementer 분리 / 행동 기반 assertion / Property-based 보강 / 의도 보존 체크. 상세는 `~/.claude/skills/tdd-first/SKILL.md`.
-
----
-
-### 5. 리팩토링
-
-**상황**: 기존 코드의 구조 개선. 행동 보존 필수.
-
-**추천 흐름**:
-```
-1. /cfh-refactor src/legacy/patient-api
-   → Step 1 Scope Narrowing (8 질문)
-   → Step 2 Project Profile 스캔
-   → Step 3 Blast Radius 분석 (import·타입·간접 참조·테스트 의존)
-   → Step 4 Safety Net (테스트 없으면 Characterization Test 먼저)
-   → Step 5 Small PR 계획 (50~200줄, 5파일 이내로 쪼갬)
-   → Step 6~8 각 PR 실행·검증·보고
-
-2. 리팩터 중 Scope 외 이슈 발견
-   → TODO 주석 금지, Issue 트래커로 분리
-```
-
-**5대 원칙**:
-- 작은 PR (하나의 주제만)
-- 행동 보존 (테스트/타입 안전망 필수)
-- Blast Radius 먼저 파악
-- Legacy 허용 (범위 밖은 Issue로)
-- 라이브러리 공식 기준만 (취향 금지)
-
-**주의**: 테스트가 전혀 없는 영역은 **Step 5 진행 전 반드시** Characterization Test. 안 그러면 "동작이 바뀌었는지 아무도 모름" 상태.
-
----
-
-### 6. 최적화 (성능)
-
-**상황**: 렌더링·런타임·번들 사이즈·DB 쿼리 개선.
-
-**추천 흐름**:
-```
-1. 현황 파악 — /cfh-review (4-옵션 인터뷰에서 (b) 최근 N 커밋 또는 (c) 특정 범위 선택)
-   stack_kind 자동 감지로 FE는 리렌더·번들·INP, BE는 N+1·트랜잭션·캐시 분석
-
-2. 집중 최적화 팀 필요 시
-   - FE: cfh generate reviewer-team (perf-reviewer 편집해 React Query staleTime, RHF watch 등 프로젝트 규칙 추가)
-   - BE: cfh generate reviewer-team-backend (perf-reviewer가 N+1·missing index·blocking IO 감지)
-
-3. 구조적 성능 리팩터면 /cfh-refactor
-   → Blast Radius 분석에서 "성능" 축 명시하면 적절한 safety net 제안
-```
-
-**측정 없는 최적화 금지**: Chrome DevTools·React Profiler·EXPLAIN ANALYZE·load test 결과 근거로만.
-
-**주의**: 측정 없는 최적화는 금지. Chrome DevTools·React Profiler·번들 분석 결과를 근거로 지적하도록 `refactoring-strategy`와 `/cfh-review`가 요구합니다.
-
----
-
-### 7. 프로젝트 온보딩 (팀 규약 내리기)
-
-**상황**: 새 프로젝트에 투입되거나, 기존 프로젝트에 Claude Code 규약을 처음 도입.
-
-**추천 흐름**:
-```
-1. 진단부터
-   cd <project>
-   cfh list --project          # 이미 있는 프로젝트 로컬 자산 확인
-   cfh doctor                  # 문제 감지
-
-2. 프로젝트 규약 스킬화
-   /cfh-new skill our-conventions --project
-   → Pre-scan이 CLAUDE.md·package.json·기존 코드 샘플을 먼저 읽고
-     초안 답변을 만들어 드림 → 사용자는 확인만
-
-3. PR 리뷰 팀 세팅 (선택)
-   cfh generate reviewer-team
-   → 각 에이전트 .md 편집해 프로젝트 고유 규칙 반영
-   git add .claude && git commit -m "chore: add Claude Code team harness"
-
-4. 일회성으로 점검
-   /cfh-trace "이런 PR이 오면"    # 어느 스킬이 트리거될지 미리 확인
-```
-
----
-
-### 8. 자동화하고 싶은데 무엇을 만들지 모를 때
-
-**상황**: "이런 반복 작업 줄이고 싶은데 skill인지 command인지 팀인지 모르겠다."
-
-**추천**:
-```
-/cfh-make 팀 API 에러 처리 규약을 claude가 자동 적용하게
-
-→ asset-factory 메타-스킬이
-  Phase 1: Intent Capture
-    Step 1a 한 문장 요구사항 ($ARGUMENTS 또는 질문)
-    Step 1b Scoped Pre-scan — 요구사항 토큰과 30%+ 겹치는 기존 자산만 노출
-    Step 1c 3 분류 질문 (반복성 / 협업 / 트리거 방식)
-  Phase 2: skill-author / harness-factory / 인라인 커맨드 중 위임
-```
-
-**언제 쓰지 말아야**: 만들려는 게 skill·command·team 중 이미 확정됐다면 `/cfh-new`·`/cfh-team` 직접. 일회성 요청이면 그냥 Claude에게 바로 말하시면 됩니다.
-
----
-
-### 9. 복잡한 작업을 어떻게 시작할지 모를 때 (작업 상의)
-
-**상황**: "작업을 해야 하긴 하는데 어느 스킬을 써야 할지, 어디부터 시작할지 정리가 안 된다."
-
-**추천**:
-```
-/cfh-plan legacy 결제 모듈에 쿠폰 검증 로직 추가
-
-→ 3 Phase (목표 먼저, 스캔은 목표 기반으로)
-  Phase 1 Intent Capture
-    Step 1a Q1 목표 한 문장 ($ARGUMENTS 또는 질문)
-    Step 1b Scoped Pre-scan — 목표에 필요한 영역만 (CLAUDE.md·대상 파일·package.json scripts)
-    Step 1c Q2-Q4 (성공 기준 / 제약·out-of-scope / 긴급도)
-  Phase 2 Approach Proposal: 태스크 분류 + 접근법 카드 (사용자 승인)
-  Phase 3 Execution: /cfh-tdd·/cfh-refactor·/cfh-tc·/cfh-review 중 위임 또는 직접 실행
-```
-
-**특징**: **명시 호출 전용**, 자동 트리거 없음. 자연어 대화가 충분한 가벼운 작업을 방해하지 않습니다.
-
-**언제 쓰지 말아야**:
-- 작업 종류 이미 확정 (`/cfh-tdd`·`/cfh-refactor` 등 직접)
-- 가벼운 일회성 요청 (자연어로 대화)
-- 자산을 만드는 게 목적 (`/cfh-make`)
-
-**/cfh-make와의 차이**: `/cfh-make`는 "Claude Code 자체 확장(skill/command/team 생성)", `/cfh-plan`은 "실제 코드·기능 작업 실행"입니다.
-
----
-
-### 10. 버그·장애·성능·회귀 조사 *(0.8.0)*
-
-**상황**: 증상은 보이는데 **원인이 불분명**. 수정부터 시작하면 위험.
-
-**추천 흐름**:
-```
-/cfh-debug 프로덕션에서 쿠폰 적용 시 간헐 500 에러
-
-→ 5 Phase 조사
-  Phase 0 증거 수집: 증상·재현·영향·시점·환경 + 유형 분류(버그/장애/성능/회귀)
-  Phase 1 Context Scan: git log·blame·관련 PR·스택 파일 scoped 스캔
-  Phase 2 가설 나열: 최소 3개 가설 + 각 확인 방법
-  Phase 3 체계적 검증: 재현 테스트·git bisect·profiler
-  Phase 4 근본 원인 + 수정 계획: hotfix vs proper fix 선택
-       → /cfh-plan 또는 /cfh-tdd로 위임
-```
-
-**언제 쓰지 말아야**:
-- 이미 원인을 아는 경우 → `/cfh-plan`으로 바로
-- 단순 오타·간단 수정 → 자연어로 바로
-
-**`/cfh-plan`과 차이**: `/cfh-plan`은 **목표 주도**(뭘 할지 안다), `/cfh-debug`는 **증거 주도**(뭐가 잘못됐는지 찾아야 한다).
-
-**특징**:
-- 4 유형 지원: 기능 버그 / 장애·인시던트 / 성능 이슈 / 회귀
-- 장애 유형에서 rollback 가능 + 고심각도면 **조사 전에 rollback 먼저** 권고
-- 최소 3개 가설 강제 (확증 편향 방지)
-- Phase 4 수정 계획은 **계획만** — 실제 수정은 `/cfh-plan` 등에 위임
-- 조사 내역 `DEBUG-LOG.md` 또는 Issue에 기록 권장
-
----
-
-## 커맨드·CLI 선택 가이드
-
-### 슬래시 커맨드 (Claude Code 대화 중)
-
-| 상황 | 추천 | 언제 쓰나 | 대안 |
-|---|---|---|---|
-| 새 기능 구현 (FE) | `/cfh-tdd <file>` | React/Vue 컴포넌트·훅·유틸 TDD | 자유 작성 + `/cfh-tc`로 뒤에 테스트 보강 |
-| 새 기능 구현 (BE/일반) | `/cfh-tdd-gen <file>` | 백엔드·라이브러리·CLI TDD | `/cfh-tdd` (잘못된 스택 권유 시 안내) |
-| 기존 코드 테스트 (FE) | `/cfh-tc <file>` | 구현 있고 RTL 테스트 추가 | — |
-| 기존 코드 테스트 (BE/일반) | `/cfh-tc-gen <file>` | 구현 있고 BE/라이브러리 테스트 추가 | — |
-| 스킬 사용 피드백 기록 | `/cfh-feedback <skill> "<comment>"` | 사용 중·후 즉석 피드백 (옵트인) | `cfh log <skill> --event ...` (CLI 직접) |
-| 코드 구조 개선 | `/cfh-refactor <target>` | 행동 변경 없는 리팩터 | 버그 수정이면 일반 대화 |
-| PR 리뷰 | `/cfh-review [branch]` | 머지 전 자체 점검 | 외부 코드 리뷰 먼저 받고 보조로 사용 |
-| 새 스킬 만들기 (확정) | `/cfh-new skill <name>` | skill이 필요한 게 확실할 때 | — |
-| 팀 구성 (확정) | `/cfh-team [domain]` | 다축 리뷰·생성-검증 분리가 확정 | `cfh generate <preset>`이 더 빠를 수 있음 |
-| 뭘 만들지 미정 | `/cfh-make [요구사항]` | 만들고 싶은데 skill/command/team 구분 안 설 때 | — |
-| 작업 어떻게 시작할지 상의 | `/cfh-plan [목표]` | 복합·모호한 작업의 목표·접근법 정리 후 실행 (명시 호출만) | 확정이면 해당 작업 커맨드 직접 |
-| 원인 불명 이슈 조사 | `/cfh-debug [증상]` *(0.8.0)* | 버그·장애·성능·회귀의 증거 주도 조사 (명시 호출만) | 원인 이미 알면 `/cfh-plan` |
-| **작업 회고 영구 기록** | `/cfh-retro [본문]` *(0.9.0)* | 직전 turn의 🔄 Retro 블록을 `~/.claude/.cfh-logs/retros/`에 저장. Stop 훅으로 자동 트리거 가능 | `/cfh-feedback` (스킬 자체 의견) |
-| **프로젝트 진행 노트** | `/cfh-progress [init\|append\|show]` *(0.10.0)* | 결정·다음 단계·미해결 질문을 `./PROGRESS.md`에 누적 — 다음 세션·팀원 인계용 | `/cfh-retro` (작업 한 건 회고) |
-| 트리거 디버깅 | `/cfh-trace "<발화>"` | description 조정 중일 때 | `cfh doctor`로 overlap도 함께 |
-| 가이드 | `/cfh-guide [topic]` | 사용법 확인 | 이 README |
-
-### CLI 커맨드 (터미널)
-
-| 상황 | 커맨드 | 언제 쓰나 |
-|---|---|---|
-| 첫 설치 | `cfh install` | npm 전역 설치 직후 1회 |
-| 심볼링크 설치 | `cfh install --link` | npm update 자동 반영 원할 때 |
-| 패키지 갱신 후 | `cfh update` | `npm update` 뒤에. managed만 갱신 |
-| 설치 현황 | `cfh list` | 뭐가 설치돼 있고 어떤 상태인지 |
-| 프로젝트만 보기 | `cfh list --project` | 프로젝트 로컬 `.claude/`만 |
-| 검증 | `cfh validate` | 편집 후, CI 파이프라인 |
-| 스캐폴드 (빠름) | `cfh new <kind> <name>` | 인터뷰 없이 골격만 필요할 때 |
-| 팀 프리셋 | `cfh generate <preset>` | 3종(producer-reviewer/pipeline/expert-pool) 중 하나에 맞을 때 |
-| 제거 | `cfh remove <name>` | 더 이상 필요없는 managed 자산 |
-| **편집 보호** | `cfh adopt <name>` | 번들 스킬을 내 것으로 편집한 뒤 업데이트에서 보호 |
-| **변경 확인** | `cfh diff <name>` | 내가 뭘 바꿨는지 확인 |
-| **전체 점검** | `cfh doctor` | 트리거 충돌·고아 manifest·shadowing 진단 |
-| **트리거 확인** | `cfh trace "<발화>"` | 어느 스킬이 매칭될지 미리보기 |
-| **키워드 검색** | `cfh search "<키워드>"` *(0.7.0)* | 설치 자산을 name·description·본문 검색 |
-| **자산 편집** | `cfh open <name>` *(0.7.0)* | $EDITOR로 SKILL.md·command 열기 |
-| **자산 내보내기** | `cfh export` *(0.7.0)* | user-authored 자산을 JSON 번들로 |
-| **자산 가져오기** | `cfh import <bundle.json>` *(0.7.0)* | 번들을 풀어 설치 |
-| **로깅 제어** | `cfh log --enable/--disable/--status` | 옵트인 텔레메트리 제어 |
-| **이벤트 기록** | `cfh log <skill> --event --utterance --helpful` | 사용 패턴 수집 |
-| **스킬 제안** | `cfh evolve [<name>]` | description·원칙 개선 포인트 제안 |
-| **토큰 비용 집계** | `cfh cost` *(0.10.0)* | Claude Code transcript에서 토큰 사용량을 명령·일자·모델·세션별로 집계. 새 텔레메트리 수집 없이 기존 데이터 read-only |
-| **스킬 eval** | `cfh eval [skill]` *(0.10.0)* | 스킬 케이스 (`prompt + assertions`) 기반 검증. `--dry-run`(기본) / `--manual` / `--executor claude` / `--baseline` |
-| **변형 비교** | `cfh eval --variants <file>` *(0.11.0)* | description A/B/C 변형의 trace 점수 비교 (LLM 호출 없음) |
-| **JUnit 리포트** | `cfh eval --report junit` *(0.11.0)* | CI PR 체크용 JUnit XML 출력 |
-| **통합 대시보드** | `cfh dashboard` *(0.11.0)* | cost+sentry+eval coverage+trend markdown 리포트 |
-| **회귀 진단** | `cfh cost --since-commit <hash>` *(0.12.0)* | git commit 시점 기준 토큰 비교 |
-| **staleness 감지** | `cfh diff --skills-vs-evals` *(0.12.0)* | SKILL.md > evals mtime인 스킬 |
-| **스킬 fork** | `cfh new skill <name> --from-existing <other>` *(0.12.0)* | 기존 스킬 복제 + TODO 마커 |
-| **자동 감시** | `cfh watch [--doctor]` *(0.12.0)* | 파일 변경 시 validate 자동 재실행 |
-| **schema 린트** | `cfh validate --strict` *(0.12.0)* | frontmatter schema 엄격 검증 |
-| **Semantic eval** | `cfh eval --enable-judge` *(0.13.0)* | judge assertion으로 의미 검증 (LLM 호출 추가) |
-| **실시간 sentry** | `cfh sentry --live` / `--install-hook` *(0.14.0)* | PostToolUse 훅으로 tool 실패 패턴 실시간 감지 |
-| **결정 트리 grill** | `/cfh-grill [topic]` *(0.14.1)* | 결정 트리 walk + 추천+이유 인터뷰 (mattpocock grill-me 어댑테이션) |
-
-**굵은 글씨**는 0.3.0 신규 명령입니다.
-
-### 결정이 어려울 때 순서
-
-1. **아무것도 모르겠다** → `/cfh-guide overview`
-2. **작업을 어떻게 시작할지 모르겠다** → `/cfh-plan <목표>`
-3. **자산(skill/command/team)을 만들고 싶은데 뭘 만들지 모르겠다** → `/cfh-make <요구사항>`
-4. **무엇이 어디에 있나** → `cfh list` (전역+프로젝트), `cfh doctor` (문제 진단)
-5. **내 발화가 안 먹힌다** → `cfh trace "<발화>"` → description에 키워드 보충 → `cfh evolve`로 보강 포인트 확인
-6. **번들 스킬을 내 것으로 만들고 싶다** → `cfh diff <name>` → `cfh adopt <name>`
-7. **새 프로젝트 온보딩** → 시나리오 7번 흐름 따라가기
-
----
-
-## 번들 자산 전체 목록
-
-### Skills (`skills/`)
-
-| 스킬 | 트리거 | 역할 |
-|---|---|---|
-| `refactoring-strategy` | "리팩터링", "refactor", "legacy cleanup" | Small PR · Blast Radius · Characterization test · 라이브러리 공식 안티패턴 |
-| `tdd-first` | "TDD", "테스트 먼저", 새 기능/버그 시작 | **FE-friendly** TDD 5 Phase (RTL·userEvent 관용구) — Intent Interview → Test Outline → Failing Test → Implement → Refactor |
-| `tdd-general` *(0.6.0)* | "TDD without React", "백엔드 TDD", "라이브러리 TDD" | **Framework-agnostic** TDD — 동일 5 Phase, 스택 중립 (Node·Python·Go·Rust·Java). Arrange-Act-Assert·DI·table-driven |
-| `skill-author` | "스킬 만들", "create a skill", "write a skill" | 인터뷰 기반 SKILL.md 작성 메타-스킬 (6 Phase: Pre-scan + 조건부 follow-up + Sanity check + (z) 모르겠음 fallback) |
-| `harness-factory` | "팀 에이전트", "agent team", "build a harness" | 6 패턴 중 선택해 `.claude/agents/` + `.claude/skills/` 생성 (7 Phase: Pre-scan + 기본 6 질문 + Deep-dive 3지선 + Sanity check R1~R8) |
-| `asset-factory` | "자동화해줘", "뭔가 만들고 싶은데", "automate this" | **자산 Dispatcher** — 3 분류 질문으로 skill/command/team/agent 판단 후 적합한 메타-스킬로 위임 (0.5.0 goal-first) |
-| `debug-investigator` *(0.8.0)* | "원인 모르겠다", "stack trace", "production 500", "배포 후 깨짐", "장애 났다" | **이슈 조사 Dispatcher** — 증거 주도 5 Phase. `/cfh-debug` 커맨드와 동일 워크플로 자동 진입 |
-
-### Slash commands (`commands/`)
-
-번들 커맨드는 0.3.0부터 **`cfh-` 접두사**로 통일되어 사용자 작성 커맨드와 네임스페이스가 분리됩니다.
-
-| 커맨드 | 인자 | 역할 |
-|---|---|---|
-| `/cfh-review` | `[parent-branch]` | 적응형 AI 코드 리뷰 — diff 규모별 서브에이전트 수 조정. **0.8.0부터 Project Health·Product Impact 추가 (Medium+에서 7 에이전트)**. **0.9.0부터 리뷰 종료 보고에 🔄 Retro 블록 (REVIEW.md 자체 commit은 기본 no-commit)** |
-| `/cfh-debug` *(0.8.0)* | `[증상 설명]` | 증거 주도 조사 워크플로 — 버그·장애·성능·회귀. 5 Phase (증거 → 컨텍스트 → 가설 3+ → 검증 → 원인+수정 계획). `debug-investigator` 스킬로 자동 트리거도 가능. **0.9.0부터 Phase 4 보고에 🔄 Retro 블록 (코드 수정은 위임 커맨드에서 commit)** |
-| `/cfh-tc` | `[path]` | 테스트 작성 — TDD Mode / Test-Fill Mode 자동 감지 (FE: RTL 관용구) |
-| `/cfh-tc-gen` | `[path]` | 테스트 작성 — BE·라이브러리·CLI 친화적 (DI·supertest·격리된 통합 테스트) |
-| `/cfh-feedback` | `<skill> "<comment>"` | 스킬 사용 피드백 기록 (cfh evolve 분석 반영, 옵트인) |
-| `/cfh-retro` *(0.9.0)* | `[본문]` | 작업 회고 영구 기록 — `~/.claude/.cfh-logs/retros/`. Stop 훅으로 5개 작업 커맨드 종료 시 자동 트리거 가능 |
-| `/cfh-progress` *(0.10.0)* | `[init\|append\|show]` | 프로젝트 결정·다음 단계·미해결을 `./PROGRESS.md`에 누적. 자동 생성 금지 (init 명시 호출 후에만), 자동 commit 금지 |
-| `/cfh-refactor` | `[target]` | `refactoring-strategy` 스킬 명시적 활성화. **0.9.0부터 Step 8 보고에 🔄 Retro + 📝 제안 커밋 블록** |
-| `/cfh-tdd` | `[target]` | `tdd-first` 5 Phase 순차 실행 (FE-friendly: RTL·userEvent 관용구). **0.9.0부터 Phase 5 보고에 🔄 Retro + 📝 제안 커밋 블록 (test→feat→refactor 3분할 우선 제안)** |
-| `/cfh-tdd-gen` | `[target]` | `tdd-general` framework-agnostic 5 Phase (BE·CLI·라이브러리·순수 함수) |
-| `/cfh-new` | `<kind> <name>` | `skill-author` 활성화 + 인터뷰 기반 자산 작성 (종류 확정됐을 때) |
-| `/cfh-team` | `[domain]` | `harness-factory` 활성화 + 팀 생성 워크플로 |
-| `/cfh-make` | `[requirement]` | `asset-factory` dispatcher — 무엇을 만들지부터 분류 |
-| `/cfh-plan` | `[goal]` | 작업 dispatcher — 목표 캡처·접근법 상의·실행 (명시 호출 전용, 자동 트리거 없음). **0.8.0부터 Phase 2 접근법 카드에 Project Alignment + Product Impact 자동 검증 섹션 포함**. **0.9.0부터 Phase 3 완료 보고에 🔄 Retro + 📝 제안 커밋 블록** |
-| `/cfh-trace` | `[query]` | 발화가 어느 스킬을 트리거할지 시뮬레이션 |
-| `/cfh-guide` | `[topic]` | 사용 가이드 |
-
-### Team presets (`templates/presets/`)
-
-| 프리셋 | 패턴 | 산출물 |
-|---|---|---|
-| `producer-reviewer` | Producer-Reviewer | producer / reviewer 2 에이전트 + 트리거 스킬 |
-| `pipeline-3stage` | Pipeline | analyst / builder / qa 3 에이전트 + 파이프라인 스킬 |
-| `reviewer-team` | Expert Pool (FE) | security / perf / a11y / types 4 에이전트 + 리뷰 풀 스킬 |
-| `reviewer-team-backend` *(0.6.0)* | Expert Pool (BE) | security / perf / types / data-integrity 4 에이전트 + BE 전용 리뷰 풀 스킬 |
+## 자산 매트릭스 (한눈에)
+
+### FE 전용
+
+| 자산                                           | 목적                                              |
+| ---------------------------------------------- | ------------------------------------------------- |
+| `/cfh-tdd` + `tdd-first` skill                 | **새** React/Vue 컴포넌트 TDD (intent mode)       |
+| `/cfh-tc`                                      | **기존** FE 파일 테스트 추가·보강 (artifact mode) |
+| `/cfh-refactor` + `refactoring-strategy` skill | FE 리팩터 (queryKey·tsc·RTL)                      |
+
+### non-FE 전반 (`-gen` suffix)
+
+| 자산                                 | 목적                                                               |
+| ------------------------------------ | ------------------------------------------------------------------ |
+| `/cfh-tdd-gen` + `tdd-general` skill | **새** non-FE 자산 TDD (BE handler·CLI·library·mobile·embedded·ML) |
+| `/cfh-tc-gen`                        | **기존** non-FE 파일 테스트 추가·보강                              |
+| `/cfh-refactor-gen`                  | non-FE 리팩터 (DB schema·migration·observability·Strangler Fig)    |
+
+### 메타 자산 — 자산 생성·orchestration
+
+| 자산                                  | 목적                                                             |
+| ------------------------------------- | ---------------------------------------------------------------- |
+| `/cfh-new` + `skill-author` skill     | skill·command·agent 스캐폴드 (skill 시 mirror command 자동 생성) |
+| `/cfh-make` + `asset-factory` skill   | 자산 종류 모를 때 3 질문 분류 dispatcher                         |
+| `/cfh-team` + `harness-factory` skill | 에이전트 팀 설계 (6 패턴 중 1)                                   |
+
+### 인터뷰·인사이트
+
+| 자산                                      | 목적                                               |
+| ----------------------------------------- | -------------------------------------------------- |
+| `/cfh-debug` + `debug-investigator` skill | 5-Phase 증거 기반 디버깅 (FE/BE 양쪽 키워드)       |
+| `/cfh-review`                             | PR 7-agent 리뷰 (stack-aware)                      |
+| `/cfh-grill` + `grill-me` skill           | 결정 트리 깊이 파기 인터뷰 (mattpocock 어댑테이션) |
+| `/cfh-plan`                               | 작업 dispatcher (목표→접근법 카드→실행/위임)       |
+
+### 워크플로 보조
+
+| 자산            | 목적                                                       |
+| --------------- | ---------------------------------------------------------- |
+| `/cfh-progress` | 프로젝트 진행 노트 — `./PROGRESS.md` 누적                  |
+| `/cfh-retro`    | 작업 회고 영구 기록 — `~/.claude/.cfh-logs/retros/`        |
+| `/cfh-feedback` | 스킬 피드백 — `~/.claude/.cfh-logs/<skill>.jsonl` (옵트인) |
+| `/cfh-guide`    | 사용 가이드 출력                                           |
+| `/cfh-trace`    | 발화→스킬 매칭 점수 미리보기                               |
+
+상세 매트릭스 (특화·이번 사이클 변경): [`PLAN.md` § 1](./PLAN.md) 또는 [`DESC_CFL.md` § 8](./DESC_CFL.md).
 
 ---
 
 ## 설치
 
-### 전역 설치 (복사 방식, 기본)
-
 ```bash
+# 글로벌 (기본 — 모든 프로젝트에서 사용)
 npm install -g @han-kyeon/claude-skills
 cfh install
+
+# 프로젝트 로컬 (팀 공유, git에 포함)
+cd my-project
+cfh install --target ./.claude
+
+# 일부만
+cfh install refactoring-strategy
+cfh install --only skills
+cfh install --dry-run            # 미리보기
 ```
 
-기본적으로 `~/.claude/skills/`와 `~/.claude/commands/`에 **파일을 복사**하고 각 항목에 `.cfh-manifest.json` 또는 `.<file>.cfh.json` 메타파일을 함께 기록합니다. 메타파일은 아래 역할:
-
-- `source`, `version` — 어느 패키지 버전에서 왔는지
-- `merkle`, `files` — 설치 시점의 SHA-256 해시 (사용자 편집 감지용)
-
-### 심볼릭 링크 방식
+확인:
 
 ```bash
-cfh install --link
+cfh list                         # 글로벌 + 프로젝트 + mapping 컬럼
+cfh list --global                # 글로벌만
+cfh list --project               # 프로젝트만
 ```
 
-`npm update -g`만 하면 자동 반영 (링크가 유지). 커스터마이징하려면 복사 방식이 적합.
-
-**Windows 주의**: 디렉터리는 junction, 파일은 일반 symlink. 권한이 없으면 **자동으로 복사로 fallback**합니다.
-
-### 특정 항목만 설치
+업데이트·제거:
 
 ```bash
-cfh install refactoring-strategy tdd-first     # 이름으로 골라서
-cfh install --only skills                       # 스킬만
-cfh install --only commands                     # 커맨드만
+cfh update                       # 패키지 자산 갱신 (user-modified는 자동 skip)
+cfh update --force               # 사용자 수정분 덮어쓰기 (warning 후 진행)
+cfh remove tdd-first             # 제거
+cfh adopt tdd-first              # managed → user-authored 전환 (cfh update 보호)
 ```
 
-### 대상 경로 변경
+> **dev 워크플로**: 패키지 소스에서 직접 작업하려면 `npm link` 사용. `--link` flag는 1.0급 polish에서 제거됨 (`docs/deprecation-policy.md` 참조).
 
-```bash
-cfh install --target ./.my-sandbox
-# → ./.my-sandbox/skills, ./.my-sandbox/commands
+---
+
+## 표준 사용법
+
+### 새 기능 시작 — TDD
+
+```
+"TDD로 src/features/coupon/CouponInput.tsx 만들어줘"
+→ tdd-first 자동 활성화 → Phase 1 Intent Interview
+
+또는 명시 호출:
+/cfh-tdd 쿠폰 검증 컴포넌트
 ```
 
-### 미리보기 (dry-run)
+백엔드·라이브러리·CLI는:
 
-```bash
-cfh install --dry-run
+```
+"FastAPI 엔드포인트 TDD로"
+→ tdd-general 자동 활성화
+
+또는:
+/cfh-tdd-gen 결제 API idempotency key 적용
+```
+
+### 기존 코드 테스트 보강
+
+```
+/cfh-tc src/components/UserList.tsx       # FE
+/cfh-tc-gen internal/retry/policy.go      # non-FE
+```
+
+> `/cfh-tdd`·`/cfh-tc`·`/cfh-tdd-gen`·`/cfh-tc-gen`은 **stack × mode 2×2 매트릭스**. 새 자산은 `tdd` 계열, 기존 보강은 `tc` 계열. 잘못 진입하면 deprecation warning + 대안 안내.
+
+### PR 리뷰
+
+```
+/cfh-review develop
+→ Tiny/Small/Medium/Large 분류 → 1~7 서브에이전트 병렬 → REVIEW.md
+```
+
+### 작업 dispatcher
+
+```
+/cfh-plan 결제 페이지에 쿠폰 검증 추가
+→ Phase 1 Q1~Q4 (목표·성공·제약·긴급도) → Phase 2 접근법 카드 → Phase 3 실행
+```
+
+### 디버깅
+
+```
+"500 에러 — 원인 모르겠어"            # BE
+"hydration mismatch 어디서 깨졌는지"  # FE
+→ debug-investigator 자동 활성화 → 5-Phase Evidence-driven
+```
+
+### 자산 생성
+
+```
+/cfh-new skill my-skill                  # skill + mirror command 자동 생성
+/cfh-new skill my-skill --no-mirror      # mirror 안 만들기
+/cfh-make 우리 팀 PR 응답 자동화          # 자산 종류 모를 때 분류기
+/cfh-team 결제 모듈 멀티 에이전트 팀       # 6 패턴 중 1 선택
+```
+
+### 결정 깊이 파기
+
+```
+/cfh-grill 쿠폰 검증 plan
+→ 결정 트리 enumerate → 한 가지씩 인터뷰 (mattpocock relentless 정신)
 ```
 
 ---
 
-## Installer 명령어
+## Soft routing suggestion (0.18.0)
 
-### `cfh install [name...]`
-
-패키지 자산을 `~/.claude/`에 설치. 이미 있으면 skip (manifest 상태와 사용자 수정 여부 표시). `--force`로 덮어쓰기.
-
-### `cfh update [name...]`
-
-**managed 항목만** 덮어씌웁니다. 사용자가 작성한 스킬 (`manifest 없음`) 또는 설치 후 수정된 항목 (`merkle 불일치`)은 건너뛰고 사유를 출력. 강제 갱신은 `--force`.
-
-```bash
-cfh update                       # 전체
-cfh update --only skills         # 스킬만
-cfh update refactoring-strategy  # 특정 항목
-```
-
-### `cfh list` / `cfh ls`
-
-설치 현황을 출력합니다. 0.3.0부터는 **현재 디렉터리에 `./.claude`가 있으면 전역과 프로젝트 두 섹션을 함께** 표시합니다.
+호출한 명령은 **default 그대로 진행**, opposite stack 신호 강할 때만 **bold + 💡로 대안 제안** (강제 X — yes/switch/explain 선택):
 
 ```
-=== Global (~/.claude) ===
+입력: /cfh-tdd "결제 API 핸들러 idempotency key"
 
-Skills (C:\Users\me\.claude\skills):
-  refactoring-strategy     managed@0.3.0
-  tdd-first                managed@0.3.0 (user-modified)
-  my-custom-skill          user-authored
-  adopted-rule             user-authored (adopted)
-
-=== Project (C:\work\my-project\.claude) ===
-
-Skills (C:\work\my-project\.claude\skills):
-  project-only-rule        user-authored
+   📌 이대로 진행: tdd-first (FE 컴포넌트 TDD)
+   💡 **더 적합해 보이는 대안 — /cfh-tdd-gen**
+        신호: [inferred] 'API 핸들러' BE 키워드 / [inferred] 'idempotency' BE 패턴
+   진행: yes / switch / explain
 ```
 
-범위 제어 플래그:
-
-```bash
-cfh list                 # 전역 + (있으면) 프로젝트
-cfh list --global        # 전역만
-cfh list --project       # 현재 프로젝트만
-cfh list --target <path> # 임의 경로
-```
-
-상태 의미:
-- `managed@<ver>` — 이 패키지가 설치한 상태 그대로
-- `managed@<ver> (user-modified)` — 이 패키지가 설치했으나 이후 편집됨
-- `managed@<ver> (symlink)` — `--link`로 설치됨 (편집 시 원본 변경)
-- `user-authored` — 사용자가 작성 — `update`·`remove`에서 자동 보호
-- `user-authored (adopted)` — 원래 managed였으나 `cfh adopt`로 사용자 소유로 전환됨
-
-### `cfh remove <name>` / `cfh rm <name>`
-
-설치 항목 제거. **user-authored** 또는 **user-modified** 항목은 기본 거부 (실수로 사용자 작업 지우지 않도록). 강제 제거는 `--force`.
-
----
-
-## Maintenance commands (0.3.0)
-
-### `cfh adopt <name>`
-
-managed 항목을 **user-authored로 전환**합니다 — 내부적으로 manifest 파일만 제거하는 한 줄 작업이지만, 이후 `cfh update`가 이 항목을 건드리지 않도록 보호됩니다. 기본적으로 y/N 확인 프롬프트가 뜨며, `--yes`로 건너뛸 수 있습니다.
-
-```bash
-cfh adopt refactoring-strategy           # 확인 후 전환
-cfh adopt refactoring-strategy --yes     # 자동 승인
-cfh adopt refactoring-strategy --dry-run # 미리보기
-```
-
-역방향(`disown`)은 제공하지 않습니다. 필요하면 `cfh update --force`로 패키지 버전을 덮어쓰십시오.
-
-### `cfh diff <name>`
-
-설치 당시 manifest 해시와 현재 파일 상태를 비교하여 **내가 어떤 파일을 고쳤는지** 알려줍니다.
-
-```bash
-cfh diff refactoring-strategy           # 요약 (추가/삭제/수정 파일 목록)
-cfh diff refactoring-strategy --full    # 현재 패키지 소스와의 unified diff
-```
-
-`--full`은 manifest가 해시만 저장하므로 **현재 패키지 소스**를 기준으로 diff합니다 (설치 당시 스냅샷과 정확히 동일한 비교는 불가능). 순수 upstream 변경 확인은 `cfh update <name> --dry-run`을 사용하십시오.
-
-### `cfh doctor`
-
-설치 상태를 9개 항목에 걸쳐 점검합니다 (0.6.0에서 3개 추가).
-
-```bash
-cfh doctor                              # 문제 있으면 exit 1
-cfh doctor --warn-only                  # 항상 exit 0 (CI에서 경고만)
-cfh doctor --usage                      # 30일 사용 현황 추가 (0.6.0 신규)
-```
-
-점검 항목:
-1. frontmatter 유효성 (`name`/`description`/20자 이상)
-2. 스킬 간 트리거 키워드 중복 (오발동 위험)
-3. 고아 manifest (파일은 없는데 manifest만 남음)
-4. 깨진 symlink
-5. 전역(`~/.claude`)과 프로젝트(`./.claude`)에 같은 이름이 있어 프로젝트가 가리는 경우
-6. 커맨드의 `$ARGUMENTS` 또는 `<invocation>` 태그 누락
-7. **(0.6.0)** 트리거 키워드 0개 스킬 (자동 트리거 불가)
-8. **(0.6.0)** 에이전트 5+개 단일 레벨 (Hierarchical 권고)
-9. **(0.6.0)** 에이전트 `tools: "*"` (최소 권한 위반)
-
-`--usage` 시 추가 출력 예:
-```text
-📊 최근 30일 스킬 사용 현황 (~/.claude/.cfh-logs/ 기반)
-  tdd-first             12회 (success 11, helpful 9, not-helpful 2)
-  refactoring-strategy   0회 ← 쓴 적 없음. 제거 또는 트리거 개선 검토?
-```
-
-### `cfh trace "<query>"`
-
-주어진 발화가 어떤 스킬을 트리거할지 **키워드 매칭**으로 시뮬레이션합니다. positive/negative(반-트리거) 분리 후 가중치 기반 점수 상위 N개를 보고합니다.
-
-```bash
-cfh trace "리팩터링 해줘"                  # 상위 5개
-cfh trace "이 PR 리뷰 좀" --top 10         # 상위 10개
-```
-
-슬래시 커맨드 `/cfh-trace`는 인자 없이도 동작 — 발화를 묻는 인터뷰 모드로 전환합니다. 점수는 참고용이며, Claude Code의 실제 트리거는 대화 컨텍스트 전체를 고려해 결정됩니다.
-
----
-
-## Utility commands (0.7.0)
-
-### `cfh search "<keyword>"`
-
-설치된 스킬·커맨드의 **name / description / 본문**을 키워드로 검색합니다. `cfh trace`가 발화 시뮬레이션이라면 `search`는 명시적 키워드 검색입니다.
-
-```bash
-cfh search "TDD"                         # 기본
-cfh search "리팩터링" --kind skill       # 스킬만
-cfh search "React" --case-sensitive      # 대소문자 구분
-cfh search "bluebird" --target ./.claude # 커스텀 경로
-```
-
-출력: 매칭된 자산의 경로 + 매칭 위치(name·description·body 중 어디서).
-
-### `cfh open <name>`
-
-설치된 자산의 파일을 `$EDITOR`로 엽니다. `adopt` 후 편집하거나 `cfh-feedback`으로 받은 개선 제안 반영할 때 편리합니다.
-
-```bash
-cfh open tdd-first                       # $EDITOR로 ~/.claude/skills/tdd-first/SKILL.md 열기
-cfh open cfh-review --editor "code -w"   # VSCode로
-cfh open my-skill --target ./.claude     # 프로젝트 로컬 대상
-```
-
-`$EDITOR`·`$VISUAL` 환경변수가 비어있으면 파일 경로만 출력. 프로젝트 로컬과 전역에 같은 이름이 있으면 **프로젝트 쪽이 우선**.
-
-### `cfh export` / `cfh import`
-
-user-authored 자산을 JSON 번들로 묶어 팀원과 공유하거나 다른 PC로 이식.
-
-```bash
-# Export — 기본은 user-authored만
-cfh export                               # cfh-export-2026-04-22.json 생성
-cfh export --output my-bundle.json
-cfh export --all                         # managed도 포함
-cfh export my-skill my-cmd               # 특정 항목만
-
-# Import
-cfh import my-bundle.json                # 충돌 시 에러 (기본)
-cfh import my-bundle.json --force        # 덮어쓰기 (user-authored는 여전히 확인 요구)
-cfh import my-bundle.json --dry-run      # 미리보기
-cfh import my-bundle.json --yes          # 일괄 승인
-```
-
-번들 포맷 (`cfh-bundle-v1`): JSON 하나에 파일 내용 전체 포함. zero-dep이라 별도 압축 라이브러리 없음. 작은 스킬 10~20개면 수십 KB 수준.
-
-**Import된 자산은 user-authored로 취급**(manifest 없음) — `cfh update`에서 자동 보호됨.
-
----
-
-## 성숙 단계 기능 — Measurement · Quality · Inquiry (0.8.0 → 0.15.0)
-
-0.8.0부터 0.15.0까지 누적된 도구들이 **측정·품질·인터뷰**의 세 축으로 자리잡았습니다. 각 도구는 독립 사용 가능하지만, **서로 엮어 쓸 때 cascade 효과**가 크게 납니다 — 예: `cfh eval`로 케이스 검증 → 결과를 `cfh dashboard`에서 시각화 → `cfh evolve`가 trend 기반 제안 → `cfh cost --since-commit`으로 회귀 감지.
-
-### 측정 cascade — 한눈에
-
-| 도구 | 측정 대상 | 비용 | 도입 |
-|---|---|---|---|
-| `cfh cost` | 실 사용 토큰 (Claude Code transcript read-only) | 0 | 0.10.0 |
-| `cfh eval` | 케이스 기반 행동 (assertion, A/B, judge) | dry-run 0 / executor 토큰 | 0.10.0~0.13.0 |
-| `cfh sentry` | tool 호출 실패·loop·empty Read | 0 (read-only) | 0.10.0 |
-| `cfh evolve` | description 정적 + eval 구조 인식 | 0 | 0.3.0 + 0.10.0 |
-| `cfh dashboard` | 위 4개 통합 markdown 리포트 | 0 | 0.11.0 |
-
-"이 스킬이 비용 대비 가치 있나"·"description drift 일으켰나"를 처음으로 정량 답할 수 있게 됩니다.
-
----
-
-### 1. 측정 (Measurement)
-
-#### `cfh cost` — 토큰 사용량 집계
-
-```bash
-cfh cost                                 # 전체
-cfh cost --by command --days 7           # 명령별, 최근 7일
-cfh cost --by day --match my-proj        # 프로젝트별·일자별
-cfh cost --since-commit <hash>           # 특정 commit 이후 vs 이전 비교 (0.12.0)
-cfh cost --by session                    # 최근 20 세션
-cfh cost --json                          # 스크립팅
-```
-
-**핵심**: Claude Code 기존 transcript(`~/.claude/projects/`)를 read-only로 분석 → 새 텔레메트리 수집 없음, 옵트인 불필요. 슬래시 커맨드 attribution 휴리스틱.
-
-실데이터 예: 이 프로젝트 4 sessions에 **772M 토큰** (98% cache read), `/cfh-plan`이 가장 비싼 명령 (326턴 119M).
-
-#### `cfh sentry` — tool 호출 안전망
-
-```bash
-cfh sentry --days 7                      # 후행 분석 (transcript jsonl)
-cfh sentry --tool Edit                   # 특정 tool만
-cfh sentry --install-hook                # 실시간 모니터링 (PostToolUse 훅) 설치
-cfh sentry --live                        # 현재 누적 상태 스냅샷 (훅 설치 시)
-```
-
-3가지 감지: 연속 tool 에러 (3+) / 동일 input 반복 (3+) / 연속 빈 Read (2+). 실시간 훅은 threshold 넘는 순간 stderr 경고 — Claude가 다음 turn에 자기 출력으로 인지.
-
-실데이터 예: Edit 489회 호출 17 실패 (3.5%), 대부분 "File has not been read yet" → Read→Edit 순서 강제 컨벤션 신호.
-
-#### `cfh eval` — 스킬 행동 검증
-
-스킬마다 `evals/*.json` 케이스 정의. assertion 4종 (contains·not_contains·regex·judge).
-
-```bash
-cfh eval --list                          # 케이스 목록·정적 검증
-cfh eval tdd-first --dry-run             # 프롬프트 미리보기 (기본, LLM 호출 없음)
-cfh eval tdd-first --manual              # 사용자가 paste
-cfh eval tdd-first --executor claude     # claude CLI subprocess
-cfh eval tdd-first --baseline            # A/B (skill 활성 vs 안티-트리거 prefix)
-cfh eval tdd-first --variants vars.json  # description A/B/C 비교 (trace 점수, LLM 호출 없음)
-cfh eval --enable-judge                  # judge assertion 활성화 (LLM 호출, ~500토큰/assertion)
-cfh eval --report junit --output out.xml # CI 통합용 JUnit XML
-```
-
-**케이스 예시** (`skills/tdd-first/evals/happy-path.json`):
-```json
-{
-  "name": "fe-tdd-trigger-on-test-first",
-  "prompt": "TDD로 src/components/X.tsx 만들어줘",
-  "skill_should_trigger": "tdd-first",
-  "assertions": [
-    { "type": "contains", "value": "Phase" },
-    { "type": "regex", "value": "Intent\\s+Interview" },
-    { "type": "not_contains", "value": "TypeError" }
-  ]
-}
-```
-
-**A/B baseline (`--baseline`)**: 같은 케이스를 2번 (treatment + soft anti-trigger prefix) 실행 → diff (+1 helped / -1 regressed / 0 no diff). 누적 net effect로 스킬의 순효과 정량 측정.
-
-**Judge assertion (`--enable-judge`)**: LLM이 직접 응답 평가. string 매칭 한계 돌파 — "Phase 1 Intent Interview 문자열만 있으면 통과 → 실제 의도 검증 못 함" 문제 해결. 옵트인 default off (토큰 비용 ×2~3).
-
-**eval-history**: 텔레메트리 옵트인 시 `~/.claude/.cfh-logs/eval-history/<skill>/`에 자동 저장 → `cfh dashboard` trend 분석 토대.
-
-#### `cfh dashboard` — 통합 리포트
-
-```bash
-cfh dashboard                            # 30일 markdown 리포트
-cfh dashboard --output dash.md           # 파일 저장
-cfh dashboard --days 7 --match proj
-```
-
-섹션: Overview · Cost (transcript) · Tool failure sensor · Eval coverage · Eval trend.
-
----
-
-### 2. 워크플로 캡처 (Workflow capture, 0.9.0 → 0.10.0)
-
-5개 작업 커맨드(`/cfh-plan`·`/cfh-tdd`·`/cfh-refactor`·`/cfh-debug`·`/cfh-review`)의 완료 보고에 자동 포함:
-
-```
-🔄 Retro
-  효과 있었음: scoped pre-scan으로 broad scan 회피
-  실패·삽질: 처음에 zustand 통합 시도 → 폐기
-  다음엔 바꿀 것: 검증 결과 캐싱 별도 PR로
-
-📝 제안 커밋  (코드 수정이 있을 때만)
-  메시지 초안: feat: add coupon validation to checkout
-  스테이지 범위: + src/features/coupon/, ~ src/features/checkout/...
-  분할 추천: 단일 / 또는 N개 분할 (모듈·관심사 혼재 시)
-  진행: yes / edit-msg / split-differently / no-commit
-```
-
-**자동 commit 금지** — 제안만, 사용자 명시 yes 후에만. 메시지 컨벤션은 `git log -10`으로 추정 (Conventional Commits / Square-bracket scope / 자유형).
-
-#### 3 도구 cascade — 영속성
-
-| 도구 | 대상 | 위치 |
-|---|---|---|
-| `/cfh-feedback` | 스킬 자체 의견 | `~/.claude/.cfh-logs/<skill>.jsonl` |
-| `/cfh-retro` | 작업 한 건 회고 | `~/.claude/.cfh-logs/retros/<file>.md` |
-| `/cfh-progress` | 프로젝트 한 개 진행 | `./PROGRESS.md` (git-tracked) |
-
-PROGRESS.md는 4 섹션: 다음 단계 / 미해결 질문 / 결정 로그 / 세션 로그. 자동 생성·자동 commit 금지 — `init` 명시 호출 후에만.
-
-#### Stop 훅 (옵트인 자동화)
-
-`~/.claude/settings.json`에 등록:
-```json
-{
-  "hooks": {
-    "Stop": [{ "hooks": [
-      { "type": "command", "command": "bash ~/.claude/scripts/cfh-retro-hook.sh" },
-      { "type": "command", "command": "bash ~/.claude/scripts/cfh-progress-hook.sh" }
-    ]}]
-  }
-}
-```
-
-각 훅이 자체 필터로 silent 종료 — 가벼운 대화엔 영향 없음. PROGRESS.md 없으면 progress 훅 자동 발동 안 함.
-
----
-
-### 3. 품질 컨벤션 (Quality conventions, 0.10.0 → 0.14.x)
-
-#### Confidence Tagging
-
-스킬 출력에 근거 확실성 표기:
-- `[verified]` — 직접 확인 (코드·문서·사용자 답변)
-- `[inferred]` — 합리적 추론
-- `[guessed]` — 약한 추측, 사용자 검증 권장
-
-`cfh doctor --strict-confidence`로 옵트인 검사. 강제 lint 아닌 권장 컨벤션.
-
-#### 추천 + 이유 패턴 (0.14.1+)
-
-cfh 인터뷰의 안티 패턴은 "어떻게 생각하세요?" 빈 질문. 결정 비용을 사용자에게 떠넘김. 0.14.1부터 cfh-* 결정 지점에 **추천 + 이유 + 대안 트리거** 형식 의무화:
-
-```
-📌 추천: yes — Phase 3 실행
-   이유:
-     - [verified] Q1~Q4 답변 일관됨
-     - [verified] Project·Product 위험 신호 없음
-     - [inferred] tdd-first 위임 적합 — Q1 키워드 매칭
-
-다른 옵션:
-  - adjust — Q2 성공 기준이 모호하게 느껴질 때
-  - reclassify — "리팩터 아니라 신규 기능" 같은 이견
-  - grill — sub-branch 미해결이 많을 때 (/cfh-grill로)
-
-선택: yes / adjust / reclassify / revise-checks / grill
-```
-
-**적용 위치**: `/cfh-plan` · `/cfh-make` · `/cfh-debug` · `/cfh-review` · `/cfh-refactor` (Step 1·5) · `/cfh-team` · `/cfh-grill` (본질). 상세: `commands/references/recommendation-pattern.md`.
-
-#### SKILL.md schema lint (`cfh validate --strict`)
-
-옵트인 frontmatter 엄격 검증:
-- `name`: kebab-case, 1~63자, dir 이름과 일치
-- `description`: 20~1024자
-- 알 수 없는 필드 → 경고 (CI 정책 권장)
-
-#### `cfh diff --skills-vs-evals` (0.12.0)
-
-description이 evals보다 새로운 스킬 (staleness) 자동 감지. mtime 기반. drift 1차 그물망.
-
----
-
-### 4. 인터뷰 도구 (Inquiry — grill-me, 0.14.1~0.15.2)
-
-`/cfh-grill [topic]` — mattpocock의 [grill-me](https://github.com/mattpocock/skills/blob/main/skills/productivity/grill-me/SKILL.md) 어댑테이션. **결정 트리를 한 가지씩** 파는 인터뷰.
-
-#### 핵심 원칙 (10+ 패치로 정제)
-
-| 원칙 | 동작 |
-|---|---|
-| 한 질문 / 한 turn | TURN BOUNDARY 명시 — 질문 후 즉시 응답 종료 |
-| 항상 추천 + 이유 | "어떻게 생각하세요?" 빈 질문 금지 |
-| 사용자 의도 우선 | 코드는 *현재 상태*, 사용자는 *미래 의도* — 결정은 항상 사용자에게 (원본 "explore codebase instead" 의도적 deviation) |
-| 깊이 무제한 | 라운드 cap·시간 박스 없음. mattpocock "relentlessly" 정신 |
-| Ambiguous 응답 = 대기 | "OK"·Enter·짧은 응답·침묵은 동의로 해석 금지, 명시 답변만 진행 신호 |
-| 명시적 위임 | `/cfh-plan(grill)` → handoff 블록 + 명시 명령. 자동 흡수 안 함 |
-| **자가검증 (slot ≠ purpose)** *(0.15.1)* | 노드·옵션·sub-decision은 "템플릿 슬롯이 있어서"가 아니라 *plan에 실제 영향*이라야 등장. [guessed]만으로 추천 못 만들면 질문 스킵 |
-| **광범위 topic 거부** *(0.15.1)* | "결제 쪽", "auth 관련" 같은 광범위 답엔 트리 enumerate 금지. 한 번 더 좁히는 질문 |
-| **자가검증 투명화** *(0.15.2)* | 각 노드에 "왜 필요한가" 한 줄 사유 + "제외된 후보" 섹션 가시화. 사용자가 보고 추가/제외 결정 번복 가능 |
-
-#### 3 Phase
-
-| Phase | 행동 |
-|---|---|
-| Phase 0 | 인자 또는 사용자 답변으로 grill 대상 확정 (자동 흡수 안 함, 광범위 답이면 좁히는 질문) |
-| Phase 1 | 결정 트리 enumerate (자가검증 후만 포함) + 제외된 후보 가시화 + 사용자 가지치기 기회 |
-| Phase 2 | 순차 인터뷰 — 매 질문 추천+이유, [guessed]만이면 스킵, TURN BOUNDARY 후 답변 대기 |
-| Phase 3 | 수렴 — 트리 소진 / 사용자 "그만" / 추측 영역 진입 시 종료 |
-
-#### 호출 경로
-
-```bash
-/cfh-grill 쿠폰 검증 plan                # 신규 기능 (greenfield)
-/cfh-grill src/legacy/payment 리팩터       # 기존 코드 대상 (mini Pre-scan)
-/cfh-grill auth flow 재설계              # 추상 목표 (greenfield)
-/cfh-grill                               # 인자 없음 → "이 grill의 plan·목표는?" 질문
-```
-
-`/cfh-plan` Phase 2 approach card에서 `(grill)` 옵션 → handoff 블록 + 명령 출력 → 사용자가 그 명령 실행.
-
-상세: `skills/grill-me/SKILL.md` (provenance 블록), `skills/grill-me/references/decision-tree.md`.
-
----
-
-### 5. CI / DX 통합 (0.11.0 → 0.12.0)
-
-| 기능 | 무엇 |
-|---|---|
-| `cfh eval --report junit` | JUnit XML 출력 → GitHub Actions·GitLab CI·Jenkins 표준 |
-| `cfh cost --since-commit <hash>` | 특정 commit 이후 토큰 변화. ±20% 임계 자동 판정 |
-| `cfh watch [--doctor]` | 파일 변경 시 validate/doctor 자동 재실행 (fs.watch + 500ms debounce) |
-| `cfh new skill <name> --from-existing <other>` | 기존 스킬 fork — frontmatter TODO 마커 + manifest 자동 제거 |
-| `cfh validate --strict` | schema 엄격 검증 (kebab-case·길이·알 수 없는 필드 경고) |
-
----
-
-### 6. Project/Product 축 평가 (0.8.0)
-
-`/cfh-review`와 `/cfh-plan`이 코드 품질 축 외에 **프로젝트 건강성·프로덕트 임팩트** 축도 평가합니다.
-
-| 축 | 의미 |
-|---|---|
-| **Project Health** | 코드베이스 장기 건강성 — 기술 부채 방향·모듈 경계 침식·의존성 정당성·migration 정렬 |
-| **Product Impact** | 사용자·비즈니스 가치 — 사용자 체감·실패 UX·메트릭·롤백 안전성·80% 대안 |
-
-`/cfh-review` (Medium+ diff): 기본 5 에이전트(Convention·Logic·Test·Performance·Security) + 2개 추가(Project Health · Product Impact) = 7개. Step 2.5에서 제외 인터뷰.
-
-`/cfh-plan` Phase 2 approach card: 두 축 추론 섹션 자동 포함 (새 질문 없이 Q1~Q4 + Pre-scan으로 추론).
-
-CLAUDE.md에 제품 컨텍스트나 migration 정보가 없으면 "ℹ 추론 기반 분석" 명시 — 사용자에게 신뢰도 신호.
-
----
-
-### 0.15.x 정리 — 1.0.0 후보 단계
-
-0.8.0~0.15.x의 measurement·quality·grill 누적이 **stable consolidation** 단계. 마지막 0.15.1·0.15.2는 grill-me의 자가검증·투명화 미세 조정 — 외부 review를 반영한 마지막 잔불 정리. 다음 작업 후보:
-- 외부 사용자 evals/feedback 1~2주 누적
-- judge prompt·eval-history 포맷·hook 스펙 안정성 검증
-- Deprecation policy 문서화
-→ **1.0.0** (4~6주 후 예상)
-
-**Context Offload Subagent (7번째 패턴)는 작업에서 제외** — Opus 추론 깊이 손실 + Claude 4.7 토큰 효율 개선으로 ROI 약화 판단.
-
----
-
-## Evolution commands (0.3.0, opt-in)
-
-스킬을 쓰다 보면 description이 실제 사용 패턴과 어긋납니다. `cfh evolve`는 정적 분석 + (옵트인 시) 사용 로그 기반 제안을 출력하여 이를 교정하도록 돕습니다. **모든 수정은 사용자가 직접** — 자동 적용은 0.3.0에 없습니다.
-
-### `cfh log`
-
-로그는 기본 비활성화. 로컬 파일(`~/.claude/.cfh-logs/<skill>.jsonl`)에만 저장되며 외부 전송 없음.
-
-```bash
-cfh log --enable                    # 동의 후 활성화 (최초 실행 시 프롬프트로 확인)
-cfh log --disable                   # 언제든 비활성화
-cfh log --status                    # 현재 상태 + 로그 파일 수
-
-cfh log <skill> --event trigger --utterance "리팩터링 좀" --helpful y
-cfh log <skill> --event miss --utterance "그냥 고쳐줘" --note "too-generic"
-```
-
-Claude Code `settings.json`의 hook로 연결하면 실제 사용 시점에 자동 기록할 수 있습니다(사용자 구성 영역).
-
-### `/cfh-feedback <skill> "<comment>"` *(0.6.0 신규)*
-
-세션 중 즉석 피드백을 기록하는 슬래시 커맨드입니다 — `cfh log`의 사용자 친화 인터페이스.
-
-```text
-/cfh-feedback tdd-first "테스트 보강만 원했는데 TDD 모드로 들어갔음"
-/cfh-feedback refactoring-strategy "Scope Q3 옵션이 모호했음"
-/cfh-feedback skill-author "Phase 1 인터뷰가 잘 짜여 있음. 만족"
-```
-
-옵트인 활성화 필요 (`cfh log --enable`). Claude가 comment를 자동 분류(miss/success/friction/positive)하여 JSONL에 기록합니다. `cfh evolve` 다음 실행 시 분석에 반영됩니다.
-
-### `cfh evolve [<name>]`
-
-모든 스킬 또는 특정 스킬 분석:
-
-```bash
-cfh evolve                          # 전체
-cfh evolve tdd-first                # 하나만
-```
-
-**정적 분석** (로그 없어도 동작):
-- description 길이 (40자 미만 경고)
-- 반-트리거 절 유무
-- 다른 스킬과 트리거 토큰 공유 (3개+ 겹치면 경고)
-- 고유 트리거 토큰 수 (5개 미만 경고)
-
-**사용 로그 기반** (로그 있을 때만):
-- helpful/not-helpful 비율
-- miss 이벤트 반복 (놓친 키워드 후보)
-- 자주 등장한 발화 토큰 top 10
-
-**출력 예시**:
-```
-── tdd-first [global] ──
-  ⚠ [description-short] description이 35자로 짧습니다. 트리거 키워드 추가 권장.
-  ⚠ [trigger-overlap] "refactoring-strategy"와 트리거 토큰 4개 공유 (refactor, test, …). 반-트리거 명시 권장.
-  ℹ [usage-summary] 총 42회 기록 (helpful 28, not-helpful 10, miss 4).
-  ℹ [top-tokens] 자주 등장한 발화 토큰: tdd(18), 테스트(14), 먼저(9), …
-  ⚠ [recurring-miss] miss 이벤트 4회 기록됨. 최근 예: "테스트만 보강" / "기존 코드 검증".
-```
-
-제안이 마음에 들면 `SKILL.md`를 직접 편집한 뒤 `cfh validate`로 확인. 향후 버전에서 `--apply` 플래그로 인터랙티브 diff 적용을 추가할 계획입니다.
-
----
-
-## Authoring commands (framework mode)
-
-이 라이브러리의 본체. 사용자는 자신의 스킬·커맨드·에이전트를 **스캐폴드에서 출발해 자유롭게** 작성합니다.
-
-### `cfh new <kind> <name>`
-
-- `kind`: `skill` | `command` | `agent`
-- `name`: kebab-case (소문자, 숫자, 대시), 1~63자
-
-기본 대상은 `~/.claude/...`. 프로젝트 로컬로 생성하려면 `--project`.
-
-```bash
-cfh new skill my-auth-flow          # ~/.claude/skills/my-auth-flow/
-cfh new skill my-flow --project     # ./.claude/skills/my-flow/
-cfh new command audit               # ~/.claude/commands/audit.md
-cfh new agent security-reviewer --project   # ./.claude/agents/security-reviewer.md
-```
-
-생성된 파일에는 `TODO:` 마커가 들어 있으며, `skill-author` 메타-스킬과 연계하면 Claude가 인터뷰로 채워줍니다.
-
-### `cfh validate`
-
-모든 스킬·커맨드의 frontmatter + 본문 구조를 검증:
-
-- SKILL.md에 YAML frontmatter 존재
-- `name` 필드가 디렉터리명과 일치
-- `description`이 최소 20자 (트리거 약함 경고)
-- 커맨드에 `$ARGUMENTS` 또는 구조화 태그(`<invocation>` 등) 존재
-
-에러 있으면 exit code 1 (CI에 유용).
-
-```bash
-cfh validate                         # 패키지 + 설치 대상 모두
-cfh validate --target ./.my-sandbox  # 특정 경로
-```
-
-### `cfh generate <preset>`
-
-프리셋 매니페스트(`templates/presets/<name>.json`)에 따라 **현재 디렉터리의 `.claude/` 아래**에 에이전트 + 스킬 세트를 생성. revfactory/harness 스타일.
-
-```bash
-cfh generate --list                   # 사용 가능 프리셋 목록
-cfh generate producer-reviewer        # .claude/agents/producer.md + reviewer.md + skills/producer-reviewer-flow/
-cfh generate pipeline-3stage --dry-run
-cfh generate reviewer-team --target ./other-project
-```
-
-생성 후 Claude Code 재시작 (또는 `/agents`로 인식 확인). Agent Teams 간 통신이 필요한 경우 환경변수:
-
-```bash
-export CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1
-```
-
----
-
-## 대화형 워크플로 (슬래시 커맨드)
-
-### `/cfh-new <kind> <name>` — 새 스킬 대화형 작성
-
-1. `skill-author` 스킬 활성화
-2. 6 질문 인터뷰 (목적 / 트리거 / 반-트리거 / 핵심 원칙 / 출력 / 참조)
-3. description 초안 제시 → 승인
-4. SKILL.md + references/ 생성 (CLI `cfh new` 또는 Claude Write)
-5. `cfh validate` + 시험 트리거
-
-```
-사용자: /cfh-new skill react-query-patterns
-Claude: (Phase 1 질문 6개 순차 진행)
-        (Phase 2 description 초안)
-        (Phase 3 SKILL.md 구조 제안)
-        (Phase 4 Write)
-        (Phase 5 validate + 시험 트리거)
-```
-
-### `/cfh-team [도메인 설명]` — 팀 에이전트 자동 생성
-
-1. `harness-factory` 스킬 활성화
-2. 5 질문 도메인 인터뷰
-3. 6 패턴 중 1개 추천 (Pipeline / Fan-out-Fan-in / Expert Pool / Producer-Reviewer / Supervisor / Hierarchical)
-4. 각 에이전트 책임 확정
-5. 프리셋 매칭 시 `cfh generate`, 아니면 Claude가 Write로 직접 생성
-6. `cfh validate` + 시운전
-
-```
-사용자: /cfh-team FE PR의 다축 코드 리뷰
-Claude: (Phase 1 5 질문)
-        → 추천 패턴: Expert Pool (security/perf/a11y/types)
-        → cfh generate reviewer-team 실행 제안
-        → 생성 후 시운전 태스크 제안
-```
-
-### `/cfh-refactor <target>` / `/cfh-tdd <target>`
-
-기존 스킬을 명시적으로 활성화. `/cfh-refactor`는 `refactoring-strategy`의 Scope Narrowing → Blast Radius → Small PR 계획 흐름. `/cfh-tdd`는 `tdd-first`의 5 Phase.
-
-### `/cfh-tc <path>` / `/cfh-review <parent-branch>`
-
-- `/cfh-tc`: 테스트 작성. 파일이 있으면 Test-Fill Mode, 없으면 TDD Mode.
-- `/cfh-review`: 코드 리뷰. diff 규모 측정 후 서브에이전트 1~5개 병렬 실행해 `REVIEW.md` 생성.
-
-### `/cfh-trace [query]`
-
-발화가 어느 스킬을 트리거할지 시뮬레이션. 인자 없으면 발화를 묻는 인터뷰 모드.
-
----
-
-## 전형적 시나리오
-
-### 시나리오 1 — FE 프로젝트에 처음 설치
-
-```bash
-npm install -g @han-kyeon/claude-skills
-cfh install
-cfh list
-```
-
-→ 4 skills + 8 commands 설치 완료. Claude Code에서 "리팩터링", "TDD" 등 자동 트리거 확인.
-
-### 시나리오 2 — 자기만의 스킬 작성
-
-```
-사용자: /cfh-new skill payment-validation
-Claude: (skill-author Phase 1~5 진행)
-```
-
-→ `~/.claude/skills/payment-validation/SKILL.md` 생성. `cfh list`에서 `user-authored`로 분류. 이후 `cfh update`가 건드리지 않음.
-
-### 시나리오 3 — 프로젝트에 코드 리뷰 팀 만들기
-
-```bash
-cd my-fe-project
-cfh generate reviewer-team
-# → ./.claude/agents/{security,perf,a11y,types}-reviewer.md 생성
-# → ./.claude/skills/expert-review-pool/SKILL.md 생성
-```
-
-각 에이전트 파일의 TODO 마커 편집. Claude Code 재시작 후 "리뷰해줘" → 4 에이전트 병렬 호출.
-
-### 시나리오 4 — 커스텀 팀 설계
-
-```
-사용자: /cfh-team 결제 모듈을 TDD 오버핏 없이 구현
-Claude: (도메인 인터뷰)
-        → 실패 비용 높음 → Producer-Reviewer 패턴 추천
-        → cfh generate producer-reviewer 제안
-```
-
-생성 후 `.claude/agents/producer.md`, `reviewer.md` 편집해 결제 도메인 제약 추가.
-
-### 시나리오 5 — 패키지 업데이트, 커스텀 작업 보존
-
-```bash
-npm update -g @han-kyeon/claude-skills
-cfh update              # 번들 자산만 갱신
-cfh list                # 커스텀 스킬은 그대로 user-authored로 남음
-```
-
----
-
-## 디렉터리 구조 (패키지 내부)
-
-```
-@han-kyeon/claude-skills/
-├── bin/cli.js                   # CLI 진입점
-├── lib/
-│   ├── install.js               # install (manifest 기록)
-│   ├── update.js                # managed만 갱신
-│   ├── list.js                  # manifest 기반 상태 표시 (전역+프로젝트)
-│   ├── remove.js                # user-authored 보호
-│   ├── adopt.js                 # managed → user-authored 전환
-│   ├── diff.js                  # 사용자 변경분 확인
-│   ├── doctor.js                # 6-point 점검
-│   ├── trace.js                 # 트리거 시뮬레이션
-│   ├── new.js                   # 스캐폴드
-│   ├── generate.js              # 프리셋 적용
-│   ├── validate.js              # frontmatter 검증
-│   ├── manifest.js              # .cfh-manifest.json 읽기·쓰기·해싱
-│   ├── frontmatter.js           # 미니멀 YAML 파서 (zero deps)
-│   ├── cost.js                  # transcript 토큰 집계 + since-commit (0.10.0+)
-│   ├── eval.js                  # skill eval + variants + junit + history (0.10.0+)
-│   ├── sentry.js                # tool 호출 실패 sensor + --live + --install-hook (0.10.0+)
-│   ├── dashboard.js             # 통합 markdown 리포트 (0.11.0)
-│   ├── watch.js                 # 파일 변경 감시 (0.12.0)
-│   └── paths.js                 # 경로 헬퍼
-├── scripts/
-│   └── cfh-sentry-hook.js       # PostToolUse 훅 — 실시간 tool 실패 감지 (0.14.0)
-├── skills/
-│   ├── refactoring-strategy/
-│   ├── tdd-first/                # FE-friendly TDD
-│   │   └── evals/                # eval 케이스 (0.10.0)
-│   ├── tdd-general/              # framework-agnostic TDD (0.6.0)
-│   ├── skill-author/             # 메타: 스킬 작성
-│   │   └── evals/                # eval 케이스 (0.10.0)
-│   ├── harness-factory/          # 메타: 팀 생성
-│   ├── debug-investigator/       # 메타: 이슈 조사 (0.8.0)
-│   ├── grill-me/                 # 결정 트리 walk + 추천+이유 (0.14.1)
-│   │   ├── references/decision-tree.md
-│   │   └── evals/
-│   └── asset-factory/            # 메타: 자산 dispatcher (0.4.0+)
-├── commands/
-│   ├── cfh-review.md, cfh-tc.md, cfh-refactor.md, cfh-tdd.md
-│   ├── cfh-tdd-gen.md            # framework-agnostic TDD (0.6.0)
-│   ├── cfh-tc-gen.md             # framework-agnostic 테스트 (0.6.0)
-│   ├── cfh-debug.md              # /cfh-debug → 이슈 조사 (0.8.0)
-│   ├── cfh-new.md                # /cfh-new → skill-author 활성화
-│   ├── cfh-team.md               # /cfh-team → harness-factory 활성화
-│   ├── cfh-make.md               # /cfh-make → asset-factory 활성화
-│   ├── cfh-plan.md               # /cfh-plan → 작업 dispatcher (0.4.0+)
-│   ├── cfh-trace.md              # /cfh-trace → 트리거 시뮬레이션
-│   ├── cfh-feedback.md           # /cfh-feedback → 사용 피드백 (0.6.0)
-│   ├── cfh-retro.md              # /cfh-retro → 작업 회고 영구 기록 (0.9.0)
-│   ├── cfh-progress.md           # /cfh-progress → 프로젝트 진행 노트 (0.10.0)
-│   ├── cfh-grill.md              # /cfh-grill → 결정 트리 깊이 파기 (0.14.1)
-│   ├── cfh-guide.md              # /cfh-guide → 사용 가이드
-│   └── references/
-│       ├── retro-and-commit.md       # 5개 커맨드 공유 Retro+Commit 블록 형식 (0.9.0)
-│       ├── progress-template.md      # PROGRESS.md 표준 형식 (0.10.0)
-│       ├── confidence-tagging.md     # [verified]/[inferred]/[guessed] 컨벤션 (0.10.0)
-│       └── recommendation-pattern.md # 추천+이유 컨벤션 (0.14.1)
-└── templates/
-    ├── skill/{SKILL.md, references/example.md}
-    ├── command.md
-    ├── agent.md
-    └── presets/
-        ├── producer-reviewer.json
-        ├── pipeline-3stage.json
-        └── reviewer-team.json
-```
-
----
-
-## 설계 원칙
-
-- **Zero runtime dependencies** — Node 내장 API만. 크기·보안 공격면 최소.
-- **Progressive disclosure** — SKILL.md는 요약·규칙, 상세는 `references/`. 트리거 시 SKILL.md만 로드되어 토큰 절약.
-- **Framework first, starter assets second** — 번들 4 스킬은 예시. 본체는 CLI + 메타-스킬.
-- **Manifest 기반 안전성** — 사용자 작성물은 `user-authored`로 태깅되어 update/remove 기본 거부.
-- **프로젝트 컨벤션 우선** — 팀의 기존 규칙이 외부 베스트 프랙티스보다 우선. 안티패턴 지적은 라이브러리 공식 문서 인용으로만.
-- **OS 중립** — POSIX + Windows (junction fallback).
-
----
-
-## 6 아키텍처 패턴 요약
-
-`harness-factory/references/patterns/` 참조. 각 패턴은 독립 파일로 상세 문서화.
-
-| 패턴 | 에이전트 수 | 통신 | 대표 용도 |
-|---|---|---|---|
-| **Pipeline** | 2~4 | 순차 | Analyst → Builder → QA. 선형 단계 변환 |
-| **Fan-out / Fan-in** | 2~N + Aggregator | 병렬 + 집계 | 독립 부분 문제 분할 처리 |
-| **Expert Pool** | 2~6 + Merger | 병렬 | 같은 입력을 여러 축에서 평가 (PR 다축 리뷰) |
-| **Producer-Reviewer** | 2 | 2-step | 오버핏 방지. 비즈니스 크리티컬 |
-| **Supervisor** | 1 + N | 중앙집중 | 동적 경로 선택. 모호한 멀티스텝 |
-| **Hierarchical Delegation** | 3~N (트리) | 상위-하위 | 초대형 cross-functional |
-
----
-
-## Monorepo 사용
-
-Nx / Turborepo / Yarn Workspaces / pnpm Workspaces 등 모노레포에서는 **패키지별로 다른 규약·스킬이 필요한 상황**이 생깁니다. 본 패키지는 monorepo 전용 기능은 제공하지 않지만, **Claude Code의 cwd 기준 `.claude/` 탐색**을 활용해 간단히 구성할 수 있습니다.
-
-### 3가지 배치 패턴
-
-#### A. 루트만 — 공통 `.claude/` (가장 단순)
-
-```
-monorepo/
-├── .claude/              # 모든 패키지에 공통 적용될 규약
-│   ├── skills/
-│   └── commands/
-├── CLAUDE.md
-├── packages/
-│   ├── web-fe/
-│   ├── api-backend/
-│   └── shared-lib/
-└── package.json
-```
-
-**언제 쓰나**: 패키지 간 규약 차이가 크지 않고 공통 스타일·TDD 원칙을 공유할 때.
-**한계**: 패키지별 스택 차이(FE vs BE)가 크면 스킬이 오발동.
-
-#### B. 패키지 로컬만 — 각 패키지에 `.claude/`
-
-```
-monorepo/
-├── packages/
-│   ├── web-fe/
-│   │   ├── .claude/           # FE 전용 규약 (예: /cfh-tdd 기반 RTL)
-│   │   │   ├── skills/
-│   │   │   └── commands/
-│   │   └── CLAUDE.md
-│   ├── api-backend/
-│   │   ├── .claude/           # BE 전용 규약 (예: /cfh-tdd-gen 기반)
-│   │   │   ├── skills/
-│   │   │   └── commands/
-│   │   └── CLAUDE.md
-│   └── shared-lib/
-│       └── .claude/           # 라이브러리 전용
-└── package.json
-```
-
-**언제 쓰나**: 패키지가 서로 다른 스택·도메인이라 공통 규약이 거의 없을 때.
-**사용법**: 해당 패키지 디렉터리에 `cd` 한 뒤 Claude Code 실행. cwd 기준 `.claude/`가 잡힘.
-```bash
-cd packages/api-backend
-claude    # 이 패키지의 .claude/만 인식됨
-```
-
-#### C. 하이브리드 — 루트 + 패키지별 override (권장, 대부분 실무)
-
-```
-monorepo/
-├── .claude/                   # 공통 최소 (skill-author·refactoring-strategy 등 메타만)
-├── packages/
-│   ├── web-fe/
-│   │   └── .claude/           # FE 특화 추가 (RTL 관례·디자인 시스템 규약)
-│   ├── api-backend/
-│   │   └── .claude/           # BE 특화 추가 (DB 마이그레이션 체크 등)
-│   └── shared-lib/
-│       └── .claude/           # 라이브러리 특화 (API stability 규약)
-```
-
-**언제 쓰나**: 공통 원칙은 있지만 패키지별 특화가 필요한 일반적 모노레포.
-
-### 명령 실행 위치 지침
-
-| 작업 | 실행 위치 | 결과 |
-|---|---|---|
-| 공통 규약 자산 생성 | 모노레포 **루트** | `<root>/.claude/`에 생성 |
-| 패키지 특화 자산 생성 | **해당 패키지 디렉터리** | `<root>/packages/<pkg>/.claude/`에 생성 |
-| `cfh generate <preset>` | 팀이 적용될 위치에서 | 실행한 위치의 `.claude/`에 생성 |
-| `cfh install` | 어디서든 | 항상 `~/.claude/` 전역 (변경 없음) |
-| `cfh list` | 패키지 디렉터리 | 전역 + 해당 패키지 `.claude/` 표시 |
-| `cfh doctor` | 패키지 디렉터리 | 해당 패키지 관점에서 점검 |
-
-### 알려진 한계
-
-- **자산 상속·오버라이드는 Claude Code 자체의 `.claude/` 탐색 규칙에 의존**합니다. 현재 Claude Code가 상위 디렉터리까지 자동 탐색하는지는 버전에 따라 다릅니다. 루트 공통 `.claude/`가 패키지 로컬 `.claude/`와 섞이길 기대하신다면 실제 동작을 **`cfh trace`·샘플 발화로 검증**하세요.
-- 본 패키지의 `cfh` CLI는 항상 **실행한 cwd 기준**으로 `./.claude/`를 봅니다. 여러 패키지를 한 번에 점검하는 `cfh --workspaces` 옵션은 0.7.0에 포함되지 않습니다 (실제 수요 확인 후 0.8.0+ 검토).
-- 패키지별 `.claude/`를 **git commit**하면 팀원이 clone 시 자동 적용되나, `~/.claude/` 전역 자산은 각자 `cfh install`이 필요.
-
-### 간단한 전략
-
-1. **처음에는 A 패턴** (루트 공통)으로 시작. 특화가 필요하면 그때 B·C로 확장.
-2. 각 패키지의 `CLAUDE.md`에 **"이 패키지 스택·규약"**을 짧게 명시 — cfh-review의 `stack_kind` 감지가 정확해짐.
-3. 공통 규약은 **`refactoring-strategy`·`skill-author`·`harness-factory`** 같은 메타-스킬 위주로, 패키지별로는 **도메인 스킬**(결제·인증·UI 컴포넌트 등)을 분리.
-
----
-
-## CI 통합
-
-`cfh validate`를 CI에 넣어 잘못된 스킬 merge를 차단:
-
-```yaml
-# .github/workflows/skills.yml
-name: Validate skills
-on: [pull_request]
-jobs:
-  validate:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: '20' }
-      - run: npx -y @han-kyeon/claude-skills validate --target ./.claude
-```
+대상 페어: `/cfh-tdd ↔ /cfh-tdd-gen`, `/cfh-tc ↔ /cfh-tc-gen`, `/cfh-refactor ↔ /cfh-refactor-gen`. `/cfh-plan` Phase 2 approach card에는 _stack signal_ 추론 섹션 포함. 휴리스틱 상세: `commands/references/soft-routing.md`.
 
 ---
 
 ## 자주 하는 질문
 
-### Q. `cfh update`가 내 스킬을 지울까 봐 걱정됩니다
-
-지우지 않습니다. `user-authored` 상태는 `update`에서 자동 제외됩니다 (`cfh list`로 확인). `managed@<ver>` 스킬도 **설치 후 편집된 경우** (`user-modified`) `--force` 없이는 덮어쓰지 않습니다.
-
-### Q. 0.1.x에서 0.2.0으로 업그레이드 했는데 `unmanaged`로 뜹니다
-
-0.1.x는 manifest를 기록하지 않았습니다. 재설치하면 manifest가 생성됩니다:
-
-```bash
-cfh install --force
-```
-
-### Q. `/cfh-team` 대신 CLI로만 팀을 만들 수 있나요?
-
-`cfh generate --list`로 프리셋 확인 후 `cfh generate <name>`. 프리셋에 없는 커스텀 조합은 `/cfh-team`이 Claude 대화로 설계해 Write tool로 생성합니다.
-
 ### Q. 스킬이 자동 트리거되지 않습니다
 
-1. `cfh list`로 설치 확인 (symlink/copy 상태도 확인)
-2. `cfh validate`로 frontmatter 검증
-3. `cfh doctor`로 키워드 중복·고아 manifest·shadowing 확인
-4. `cfh trace "<내 발화>"`로 어느 스킬이 매칭되는지 점수 확인
-5. SKILL.md `description`에 **구체 키워드** 3개 이상 있는지 확인
-6. Claude Code 세션 재시작 (`.claude/` 또는 `~/.claude/` 변경 시 캐시 갱신 필요)
+`cfh trace "<발화>"`로 매칭 점수 확인. description 키워드와 발화가 충분히 겹치는지 확인. 명시 호출(`/cfh-foo`)은 항상 자동 trigger를 이깁니다.
 
-### Q. 내가 편집한 스킬이 `cfh update`에 덮어써질까 걱정됩니다
+### Q. 두 skill이 같은 발화에 충돌해요
 
-편집된 managed 항목(`user-modified`)은 기본적으로 보호되며, 완전히 사용자 소유로 선언하고 싶으면 `cfh adopt <name>`을 쓰시면 됩니다. 이후 `user-authored (adopted)`로 분류되어 업데이트에서 자동 제외됩니다.
+`cfh check skills --mapping`로 매핑 확인. trigger-overlap 경고가 있으면 description에 anti-trigger ("Do NOT trigger when ...") 추가.
 
-### Q. /cfh-team의 Deep-dive가 항상 (b) 모두 yes로 가게 하고 싶습니다 *(0.6.0)*
+### Q. cfh-tdd vs cfh-tdd-gen 어느 쪽을 쓰나요
 
-`--deep` 플래그로 매번 (b)를 자동 응답하실 수 있습니다.
-```text
-/cfh-team --deep <도메인 설명>
+- FE 컴포넌트(React/Vue) → `cfh-tdd`
+- BE 핸들러·라이브러리·CLI·mobile·embedded·ML → `cfh-tdd-gen`
+- 모호하면 Track 9 soft suggestion이 안내 (0.18.0+)
+
+### Q. /cfh-tc로 새 컴포넌트 시작하면?
+
+Track 8 (0.17.0)부터 `/cfh-tc`·`/cfh-tc-gen`은 **기존 파일 대상 한정**. 새 자산은 `/cfh-tdd`·`/cfh-tdd-gen`. 0.17.x 동안 deprecation warning + 정상 작동. 향후 major에서 자동 차단.
+
+### Q. cfh check --strict 가 unknown field 에러를 뱉어요
+
+1.0급부터 default가 strict — SKILL.md frontmatter의 unknown field가 ERROR. 옵션:
+
+- frontmatter에서 해당 필드 제거
+- `schemas/skill-frontmatter.json` 에 필드 추가 후 PR
+- `cfh check schema --legacy` — 0.x style warn-only
+
+### Q. cfh install --link 가 안 돼요
+
+1.0급 polish에서 제거됨. dev 워크플로는 `npm link` 권장 (패키지 디렉터리에서 `npm link`, 사용 프로젝트에서 `npm link @han-kyeon/claude-skills`).
+
+### Q. 자동화 스크립트 수정해야 하나요
+
+알 됩니다. 구 명령(`cfh evolve`·`cfh log`·`cfh dashboard`·`cfh eval`·`cfh validate`·`cfh doctor` 등)은 한 사이클 동안 alias로 작동 + stderr deprecation warning. 시간 여유 있을 때 신 명령으로 갱신.
+
+### Q. PROGRESS.md가 자동 생성됐어요. 안 생기게 하려면
+
+자동 생성은 절대 안 됩니다 — `/cfh-progress init`로 사용자 명시 호출만 생성. 자동 생성됐다면 다른 누군가가 호출한 것. 삭제 후 `init` 안 부르면 됩니다.
+
+### Q. 사용자가 작성한 스킬이 cfh update에 덮어써질까 봐 걱정됩니다
+
+user-authored (manifest 없음) 또는 user-modified는 default skip됩니다. `--force`로 덮어쓰기 시 warning 출력 + 명시 진행. 보호 강화하려면 `cfh adopt <name>`으로 user-authored 전환.
+
+### Q. CI에 통합하려면
+
+```yaml
+- run: npm install -g @han-kyeon/claude-skills
+- run: cfh install
+- run: cfh check --strict # schema + 진단 모두
+- run: cfh dev eval --executor claude --report junit --output junit.xml
+- uses: dorny/test-reporter@v1
+  with: { path: junit.xml }
 ```
-반대로 단순 팀이라 빠르게 가시려면 `--fast`로 (c) skip 자동.
 
-### Q. 인터뷰 질문에 답을 모르겠어요 *(0.6.0)*
+`cfh check --legacy` 옵션은 0.x style 호환 (1.0급 strict 우회). 자세한 명령은 `cfh --help`.
 
-모든 메타-스킬의 모든 질문에 `(z) 모르겠음` 옵션이 기본 탑재되어 있습니다. 선택 시 Claude가 자동으로 다음 3단계를 적용합니다:
-1. 비슷한 상황 예시 2~3개 제시 → 사용자가 가까운 쪽 선택
-2. 그래도 모르면 안전한 기본값 제안 + "나중에 수정 가능" 안내
-3. y로 진행 또는 n으로 보류
-
-상세 protocol: `~/.claude/skills/asset-factory/references/unknown-answer-playbook.md`.
-
-### Q. cfh-tdd vs cfh-tdd-gen 어느 쪽 쓰나요 *(0.6.0)*
-
-| | `cfh-tdd` | `cfh-tdd-gen` |
-|---|---|---|
-| 가정 스택 | React/Vue + RTL | 임의 (Node·Python·Go·Rust 등) |
-| 테스트 관용구 | getByRole·userEvent·MSW | Arrange-Act-Assert·DI·table-driven |
-| 안티패턴 | DOM class 검증·내부 state 접근 | private 메서드·시간 의존·글로벌 상태 누수 |
-
-본인 프로젝트가 React/Vue면 `cfh-tdd`, 백엔드·라이브러리·CLI면 `cfh-tdd-gen`. 모노레포라면 대상 파일 위치로 결정.
-
-### Q. 팀 산출물이 잘못됐을 때 감지 못 할까 봐 걱정됩니다 *(0.6.0)*
-
-`/cfh-team` Phase 1 Q6 관측성 질문이 정확히 그 우려를 다룹니다. (e) 감지 경로 없음 + Q4 실패 비용 (b)/(c)이면 Sanity check R8이 트리거되어 Producer-Reviewer 강제 권고 또는 사람 승인 관문 추가를 제안합니다.
-
-### Q. Shell에서 cfh 자동완성을 쓰고 싶어요 *(0.7.0)*
-
-bash·zsh 자동완성 스크립트가 `completions/` 디렉터리에 포함돼 있습니다.
+### Q. Monorepo·프로젝트별 다른 스킬 쓰기
 
 ```bash
-# bash
-echo 'source '$(npm root -g)'/@han-kyeon/claude-skills/completions/cfh.bash' >> ~/.bashrc
-
-# zsh
-echo 'fpath=('$(npm root -g)'/@han-kyeon/claude-skills/completions $fpath)' >> ~/.zshrc
-echo 'autoload -Uz compinit && compinit' >> ~/.zshrc
+cfh install --target ./packages/web/.claude       # 패키지별
+cfh new skill my-team-skill --project             # 프로젝트 로컬
+cfh list --project                                # 프로젝트 자산만
 ```
 
-Tab을 누르면 서브커맨드·플래그·자산 이름(`remove <TAB>` 등)이 자동완성됩니다. 상세: `completions/README.md`.
-
-### Q. 자산을 팀원에게 공유하고 싶어요 *(0.7.0)*
-
-두 가지 방법:
-
-**방법 1 — 프로젝트 로컬 + git**: 팀 공유가 목적이면 `./.claude/`에 작성하고 git commit. 팀원은 `git pull`만 하면 자동 적용.
-
-**방법 2 — export/import 번들**: 전역 자산(`~/.claude/`)을 다른 PC로 옮기거나 일회성으로 공유할 때.
-```bash
-# 내보내기
-cfh export --output my-skills.json
-
-# 받은 사람
-cfh import my-skills.json
-```
-
-### Q. Hooks로 사용 로그를 자동 수집하고 싶어요
-
-`HOOKS.md`에 Claude Code `settings.json`의 `PostToolUse`·`Stop`·`UserPromptSubmit` 훅에 `cfh log`를 연결하는 7가지 레시피가 있습니다. CI에서 `cfh doctor`·`cfh evolve` 돌리는 예제도 포함.
-
-### Q. Monorepo에서는 어떻게 쓰나요 *(0.7.0)*
-
-`./.claude/`는 Claude Code가 cwd 기준으로 탐색하므로 **패키지 디렉터리에 cd한 뒤 Claude Code 실행**이 기본 패턴입니다. 3가지 배치(루트만 / 패키지만 / 하이브리드) 가이드는 이 README의 "Monorepo 사용" 섹션 참고.
-
-### Q. 프로젝트별로 다른 스킬을 쓰고 싶습니다
-
-전역(`~/.claude/`) 대신 프로젝트 로컬(`<project>/.claude/`)을 사용:
-
-```bash
-cfh new skill project-specific-rule --project
-cfh generate reviewer-team --target ./   # 현재 프로젝트에 팀 생성
-```
-
-프로젝트 로컬이 전역보다 **우선**합니다.
+프로젝트 로컬(`./.claude/`)이 글로벌(`~/.claude/`)을 가립니다. `cfh check skills` 가 shadowing 감지.
 
 ---
 
-## 로컬 개발
-
-```bash
-git clone <this-repo>
-cd claude-fe-harness
-npm link
-
-# 다른 디렉터리에서
-cfh install --target ./.my-sandbox --dry-run
-cfh list --target ./.my-sandbox
-cfh validate --target ./.my-sandbox
-```
-
----
-
-## Migration Guide (0.x → 0.16.x)
+## Migration Guide (0.x → 0.18.x)
 
 0.16.x cycle은 명령 이름·subcommand 구조 정리가 핵심. **모든 구 명령은 한 사이클 동안 alias 유지** — 자동화 스크립트는 즉시 수정 불필요. 1.0급 안정성 도달 후 사용자 판단으로 1.0 promotion 시점에 alias 제거 단계 시작.
 
@@ -1748,72 +388,62 @@ cfh validate --target ./.my-sandbox
 cfh evolve [skill]              →  cfh feedback [skill]
 cfh log <skill>                 →  cfh feedback log <skill>
 cfh log --enable                →  cfh feedback enable
-cfh log --disable               →  cfh feedback disable
-cfh log --status                →  cfh feedback status
 
-# Observability umbrella
-cfh dashboard                   →  cfh stats           (default = dashboard 뷰)
-                                   cfh stats cost      (= cfh cost, alias만)
-                                   cfh stats errors    (= cfh sentry summary)
-
-# Sentry subcommands (flag → sub)
+# Observability
+cfh dashboard                   →  cfh stats
+cfh cost                        →  cfh stats cost (cost는 alias만 유지)
 cfh sentry --live               →  cfh sentry live
 cfh sentry --install-hook       →  cfh sentry hook install
 
-# Maintainer namespace
+# Maintainer
 cfh eval                        →  cfh dev eval
 
-# Health checks umbrella
-cfh validate                    →  cfh check schema    (또는 cfh check 전체)
+# Health checks
+cfh validate                    →  cfh check schema
 cfh doctor                      →  cfh check skills
 
-# Removed (no alias)
-cfh install --link              →  removed; use `npm link` for dev iteration
+# Removed
+cfh install --link              →  removed (dev: npm link)
 ```
+
+### TDD/TC mode 분기 (0.17.0 Track 8)
+
+`/cfh-tc`·`/cfh-tc-gen`은 **기존 파일 대상**으로 한정. 새 컴포넌트·모듈은 `/cfh-tdd`·`/cfh-tdd-gen`:
+
+| 기존 발화 (≤ 0.16.x)              | 새 발화 (0.17+)          | 자동 라우팅  |
+| --------------------------------- | ------------------------ | ------------ |
+| `/cfh-tc 컴포넌트 새로 짤건데`    | `/cfh-tdd 컴포넌트 새로` | tdd-first    |
+| `/cfh-tdd UserList.tsx 보강`      | `/cfh-tc UserList.tsx`   | (cfh-tc)     |
+| `/cfh-tc-gen 새 API 핸들러`       | `/cfh-tdd-gen 새 API`    | tdd-general  |
+| `/cfh-tdd-gen 기존 retry.go 보강` | `/cfh-tc-gen 기존 retry` | (cfh-tc-gen) |
+
+**Stack × Mode 매트릭스**:
+
+|            | **intent** (새로) | **artifact** (기존) |
+| ---------- | ----------------- | ------------------- |
+| **FE**     | `/cfh-tdd`        | `/cfh-tc`           |
+| **non-FE** | `/cfh-tdd-gen`    | `/cfh-tc-gen`       |
 
 ### Schema 검증 강화
 
-1.0부터 `cfh check schema`(구 `cfh validate`)는 default가 strict 모드 — SKILL.md frontmatter의 unknown field를 ERROR로 보고합니다. 0.x 동작이 필요하면 `--legacy` flag 사용:
-
-```bash
-cfh check schema --legacy       # 0.x style: unknown field = warn-only
-```
-
-CI에서 1.0.x 동안 `--legacy` 통과 후 1.1+ 시점에 제거 권장.
+1.0급부터 `cfh check schema`(구 `cfh validate`)는 default가 strict — SKILL.md frontmatter의 unknown field를 ERROR로 보고. 0.x 동작이 필요하면 `--legacy` flag.
 
 ### Deprecation 사이클
 
 상세 정책: [`docs/deprecation-policy.md`](docs/deprecation-policy.md).
 
-- 0.16.x: 구 명령·플래그가 작동하며 stderr에 deprecation warning 출력
+- 0.16.x ~ 0.18.x: 구 명령·플래그·발화 작동 + stderr deprecation warning
 - 1.0 promotion 후 한 사이클: alias 일괄 제거 (사용자 판단으로 시점 결정)
 
-자동화 스크립트는 0.16.x 동안 무수정 작동. 1.0 promotion 전에 신 명령으로 migration 권장.
+### 적용 사이클 (Track 7·8·9)
 
-### 0.16.3 patch — audit-driven polish
-
-8 항목 일괄 적용 (PLAN § 7):
-
-| Track | 변경 |
-|---|---|
-| 7.1 | `/cfh-feedback debug-investigator` · `/cfh-feedback cfh-review` — 잘못된 target 식별자 정정 |
-| 7.2a | `skill-author` Pre-scan 9 stack (pyproject·Cargo·go.mod·pom·gradle·composer·Gemfile) |
-| 7.2b | `cfh-progress` 이름 추출 6 stack regex 우회 (외부 dep 0) |
-| 7.3 | `debug-investigator` FE 키워드 병기 (hydration mismatch·white screen·INP regression) |
-| 7.4 | `cfh-guide` TDD 라우팅 row 분리 (tdd-first FE / tdd-general non-FE) |
-| 7.5 | 메타 자산 `a11y` default → alternatives 7종 병기 |
-| 7.6 | `tdd-general` worked example 다양화 (data pipeline·distributed retry·Rust ParseError) |
-| 7.7 | `cfh-tc-gen` IO 카테고리 일반화 (embedded·mobile·ML) + 스택 가정 표 확장 |
-| 7.8.3 | `tests/contract/meta-asset-axes.test.js` — a11y default 회귀 영구 차단 |
-
-### 향후 사이클 미리보기
-
-| 마일스톤 | 범위 | 베이킹 |
-|---|---|---|
-| **0.17.0** | Track 8 — TDD/TC mode 분기 (intent×artifact 매트릭스) | 0.16.3 release 후 1~2주 |
-| **0.18.0** | Track 9 — Soft routing suggestion (bold 강조, 강제 X) | 0.17.0 release 후 2주+ |
-| **0.18.x+** | 다음 audit run 결과 + 외부 사용자 feedback | 사이클마다 1~2주 |
-| **1.0.0** | (사용자 판단 — 자동 게이트 아님) | — |
+| 마일스톤    | 범위                                                  | 상태                   |
+| ----------- | ----------------------------------------------------- | ---------------------- |
+| **0.16.3**  | Track 7 — audit-driven polish 8 항목                  | ✅ release             |
+| **0.17.0**  | Track 8 — TDD/TC mode 분기 (intent×artifact 매트릭스) | ✅ release             |
+| **0.18.0**  | Track 9 — Soft routing suggestion (bold 강조, 강제 X) | ✅ release             |
+| **0.18.x+** | 다음 audit run 결과 + 외부 사용자 feedback            | 베이킹 + 외부 검증     |
+| **1.0.0**   | (사용자 판단 — 자동 게이트 아님)                      | 안정성 체크리스트 검토 |
 
 상세: [`PLAN.md`](./PLAN.md).
 
