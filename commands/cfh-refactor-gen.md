@@ -159,6 +159,7 @@ BE / 스택 중립 리팩터링 워크플로를 시작합니다.
 - contract test (Pact·OpenAPI diff)
 - load test 비교 (p50·p95·throughput)
 - trace span·metric label 회귀 검증 (관찰성 회귀 위험)
+- **언어별 정적 검증 도구를 회귀 게이트로 활용** — Python: `mypy --strict`·`ruff`·`bandit` / Go: `go vet`·`staticcheck`·`go build ./...` / Rust: `cargo clippy`·`cargo check`·`cargo semver-checks` / JVM: SpotBugs·ErrorProne·`detekt`(Kotlin) / Node: `tsc --noEmit`·`eslint`. interface·trait 추출 시 *암묵 구현 컴파일 안전망*으로 필수.
 
 ## (grill) 옵션
 

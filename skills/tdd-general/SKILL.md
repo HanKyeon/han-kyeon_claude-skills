@@ -69,6 +69,9 @@ Phase 1: Intent Interview   (의도 6 질문 — Happy Path·Edge·Error·Out-of
 Phase 2: Test Outline        (테스트 케이스 제목·구조 제안 → 사용자 승인)
    ↓
 Phase 3: Failing Tests       (구현 파일 본문 접근 금지, 시그니처만 확인)
+                              • 정적 타입 언어(Rust·Go·Java·Kotlin·TypeScript): 컴파일 실패도 RED의 일부.
+                                "테스트 실패" vs "구현 미완"을 구분하려면 `unimplemented!()` / `panic!("TODO")` /
+                                `throw NotImplementedError` 등으로 명시 — 컴파일은 통과시키고 런타임에 fail.
    ↓
 Phase 4: Implementation      (최소 구현으로 GREEN, hard-code 금지, 테스트 수정 금지)
    ↓
@@ -103,6 +106,8 @@ describe('validateCoupon', () => {
 ```
 
 ### Python (pytest) — data pipeline transform
+
+> `pytest` 관용구: `@pytest.fixture` (scope: function/module/session)로 setup 격리, `@pytest.mark.parametrize`로 table-driven, `conftest.py`에 공유 fixture, `respx`/`pytest-httpx`로 HTTP mock.
 
 ```python
 class TestNormalizeUserRecord:
@@ -194,6 +199,49 @@ mod tests {
 }
 ```
 
+### JVM (JUnit 5 / Kotlin) — Spring service handler
+
+```kotlin
+// Kotlin + JUnit 5 + AssertJ + MockK
+@DisplayName("CouponValidator")
+class CouponValidatorTest {
+
+    private val repo: CouponRepository = mockk()
+    private val sut = CouponValidator(repo)
+
+    @Nested
+    @DisplayName("happy path")
+    inner class HappyPath {
+        @Test
+        fun `returns valid when coupon is active and unused`() {
+            every { repo.findByCode("SUMMER2026") } returns Coupon(active = true, used = false)
+            val result = sut.validate("SUMMER2026")
+            assertThat(result.valid).isTrue()
+        }
+    }
+
+    @ParameterizedTest
+    @MethodSource("invalidInputs")
+    fun `rejects invalid inputs`(input: String?, expectedReason: String) {
+        every { repo.findByCode(any()) } returns null
+        val result = sut.validate(input)
+        assertThat(result.valid).isFalse()
+        assertThat(result.reason).isEqualTo(expectedReason)
+    }
+
+    companion object {
+        @JvmStatic
+        fun invalidInputs() = listOf(
+            Arguments.of(null, "empty"),
+            Arguments.of("", "empty"),
+            Arguments.of("   ", "whitespace"),
+        )
+    }
+}
+```
+
+> JVM 관용구: `@Nested` 그룹핑, `@ParameterizedTest` + `@MethodSource`, AssertJ fluent assertion, MockK(Kotlin)/Mockito(Java) DI, `@WebMvcTest`·`@DataJpaTest` slice 분리. Spring slice 선택은 `cfh-grill`로 깊이 결정.
+
 ## 안티패턴 (tdd-general 전용)
 
 | ❌ Do NOT | 대신 |
@@ -224,6 +272,29 @@ from hypothesis import given, strategies as st
 @given(st.text())
 def test_serialize_deserialize_is_identity(s):
     assert deserialize(serialize(s)) == s
+```
+
+```rust
+use proptest::prelude::*;
+
+proptest! {
+    #[test]
+    fn parse_format_roundtrip(d: i64) {
+        let s = format_date(d);
+        prop_assert_eq!(parse_date(&s).unwrap(), d);
+    }
+}
+```
+
+```kotlin
+// JVM (Kotest property-based)
+class SerdeProperty : StringSpec({
+    "serialize then deserialize is identity" {
+        checkAll<String> { s ->
+            deserialize(serialize(s)) shouldBe s
+        }
+    }
+})
 ```
 
 ## references

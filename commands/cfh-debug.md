@@ -250,6 +250,17 @@ Phase 2 Hypothesis로 진행할까요?
 
 **가설 하나씩 체계적으로 검증·제거**. 근거 없이 "이게 맞다"고 수렴 금지.
 
+### 언어·스택별 표준 도구 (anchor — 사용자 stack에 맞춰 선택)
+
+> **카탈로그 X, anchor만**. 발견 시 *해당 stack 공식 도구 문서* 인용 요청.
+
+- **Python**: `py-spy` / `tracemalloc` / `django-silk` · Django Debug Toolbar · `connection.queries` / `pytest-asyncio` race / `cProfile`
+- **Go**: `pprof` (`runtime/pprof`·`net/http/pprof`) / `go tool trace` / `go test -race` / `GODEBUG=gctrace=1` / `runtime.Stack` dump
+- **Rust**: `tokio-console` / `tracing` + `tracing-subscriber` / `cargo flamegraph` / `RUST_BACKTRACE=1` / `miri` / `loom` (concurrency)
+- **JVM (Java/Kotlin)**: `jstack` / `jmap` + `jhat` / JFR (Java Flight Recorder) / async-profiler / VisualVM / `-XX:+HeapDumpOnOutOfMemoryError` / HikariCP pool metric
+- **Node**: `--inspect` + Chrome DevTools / `clinic.js` / `0x` flamegraph / `--prof` / `process.memoryUsage()`
+- **Frontend (browser)**: Chrome DevTools (Performance·Memory·Network) / React Profiler / Vue Devtools / Lighthouse / `console.trace`
+
 ### 유형별 검증 도구
 
 #### (a) 기능 버그

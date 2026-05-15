@@ -37,11 +37,13 @@
 2. 프로젝트 이름 추출 — multi-stack 우선순위 (정규식 우회, 외부 dep 0):
    1. `package.json`의 `"name"` (JSON.parse — Node 내장)
    2. `pyproject.toml` `[project]` 또는 `[tool.poetry]` 섹션의 `^name\s*=\s*["'](.+)["']`
-   3. `Cargo.toml` `[package]` 섹션의 `^name\s*=\s*["'](.+)["']`
-   4. `go.mod` 첫 줄 `^module\s+(.+)$` — 마지막 `/` 이후 segment
-   5. `pom.xml`의 `<artifactId>([^<]+)</artifactId>`
-   6. `build.gradle{,.kts}`의 `rootProject\.name\s*=\s*["'](.+)["']`
-   7. fallback: 현재 디렉터리 basename
+   3. `setup.py`의 `name\s*=\s*["'](.+)["']` (legacy Python 프로젝트)
+   4. `Cargo.toml` `[package]` 섹션의 `^name\s*=\s*["'](.+)["']`
+   5. `go.mod` 첫 줄 `^module\s+(.+)$` — 마지막 `/` 이후 segment
+   6. `pom.xml`의 `<artifactId>([^<]+)</artifactId>`
+   7. `settings.gradle{,.kts}`의 `rootProject\.name\s*=\s*["'](.+)["']` (멀티 모듈 root)
+   8. `build.gradle{,.kts}`의 `rootProject\.name\s*=\s*["'](.+)["']`
+   9. fallback: 현재 디렉터리 basename
    - 어떤 단계에서든 파일 읽기·파싱 실패 시 silent fallback to 다음 단계
 3. 템플릿 채우기 (`commands/references/progress-template.md` 형식):
    - frontmatter: `project`, `created` (now ISO), `last_updated` (now ISO), `sessions: 0`

@@ -116,6 +116,13 @@ Step 1로 진행.
 | Express·Koa·Fastify·NestJS 또는 `app/api/`·`routes/` 다수 | `backend-node` |
 | FastAPI·Django·Flask 또는 `*.py` 다수 | `backend-python` |
 | `go.mod` + `*.go` | `backend-go` |
+| `pom.xml`/`build.gradle{,.kts}` + `*.java` | `backend-java` |
+| `build.gradle.kts` + `*.kt` (Kotlin/Spring 등) | `backend-kotlin` |
+| `Cargo.toml` + `*.rs` (axum·actix·warp 등) | `backend-rust` |
+| `Gemfile` + `*.rb` (Rails 등) | `backend-ruby` |
+| `composer.json` + `*.php` (Laravel·Symfony 등) | `backend-php` |
+| `*.swift` + `Package.swift` 또는 `*.xcodeproj` | `mobile-ios` |
+| `build.gradle` + `AndroidManifest.xml` | `mobile-android` |
 | 위 둘 이상 (모노레포) | `mixed` |
 | 아무것도 매칭 안 됨 | `unknown` (보수적으로 일반 룰만 적용) |
 
@@ -150,6 +157,20 @@ project_profile:
 ```
 
 `stack_kind`는 Subagent D(Performance)·E(Security)·C(Test)의 prompt에 **조건부 분기**로 사용됩니다.
+
+### 언어별 prompt anchor (Subagent B/D/E의 stack-specific 보강)
+
+각 backend-* 분기는 generic 룰 외에 *언어 idiom* 한 줄을 prompt에 포함:
+
+- **backend-python**: `mypy --strict` 위반·`ruff` rule·`bandit` security·SQLAlchemy `N+1` (`select_related`/`prefetch_related`)·Pydantic v1→v2 migration·`alembic` 마이그레이션 누락
+- **backend-go**: `errors.Is/As` wrap chain·`fmt.Errorf("%w", err)`·`context.Context` 전파·`go test -race`·`go vet`·`staticcheck`·`sync.Pool` allocation·`errgroup` cancellation
+- **backend-java / backend-kotlin**: `@Transactional` propagation/isolation·`@WebMvcTest` slice·`@MockBean` boundary·Kotlin null safety (`String?`)·sealed class exhaustive `when`·JPA `LazyInitializationException`
+- **backend-rust**: borrow/lifetime·`unsafe` audit·`Send + Sync`·`Arc<Mutex>` deadlock·`.unwrap()` panic 경로·`?` propagation·trait object vs generic
+- **backend-node**: TypeScript `tsc --noEmit`·`eslint`·async error swallowing·`Express` route 등록 누락·`@types/*` 의존
+- **frontend**: React Query `queryKey` 일관성·hydration mismatch·React Profiler 측정·`Suspense` 경계
+- **mobile-ios / mobile-android**: `XCTestExpectation` async·`Instrumented` JUnit·permission flow·deep link·thread/queue·메모리 사이클
+
+위 anchor를 *prompt에 포함하되 카탈로그로 확장하지 말 것* — 발견 시 사용자에게 *해당 stack의 공식 도구·라이브러리* 문서 인용을 요청.
 
 ## Step 2: Diff 규모 측정 + 전략 결정
 
