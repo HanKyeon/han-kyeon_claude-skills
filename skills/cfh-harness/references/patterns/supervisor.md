@@ -69,7 +69,7 @@ description: |
 
 ## 프리셋
 
-현재 번들 프리셋 없음. Claude가 harness-factory Phase 5의 Option B로 직접 생성.
+현재 번들 프리셋 없음. Claude가 cfh-harness Phase 5의 Option B로 직접 생성.
 
 ## 참고 구현
 

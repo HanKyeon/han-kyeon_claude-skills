@@ -166,7 +166,7 @@ cfh generate reviewer-team               # 4 전문 리뷰어 (security/perf/a11
 
 ```
 사용자: /cfh-team 결제 모듈을 오버핏 없이 TDD로 구현
-Claude: (harness-factory 6 Phase 워크플로)
+Claude: (cfh-harness 6 Phase 워크플로)
 ```
 
 1. Domain Interview (5 질문)
@@ -187,7 +187,7 @@ Claude: (harness-factory 6 Phase 워크플로)
 | **Supervisor** | 런타임 동적 경로 (모호한 멀티스텝) | 1+N |
 | **Hierarchical** | 하위 팀으로 자연 분해되는 초대형 | 3~N |
 
-상세: `~/.claude/skills/harness-factory/references/patterns/<name>.md`
+상세: `~/.claude/skills/cfh-harness/references/patterns/<name>.md`
 
 ### Agent Teams 실험 플래그
 
@@ -219,7 +219,7 @@ Claude: (asset-factory 메타-스킬 활성화)
             Q3 트리거 방식?
           → 분류 결과 공개 (예: "skill로 판단")
           → 사용자 승인
-        Phase 2: skill-author / harness-factory / 인라인 커맨드 인터뷰로 위임
+        Phase 2: skill-author / cfh-harness / 인라인 커맨드 인터뷰로 위임
 ```
 
 ### 언제 쓰나
@@ -233,13 +233,13 @@ Claude: (asset-factory 메타-스킬 활성화)
 | 결과 | 위임 대상 | 비고 |
 |---|---|---|
 | skill | `skill-author` | asset-factory가 Phase 0 + Q1 초안을 이미 채움 |
-| team | `harness-factory` | 태스크 성격 힌트 포함 전달, Deep-dive는 정상 수행 |
+| team | `cfh-harness` | 태스크 성격 힌트 포함 전달, Deep-dive는 정상 수행 |
 | command | asset-factory 인라인 (3 질문) | `cfh new command <name>` 스캐폴드 호출 |
 | agent (단독) | 대부분 team으로 재분류 권장 | 명확한 경우만 `cfh new agent` |
 
 ### 언제 쓰지 말아야 하나
 
-- 이미 어떤 자산인지 확정됐을 때 → `skill-author`(`/cfh-new skill …`) 또는 `harness-factory`(`/cfh-team …`) 직접
+- 이미 어떤 자산인지 확정됐을 때 → `skill-author`(`/cfh-new skill …`) 또는 `cfh-harness`(`/cfh-team …`) 직접
 - 일회성 요청일 때 → 그냥 Claude에게 바로 말하세요
 
 ---
@@ -268,7 +268,7 @@ Claude: (3 Phase, 0.4.0+ goal-first)
 | 목적 | **재사용 자산 생성** (skill/command/team) | **실제 작업 실행** |
 | 결과물 | `.claude/` 아래 파일 | 코드 수정·기능 구현·리팩터·리뷰 등 |
 | 자동 트리거 | "자동화해줘" 등 일부 발화 | **없음** (명시 호출만) |
-| 후속 위임 | skill-author / harness-factory | tdd-first / refactoring-strategy / /cfh-tc / /cfh-review 등 |
+| 후속 위임 | skill-author / cfh-harness | tdd-first / refactoring-strategy / /cfh-tc / /cfh-review 등 |
 
 ### 언제 쓰나
 
@@ -409,7 +409,7 @@ cfh evolve tdd-first                      # 특정 스킬만
 | "TDD (FE 컴포넌트)" — '테스트 먼저', 'TDD로 .tsx', '컴포넌트 TDD' | `tdd-first` (FE-friendly RTL·MSW) |
 | "TDD (BE / 라이브러리 / CLI)" — 'TDD without React', '백엔드 TDD', 'pure function TDD' | `tdd-general` (stack-neutral AAA·table-driven) |
 | "스킬 만들", "create a skill" | `skill-author` |
-| "팀 에이전트", "agent team", "build a harness" | `harness-factory` |
+| "팀 에이전트", "agent team", "build a harness" | `cfh-harness` |
 | "자동화해줘", "뭔가 만들고 싶은데", "automate this" | `asset-factory` (dispatcher) |
 | "원인 모르겠다", "stack trace", "production 500", "장애 났다" | `debug-investigator` (→ /cfh-debug) |
 
@@ -422,7 +422,7 @@ cfh evolve tdd-first                      # 특정 스킬만
 | `/cfh-tc <path>` | 테스트 작성 (TDD Mode / Test-Fill Mode 자동 감지) |
 | `/cfh-review [parent-branch]` | 적응형 PR 리뷰 |
 | `/cfh-new <kind> <name>` | `skill-author` 대화 (무엇을 만들지 확정됐을 때) |
-| `/cfh-team [domain]` | `harness-factory` 대화 |
+| `/cfh-team [domain]` | `cfh-harness` 대화 |
 | `/cfh-make [requirement]` | `asset-factory` dispatcher (분류부터 시작) |
 | `/cfh-plan [goal]` | 작업 dispatcher (목표 캡처·접근법 상의·실행, 명시 호출 전용) |
 | `/cfh-trace [query]` | 트리거 시뮬레이션 |

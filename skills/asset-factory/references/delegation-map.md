@@ -5,7 +5,7 @@
 ## 원칙
 
 1. **컨텍스트 이관 최대화.** asset-factory의 Q1~Q3 답변과 Pre-scan 결과를 위임받는 쪽이 활용할 수 있도록 전달.
-2. **중복 질문 금지.** skill-author나 harness-factory의 Phase 0·1 중 asset-factory가 이미 확인한 내용은 skip하도록 알림.
+2. **중복 질문 금지.** skill-author나 cfh-harness의 Phase 0·1 중 asset-factory가 이미 확인한 내용은 skip하도록 알림.
 3. **위임 공개.** 사용자에게 "이제 `<대상 스킬>`로 넘어갑니다. 거기서 <남은 질문 수>개를 더 묻습니다"라고 사전 안내.
 4. **되돌림 경로 유지.** 위임 대상에서 사용자가 "잘못 분류된 것 같다"고 판단하면 asset-factory로 복귀할 수 있음을 명시.
 
@@ -57,7 +57,7 @@ paired_command:
 
 ---
 
-## 위임 2 — harness-factory
+## 위임 2 — cfh-harness
 
 ### 언제
 Q2=(a) — 팀 확정
@@ -65,7 +65,7 @@ Q2=(a) — 팀 확정
 ### 사용자에게 하는 안내
 
 ```
-이제 `harness-factory` 메타-스킬로 넘어갑니다.
+이제 `cfh-harness` 메타-스킬로 넘어갑니다.
 분류 과정에서 얻은 "협업 필요" 판단을 전달하므로, Phase 1 Q1(태스크 성격)은 "(a)~(f) 중 하나로 좁혀진 상태"로 시작합니다.
 남은 작업: Phase 1 나머지 질문 → Phase 2~6 진행.
 ```
@@ -83,14 +83,14 @@ phase1_hints:
   Q1_task_type_candidates: <자동 추려진 후보 1~2개>
     # 예: 사용자가 "여러 축에서 리뷰" 말하면 (c) Expert Pool이 유력 (도메인별 축: FE a11y·타입 / BE consistency·idempotency·latency 등)
     # 사용자가 "생성 → 검증" 말하면 (d) Producer-Reviewer가 유력
-  Q2_io: (모름 — harness-factory가 질문)
+  Q2_io: (모름 — cfh-harness가 질문)
   Q3_axes: <asset-factory에서 식별한 축 후보 — 있다면>
   Q4_failure_cost: (모름)
   Q5_scale: (모름)
 existing_agents: <Pre-scan에서 발견한 ./.claude/agents/ 목록, 있다면>
 ```
 
-### harness-factory가 해야 할 것
+### cfh-harness가 해야 할 것
 
 1. Phase 0 Pre-scan 스캔 완료로 간주. 도메인 경계·기존 에이전트 목록을 그대로 활용.
 2. Q1 태스크 성격은 힌트 1~2개와 함께 제시하여 빠른 확인.
@@ -175,7 +175,7 @@ Q1=(a) + Q2=(b) + Q3=(b)
 ```
 단독 agent는 보통 아래 두 경우에만 가치가 있습니다:
 (a) 기존 skill 내부에서 위임받을 전문 역할 → `cfh new agent <name> --project` + 부모 skill에 위임 지침 추가
-(b) 새 팀의 시작점 → 차라리 harness-factory로 팀 전체를 설계
+(b) 새 팀의 시작점 → 차라리 cfh-harness로 팀 전체를 설계
 
 어느 쪽인가요?
 ```
@@ -184,7 +184,7 @@ Q1=(a) + Q2=(b) + Q3=(b)
   1. Input contract: 오케스트레이터로부터 무엇을 받는가?
   2. Process: 내부 단계는?
   3. Output contract: 어떤 구조로 반환?
-- (b) → harness-factory로 위임 (위의 위임 2와 동일)
+- (b) → cfh-harness로 위임 (위의 위임 2와 동일)
 
 ---
 

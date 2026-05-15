@@ -2,7 +2,7 @@
   {
     "name": "grill-explicit-trigger",
     "prompt": "이 쿠폰 검증 plan을 grill해줘. 결정 트리 깊이 파봐.",
-    "skill_should_trigger": "grill-me",
+    "skill_should_trigger": "grilling",
     "assertions": [
       { "type": "regex", "value": "결정 트리|decision tree|Decision tree" },
       { "type": "contains", "value": "추천" },
@@ -15,7 +15,7 @@
   {
     "name": "grill-after-cfh-plan",
     "prompt": "cfh-plan으로 접근법 카드 만들었는데 (grill) 옵션 골랐어. 깊이 들어가자.",
-    "skill_should_trigger": "grill-me",
+    "skill_should_trigger": "grilling",
     "assertions": [
       { "type": "regex", "value": "Phase 0|context absorption|기존 컨텍스트" },
       { "type": "not_contains", "value": "Q1~Q4 다시 답해주세요" },

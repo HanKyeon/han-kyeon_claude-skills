@@ -19,7 +19,7 @@
 | `package.json` | 스택·테스트 프레임워크 → 에이전트 도구 선택 기준 |
 | `./.claude/agents/` | 이미 있는 에이전트 — 중복·계층 재편 검토 |
 | `./.claude/skills/` | 기존 스킬 — 트리거 충돌 검토 |
-| `~/.claude/skills/harness-factory/references/patterns/*.md` | 6 패턴 카드 — 추천 시 참조용 |
+| `~/.claude/skills/cfh-harness/references/patterns/*.md` | 6 패턴 카드 — 추천 시 참조용 |
 
 ### 선택
 

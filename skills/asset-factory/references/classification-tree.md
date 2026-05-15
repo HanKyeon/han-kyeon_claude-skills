@@ -89,7 +89,7 @@ Q2로 진행.
 
 ### 목적
 
-단일 자산(skill/command/agent) vs 팀(harness-factory) 구분.
+단일 자산(skill/command/agent) vs 팀(cfh-harness) 구분.
 
 ### 판단 기준
 
@@ -109,11 +109,11 @@ Q2로 진행.
 
 ### (a) 팀 처리
 
-Q3 skip. Phase 2에서 `harness-factory`로 위임.
+Q3 skip. Phase 2에서 `cfh-harness`로 위임.
 
 전달 컨텍스트:
-- 요구사항 한 문장 → harness-factory Phase 0의 도메인 설명
-- Q2 답변 근거 → harness-factory Q1의 태스크 성격 힌트
+- 요구사항 한 문장 → cfh-harness Phase 0의 도메인 설명
+- Q2 답변 근거 → cfh-harness Q1의 태스크 성격 힌트
 
 ### (b) 단일 자산 처리
 
@@ -160,7 +160,7 @@ Q1~Q3 어느 질문에서도 "agent"를 직접 묻지 않는 이유: **단독 ag
 ```
 단독 agent를 만드는 것은 아래 경우에만 권장됩니다:
 (a) 기존 skill의 내부에서 위임받을 전문 역할을 분리 → `cfh new agent <name> --project` 스캐폴드 + 부모 skill 수정
-(b) 새 팀의 첫 에이전트 → harness-factory 위임 권장 (나머지 에이전트도 한 번에 설계)
+(b) 새 팀의 첫 에이전트 → cfh-harness 위임 권장 (나머지 에이전트도 한 번에 설계)
 (c) 그 외 (독립 실행용) → 실제로는 command가 맞을 가능성. Q3 재분류.
 
 어느 쪽인가요?
@@ -194,7 +194,7 @@ Q1~Q3 어느 질문에서도 "agent"를 직접 묻지 않는 이유: **단독 ag
 
 - Q1: 반복 (a)
 - Q2: 팀 (a) — 서로 다른 축 독립 평가
-- → **team** (harness-factory의 Expert Pool 패턴 가능성 높음)
+- → **team** (cfh-harness의 Expert Pool 패턴 가능성 높음)
 
 ### Case D. 애매한 TDD 보조
 

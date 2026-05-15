@@ -1,6 +1,6 @@
 <s>
-이 커맨드는 `harness-factory` 메타-스킬을 활성화하여 **에이전트 팀 + 전용 스킬을 프로젝트 로컬에 생성**하는 워크플로를 시작합니다.
-스킬이 자동 트리거되지 않았다면 지금 `~/.claude/skills/harness-factory/SKILL.md`를 읽고 그 6 Phase에 따라 진행하세요.
+이 커맨드는 `cfh-harness` 메타-스킬을 활성화하여 **에이전트 팀 + 전용 스킬을 프로젝트 로컬에 생성**하는 워크플로를 시작합니다.
+스킬이 자동 트리거되지 않았다면 지금 `~/.claude/skills/cfh-harness/SKILL.md`를 읽고 그 6 Phase에 따라 진행하세요.
 </s>
 
 <invocation>
@@ -26,7 +26,7 @@
 
 ## Phase 1 — Domain Interview
 
-`harness-factory/references/interview-flow.md`의 5 질문:
+`cfh-harness/references/interview-flow.md`의 5 질문:
 
 1. 태스크 성격 (선형 / 병렬 / 다축 평가 / 검증 / 동적 분기 / 계층)
 2. 입력 → 출력
@@ -36,7 +36,7 @@
 
 ## Phase 2 — Pattern Selection (추천+이유 패턴, 0.14.1+)
 
-`harness-factory/references/patterns/`의 6 패턴 중 1개 자동 추천:
+`cfh-harness/references/patterns/`의 6 패턴 중 1개 자동 추천:
 
 | 패턴 | 적합 신호 |
 |---|---|
@@ -140,7 +140,7 @@ export CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1
 - 트리거 스킬 발화 시뮬레이션 → cfh trace "<예상 팀 호출 발화>"
 - 설치 확인 → cfh list --project
 - 시운전 샘플 태스크 1개 즉시 실행 (Phase 6에서 제안된 것)
-- 이번 팀 설계 흐름 피드백 → /cfh-feedback harness-factory "<comment>"
+- 이번 팀 설계 흐름 피드백 → /cfh-feedback cfh-harness "<comment>"
 ```
 
 </output_format>

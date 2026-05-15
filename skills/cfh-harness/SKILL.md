@@ -1,5 +1,5 @@
 ---
-name: harness-factory
+name: cfh-harness
 description: |
   Use this skill when the user wants to design a multi-agent team or scaffold a
   coordinated set of agents+skills for a domain (keywords: "팀 에이전트", "team agents",

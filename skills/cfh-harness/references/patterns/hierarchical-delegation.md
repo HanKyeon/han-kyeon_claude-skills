@@ -76,7 +76,7 @@ description: |
 
 ## 프리셋
 
-현재 번들 프리셋 없음. Claude가 harness-factory Phase 5의 Option B로 사용자와 함께 트리 구조를 직접 설계.
+현재 번들 프리셋 없음. Claude가 cfh-harness Phase 5의 Option B로 사용자와 함께 트리 구조를 직접 설계.
 
 ## 참고 구현
 

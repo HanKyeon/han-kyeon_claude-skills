@@ -7,7 +7,7 @@
 사용자가 질문에 답을 못 할 때 기존 스킬들은 서로 다르게 대응했습니다:
 - `asset-factory` — (c) 모르겠음 + 힌트 제공 (잘 됨)
 - `skill-author` — F-series follow-ups가 있지만 "그래서 답을 모르면?" 명확한 경로 없음
-- `harness-factory` — 옵션 제시 없이 자유 서술 기대 → 사용자 이탈
+- `cfh-harness` — 옵션 제시 없이 자유 서술 기대 → 사용자 이탈
 - `tdd-first`·`refactoring-strategy` — 일부 질문에만 fallback 존재
 
 이 playbook은 **모든 메타-스킬 질문에 (z) 모르겠음을 붙이고 동일 처리 흐름**을 적용합니다.
@@ -60,7 +60,7 @@
 | Q5 출력 형태 | "질문 리스트 형식" | 가장 일반적 |
 | Q6 참조 자료 | "없음 (SKILL.md 단일 파일)" | 처음부터 references 분리는 over-engineering |
 
-### harness-factory
+### cfh-harness
 
 | 질문 | 기본값 | 근거 |
 |---|---|---|

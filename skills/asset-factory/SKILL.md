@@ -5,9 +5,9 @@ description: |
   it should be a skill, slash command, subagent, or agent team (keywords: "자동화해줘",
   "이거 만들어줘", "반복 작업 줄이고 싶어", "claude가 알아서 하게", "뭔가 만들고 싶은데",
   "automate this", "turn into a workflow"). Classifies the request via 3-question decision tree
-  and delegates to skill-author (for skills), harness-factory (for teams), or inline interview
+  and delegates to skill-author (for skills), cfh-harness (for teams), or inline interview
   (for commands). Do NOT trigger when the user already specified the asset kind (use
-  skill-author or harness-factory directly), or for one-shot requests that do not need
+  skill-author or cfh-harness directly), or for one-shot requests that do not need
   persistence.
 commands: [/cfh-make]
 ---
@@ -20,7 +20,7 @@ commands: [/cfh-make]
 ```
 TRIGGER:  '자동화해줘', '이거 만들어줘', '반복 작업 줄이고 싶어', 'automate this',
           'turn into a workflow' 같이 만들 자산 종류가 아직 정해지지 않은 경우.
-SKIP:     이미 skill/command/team 종류가 명확하면 (skill-author/harness-factory 직접 호출).
+SKIP:     이미 skill/command/team 종류가 명확하면 (skill-author/cfh-harness 직접 호출).
           One-shot 요청(영속성 불필요)에도 트리거 안 됨.
 EXAMPLES:
   - '리뷰 응답 검증 자동화하고 싶어' → 분류 인터뷰 → skill/command/team 결정
@@ -43,7 +43,7 @@ EXAMPLES:
 ```
 Phase 1: Intent Capture          (요구사항 → scoped Pre-scan → 3 분류 질문)
    ↓
-Phase 2: Delegation              (분류 결과에 따라 skill-author / harness-factory / 인라인)
+Phase 2: Delegation              (분류 결과에 따라 skill-author / cfh-harness / 인라인)
 ```
 
 ## Phase 1 — Intent Capture
@@ -73,7 +73,7 @@ Phase 2: Delegation              (분류 결과에 따라 skill-author / harness
    상태: <managed@X | user-authored | user-modified | user-authored (adopted)>
 
 어떻게 진행할까요?
-  (a) 기존 자산 편집 모드로 전환 — skill-author·harness-factory가 '기존 편집'으로 위임
+  (a) 기존 자산 편집 모드로 전환 — skill-author·cfh-harness가 '기존 편집'으로 위임
   (b) 다른 이름으로 새로 생성 — 이름 제안 인터뷰로 이동
   (c) 기존을 덮어쓰고 새로 생성 — ⚠️ 아래 경고 참고
   (d) 취소
@@ -122,7 +122,7 @@ Phase 2: Delegation              (분류 결과에 따라 skill-author / harness
 
 > *"서로 다른 전문 관점이 각자 평가·기여해야 하는 구조인가요? (예: 보안·성능·접근성(a11y) / 일관성·멱등성·지연 / 공정성·robustness / 생성자·검증자 / 단계별 담당 — 도메인에 맞는 축 3~5개 선택)"*
 
-- (a) **예** — 2명 이상의 독립 역할이 필요 → **team** 확정. Phase 2에서 harness-factory로 위임.
+- (a) **예** — 2명 이상의 독립 역할이 필요 → **team** 확정. Phase 2에서 cfh-harness로 위임.
 - (b) **아니요** — 단일 역할·단일 관점 → Q3로
 - (c) **모르겠음** — 다음 힌트로 재질문: "단일 에이전트가 처음부터 끝까지 담당해도 괜찮다면 (b), 두 명이 나뉘어 일해야 실패가 줄어든다면 (a)입니다."
 
@@ -176,10 +176,10 @@ Q3 트리거: <답변>
 
 ### team 으로 분류됨
 
-`harness-factory` 스킬로 위임:
-- 이 스킬의 Q1~Q3 답변을 `harness-factory`의 Phase 0 Pre-scan 결과 일부로 전달
-- 특히 "독립적 전문 축"이 이미 파악되었으면 harness-factory Phase 1의 Q3 초안으로 사용
-- harness-factory의 Phase 1~6 수행
+`cfh-harness` 스킬로 위임:
+- 이 스킬의 Q1~Q3 답변을 `cfh-harness`의 Phase 0 Pre-scan 결과 일부로 전달
+- 특히 "독립적 전문 축"이 이미 파악되었으면 cfh-harness Phase 1의 Q3 초안으로 사용
+- cfh-harness의 Phase 1~6 수행
 
 ### agent (단독) 로 분류됨
 
@@ -188,7 +188,7 @@ Q3 트리거: <답변>
 ```
 단독 에이전트는 대개 팀의 일부로 작성됩니다. 아래 중 어느 쪽인가요?
 (a) 기존 스킬 안에서 위임받을 서브에이전트 → `cfh new agent <name> --project` 스캐폴드만 + 직접 편집
-(b) 새 팀의 첫 에이전트 → harness-factory로 위임 (나중에 추가 에이전트)
+(b) 새 팀의 첫 에이전트 → cfh-harness로 위임 (나중에 추가 에이전트)
 (c) 잘못 분류됨 — 다시 Phase 1로
 ```
 
@@ -205,4 +205,4 @@ Q3 트리거: <답변>
 ## references/
 
 - `classification-tree.md` — 3 분류 질문 상세, 경계 케이스 (hybrid·애매한 경우), Pre-scan 프로토콜
-- `delegation-map.md` — skill-author / harness-factory / inline command 인터뷰 각각의 위임 시 전달 컨텍스트·프롬프트 템플릿
+- `delegation-map.md` — skill-author / cfh-harness / inline command 인터뷰 각각의 위임 시 전달 컨텍스트·프롬프트 템플릿

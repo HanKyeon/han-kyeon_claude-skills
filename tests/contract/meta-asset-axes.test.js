@@ -20,7 +20,7 @@ const FORBIDDEN_DEFAULT = '보안·성능·a11y·타입·도메인';
 // Other usages of "a11y" alone are fine — we only ban this specific 5-axis tuple.
 const META_ASSET_FILES = [
   'skills/asset-factory/SKILL.md',
-  'skills/harness-factory/SKILL.md',
+  'skills/cfh-harness/SKILL.md',
   'commands/cfh-team.md',
   'commands/cfh-make.md',
   'commands/cfh-new.md',

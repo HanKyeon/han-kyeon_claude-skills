@@ -1,7 +1,7 @@
 <s>
 **전제**: 이 커맨드는 Claude Code 환경에서 동작. 코드는 결정에 *사용하지 않고* 추천의 이유 컨텍스트로만 (선택적으로) 참조합니다 — 결정은 항상 사용자에게 묻기.
 
-**구조**: `/cfh-grill` 커맨드는 `grill-me` 스킬의 명시 호출 입구입니다. 자동 트리거(발화 기반 활성화)는 스킬의 description이 처리, 이 커맨드 파일은 호출·인자 라우팅에 집중. 본체 워크플로 정의는 `~/.claude/skills/grill-me/SKILL.md`.
+**구조**: `/cfh-grill` 커맨드는 `grilling` 스킬의 명시 호출 입구입니다. 자동 트리거(발화 기반 활성화)는 스킬의 description이 처리, 이 커맨드 파일은 호출·인자 라우팅에 집중. 본체 워크플로 정의는 `~/.claude/skills/grilling/SKILL.md`.
 
 **🔀 잘못 진입하셨다면**:
 - 새 plan을 처음부터 짜고 싶다 → `/cfh-plan`
@@ -9,7 +9,7 @@
 - 버그·장애 원인 조사 → `/cfh-debug`
 - 작업 회고 → `/cfh-retro`
 
-이 커맨드는 **기존 plan·design·결정을 깊이 파는 인터뷰**입니다. mattpocock의 grill-me를 cfh 프로젝트 가치에 맞게 어댑테이션 — 한 번에 한 질문 + 추천+이유 + 사용자 의도 우선 + 결정 트리 walk.
+이 커맨드는 **기존 plan·design·결정을 깊이 파는 인터뷰**입니다. mattpocock의 grilling를 cfh 프로젝트 가치에 맞게 어댑테이션 — 한 번에 한 질문 + 추천+이유 + 사용자 의도 우선 + 결정 트리 walk.
 
 **핵심 원칙**:
 - **한 번에 한 질문.** 일괄 폼 금지.
@@ -40,7 +40,7 @@ plan·design 깊이 파기를 시작합니다.
 1. **명시 호출 (인자 직접)** — `/cfh-grill <topic>` 또는 `/cfh-grill`
 2. **`/cfh-plan`의 (grill) 옵션 위임** — `/cfh-plan`이 컨텍스트를 인자로 직렬화해 명시 호출 명령을 출력 → 사용자가 그 명령을 그대로 실행. 인자 + 직전 turn의 handoff 블록을 컨텍스트로 사용. **/cfh-grill이 자동으로 직전 turn을 흡수하지 않음** — `/cfh-plan` 측이 명시 핸드오프.
 
-(주: 슬래시 커맨드 정의는 자동 발동되지 않음. "grill me"·"stress-test"·"진짜 이거 맞아?" 발화는 `/cfh-plan` 등 다른 커맨드의 **라우팅 힌트** — 그쪽이 `/cfh-grill 호출 권장`을 출력함. skill 자체의 자동 트리거는 grill-me SKILL.md의 description으로 처리.)
+(주: 슬래시 커맨드 정의는 자동 발동되지 않음. "grill me"·"stress-test"·"진짜 이거 맞아?" 발화는 `/cfh-plan` 등 다른 커맨드의 **라우팅 힌트** — 그쪽이 `/cfh-grill 호출 권장`을 출력함. skill 자체의 자동 트리거는 grilling SKILL.md의 description으로 처리.)
 
 </invocation>
 
@@ -80,7 +80,7 @@ Phase 0가 끝나면 가능한 한 많은 결정 지점을 enumerate. **최소·
 
 ## Phase 1 — Decision tree 보여주기
 
-`skills/grill-me/references/decision-tree.md`의 전형 트리에서 컨텍스트에 맞는 후보 추출. **카테고리별 템플릿**:
+`skills/grilling/references/decision-tree.md`의 전형 트리에서 컨텍스트에 맞는 후보 추출. **카테고리별 템플릿**:
 - **FE 기능**: state·data flow·error UX·validation·caching·a11y·testing
 - **백엔드 기능**: API contract·auth·data layer·caching·idempotency·observability·rate limit
 - **Refactor**: scope·behavior preservation·safety net·migration strategy·blast radius
@@ -277,6 +277,6 @@ unresolved 노드 남아있으면 Step 1로 회귀 (다음 turn에서).
 - **종료 조건 명시.** Phase 3에서 어느 조건으로 종료했는지 보고.
 - **자동 commit·자동 PROGRESS 갱신 안 함.** 다음 단계 권장만.
 - **Out of scope.** 새 plan 만들기는 안 함 — `/cfh-plan`. grill은 기존 plan 깊이 파는 도구.
-- 형식 단일 출처: `commands/references/recommendation-pattern.md`, `skills/grill-me/references/decision-tree.md`.
+- 형식 단일 출처: `commands/references/recommendation-pattern.md`, `skills/grilling/references/decision-tree.md`.
 
 </constraints>

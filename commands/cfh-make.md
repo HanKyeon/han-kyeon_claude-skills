@@ -111,10 +111,10 @@ Q3 트리거: <답변 or N/A>
 - Q1 목적 초안까지 만들어서 넘김
 - skill-author는 중복 Pre-scan 생략하고 Q2~Q6 + Sanity check부터
 
-### team → harness-factory 위임
-- Q1~Q3 답변으로 harness-factory Phase 0 + Q1(태스크 성격) 힌트 생성
+### team → cfh-harness 위임
+- Q1~Q3 답변으로 cfh-harness Phase 0 + Q1(태스크 성격) 힌트 생성
 - 기존 `./.claude/agents/` 스캔 결과 이관
-- harness-factory는 기본 5 질문 + Deep-dive 옵트인 수행
+- cfh-harness는 기본 5 질문 + Deep-dive 옵트인 수행
 
 ### command → 인라인 인터뷰 (3 질문)
 - C1 목적·입력 / C2 출력 / C3 워크플로 단계
@@ -122,7 +122,7 @@ Q3 트리거: <답변 or N/A>
 - `cfh validate` 안내
 
 ### agent (단독) → 스캐폴드 + 간단 인터뷰
-- 대부분 team 권장 (harness-factory로 재분류 제안)
+- 대부분 team 권장 (cfh-harness로 재분류 제안)
 - 명확히 기존 skill 내부용이면 `cfh new agent <name> --project` 스캐폴드
 
 ## 종료 보고

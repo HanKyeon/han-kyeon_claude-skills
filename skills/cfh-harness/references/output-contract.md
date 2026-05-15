@@ -1,6 +1,6 @@
 # Output Contract
 
-harness-factory가 Phase 5에서 생성하는 파일 구조와 Claude Code 등록 규칙.
+cfh-harness가 Phase 5에서 생성하는 파일 구조와 Claude Code 등록 규칙.
 
 ## 디렉터리 레이아웃
 

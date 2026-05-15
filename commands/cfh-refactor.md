@@ -32,7 +32,7 @@
 
 ## Step 1 — Scope Narrowing (사용자 질문, 추천+이유 패턴 적용)
 
-`refactoring-strategy/references/scope-narrowing.md`의 8 질문을 **3~4개씩 묶지 말고 한 번에 한 질문**으로 순차 수행 (0.14.1+ grill-me 컨벤션):
+`refactoring-strategy/references/scope-narrowing.md`의 8 질문을 **3~4개씩 묶지 말고 한 번에 한 질문**으로 순차 수행 (0.14.1+ grilling 컨벤션):
 
 - Q1 범위 축 (Breadth)
 - Q2 깊이 축 (Depth)

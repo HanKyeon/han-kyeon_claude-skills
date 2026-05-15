@@ -9,7 +9,7 @@
       { "type": "regex", "value": "cfh-make|cfh-plan|asset-factory" }
     ],
     "tags": ["anti-trigger"],
-    "notes": "fresh plan은 cfh-make / cfh-plan이지 grill-me 아님"
+    "notes": "fresh plan은 cfh-make / cfh-plan이지 grilling 아님"
   },
   {
     "name": "no-trigger-on-debug",

@@ -1,6 +1,6 @@
 # 결정 트리 walk 알고리즘
 
-grill-me Phase 1·2의 핵심 — 어떤 결정을 어떤 순서로 파는가.
+grilling Phase 1·2의 핵심 — 어떤 결정을 어떤 순서로 파는가.
 
 이 문서는 `commands/cfh-grill.md` v4 결정과 일관됩니다. 충돌 시 cfh-grill.md가 권위.
 

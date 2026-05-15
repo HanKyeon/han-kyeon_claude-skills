@@ -19,7 +19,7 @@ commands: [/cfh-new]
 TRIGGER:  'create a skill', 'write a skill', '새 스킬', '스킬 만들', 'author a skill',
           'turn this workflow into a skill' 같이 *새 스킬을 작성*하는 의도.
 SKIP:     *기존 스킬 사용* 질문이면 트리거 안 됨. 다른 자산(command/team) 작성이면
-          asset-factory 또는 harness-factory.
+          asset-factory 또는 cfh-harness.
 EXAMPLES:
   - 'HIPAA 준수 검증 스킬 만들고 싶어' → Phase 0 Pre-scan + Q1~Q6 인터뷰
   - '기존 tdd-first description 다듬어줘' → Edit 모드 (Phase 1 인터뷰 skip)

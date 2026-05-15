@@ -50,11 +50,11 @@ cfh check                    # schema lint + skill 진단 모두
 
 이 패키지는 Claude Code를 위한 **인프라 + 자산 묶음**입니다.
 
-- **인프라 (framework-agnostic)**: install·update·list·new·generate·adopt·diff·check·trace CLI · feedback·stats·dev eval · asset-factory dispatcher · skill-author·harness-factory 메타-skill · grill-me 결정 트리 인터뷰 · cfh-plan 작업 dispatcher
+- **인프라 (framework-agnostic)**: install·update·list·new·generate·adopt·diff·check·trace CLI · feedback·stats·dev eval · asset-factory dispatcher · skill-author·cfh-harness 메타-skill · grilling 결정 트리 인터뷰 · cfh-plan 작업 dispatcher
 - **자산 (FE/non-FE 명시 분기)**:
   - **FE 전용**: `tdd-first` (RTL·MSW), `/cfh-tdd`·`/cfh-tc`·`/cfh-refactor`
   - **non-FE 전반** (`-gen` suffix): `tdd-general` (AAA·table-driven), `/cfh-tdd-gen`·`/cfh-tc-gen`·`/cfh-refactor-gen` — BE/library/CLI/mobile/embedded/ML 모두 커버
-  - **stack-neutral**: `debug-investigator` (FE/BE 양쪽 키워드), `grill-me`, `refactoring-strategy` (FE/BE 컨텍스트 분기)
+  - **stack-neutral**: `debug-investigator` (FE/BE 양쪽 키워드), `grilling`, `refactoring-strategy` (FE/BE 컨텍스트 분기)
 
 **한 문장**: 프로젝트별·팀별 Claude Code 사용 패턴을 자산화·관리·진화시키는 도구.
 
@@ -91,7 +91,7 @@ cfh check                    # schema lint + skill 진단 모두
 - Phase 2: 한 가지씩 *깊이* 인터뷰. 매 질문 추천 + 이유 + 대안. 한 번에 하나만.
 - Phase 3: 트리 walk 후 *의도 정렬*된 plan 완성
 
-→ mattpocock grill-me의 *relentless* 정신 + 자가검증(slot ≠ purpose)·ambiguous 응답 대기 등 cfh 어댑테이션.
+→ mattpocock grilling의 *relentless* 정신 + 자가검증(slot ≠ purpose)·ambiguous 응답 대기 등 cfh 어댑테이션.
 
 ### 3. 새 기능·새 모듈 시작 — `/cfh-tdd` / `/cfh-tdd-gen`
 
@@ -157,7 +157,7 @@ cfh check                    # schema lint + skill 진단 모두
 | ------------------------------------- | ---------------------------------------------------------------- |
 | `/cfh-new` + `skill-author` skill     | skill·command·agent 스캐폴드 (skill 시 mirror command 자동 생성) |
 | `/cfh-make` + `asset-factory` skill   | 자산 종류 모를 때 3 질문 분류 dispatcher                         |
-| `/cfh-team` + `harness-factory` skill | 에이전트 팀 설계 (6 패턴 중 1)                                   |
+| `/cfh-team` + `cfh-harness` skill | 에이전트 팀 설계 (6 패턴 중 1)                                   |
 
 ### 인터뷰·인사이트
 
@@ -165,7 +165,7 @@ cfh check                    # schema lint + skill 진단 모두
 | ----------------------------------------- | -------------------------------------------------- |
 | `/cfh-debug` + `debug-investigator` skill | 5-Phase 증거 기반 디버깅 (FE/BE 양쪽 키워드)       |
 | `/cfh-review`                             | PR 7-agent 리뷰 (stack-aware)                      |
-| `/cfh-grill` + `grill-me` skill           | 결정 트리 깊이 파기 인터뷰 (mattpocock 어댑테이션) |
+| `/cfh-grill` + `grilling` skill           | 결정 트리 깊이 파기 인터뷰 (mattpocock 어댑테이션) |
 | `/cfh-plan`                               | 작업 dispatcher (목표→접근법 카드→실행/위임)       |
 
 ### 워크플로 보조
@@ -377,9 +377,42 @@ cfh list --project                                # 프로젝트 자산만
 
 ---
 
-## Migration Guide (0.x → 0.18.x)
+## Migration Guide (0.x → 0.19.x)
 
-0.16.x cycle은 명령 이름·subcommand 구조 정리가 핵심. **모든 구 명령은 한 사이클 동안 alias 유지** — 자동화 스크립트는 즉시 수정 불필요. 1.0급 안정성 도달 후 사용자 판단으로 1.0 promotion 시점에 alias 제거 단계 시작.
+0.16.x~0.19.x cycle은 명령 이름·subcommand 구조 정리 + skill 디렉터리 명명 정리가 핵심. **모든 구 명령은 한 사이클 동안 alias 유지** — 자동화 스크립트는 즉시 수정 불필요. 1.0급 안정성 도달 후 사용자 판단으로 1.0 promotion 시점에 alias 제거 단계 시작.
+
+### Skill 디렉터리 rename (0.19.0)
+
+원본 패키지(mattpocock·revfactory)와의 글로벌 네임스페이스 충돌 회피를 위해 2개 skill 디렉터리 rename:
+
+| Before (≤ 0.18.x) | After (0.19+) |
+|---|---|
+| `~/.claude/skills/grill-me/` | `~/.claude/skills/grilling/` |
+| `~/.claude/skills/harness-factory/` | `~/.claude/skills/cfh-harness/` |
+
+**사용자 영향**:
+
+| 측면 | 영향 |
+|---|---|
+| mirror command (`/cfh-grill`·`/cfh-team`) | **변화 없음** |
+| 자동 trigger 발화 (description 키워드) | **변화 없음** |
+| `cfh trace`·`cfh list` 출력의 skill 이름 | 변경 (자동화 스크립트가 `grill-me`·`harness-factory` 문자열 의존하면 영향) |
+
+**0.18.x → 0.19.x 마이그레이션** (글로벌 설치 사용자):
+
+```bash
+# 1. 새 디렉터리 설치
+cfh install --force
+
+# 2. 구 디렉터리 manual 제거 (cfh install이 자동 제거 안 함)
+rm -rf ~/.claude/skills/grill-me ~/.claude/skills/harness-factory
+
+# 3. 확인
+cfh list                       # grilling·cfh-harness 표시 + 구 이름 없음
+cfh trace "grill 좀 해줘"       # grilling 매칭 확인
+```
+
+프로젝트 로컬 설치(`./.claude/`) 사용자도 동일 — `./.claude/skills/grill-me/`·`./.claude/skills/harness-factory/`를 manual 제거.
 
 ### 이름 변경 요약
 
@@ -432,7 +465,7 @@ cfh install --link              →  removed (dev: npm link)
 
 상세 정책: [`docs/deprecation-policy.md`](docs/deprecation-policy.md).
 
-- 0.16.x ~ 0.18.x: 구 명령·플래그·발화 작동 + stderr deprecation warning
+- 0.16.x ~ 0.19.x: 구 명령·플래그·발화 작동 + stderr deprecation warning
 - 1.0 promotion 후 한 사이클: alias 일괄 제거 (사용자 판단으로 시점 결정)
 
 ### 적용 사이클 (Track 7·8·9)
@@ -442,7 +475,8 @@ cfh install --link              →  removed (dev: npm link)
 | **0.16.3**  | Track 7 — audit-driven polish 8 항목                  | ✅ release             |
 | **0.17.0**  | Track 8 — TDD/TC mode 분기 (intent×artifact 매트릭스) | ✅ release             |
 | **0.18.0**  | Track 9 — Soft routing suggestion (bold 강조, 강제 X) | ✅ release             |
-| **0.18.x+** | 다음 audit run 결과 + 외부 사용자 feedback            | 베이킹 + 외부 검증     |
+| **0.19.0**  | Skill 디렉터리 rename (`grilling`·`cfh-harness`) — 네임스페이스 충돌 회피 | ✅ release             |
+| **0.19.x+** | 다음 audit run 결과 + 외부 사용자 feedback            | 베이킹 + 외부 검증     |
 | **1.0.0**   | (사용자 판단 — 자동 게이트 아님)                      | 안정성 체크리스트 검토 |
 
 상세: [`PLAN.md`](./PLAN.md).

@@ -1,14 +1,14 @@
 ---
-name: grill-me
+name: grilling
 description: Use this skill when the user wants to stress-test a plan, design, or decision through deep sequential questioning — keywords "grill me", "stress-test this plan", "진짜 이거 맞아", "더 깊이 봐줘", "결정 트리 파봐", "이 디자인 검증해줘". Walks the decision tree branch-by-branch, resolves dependencies, and provides recommendations with rationale for every question. Explores the codebase before asking when answers can be found in code. Do NOT trigger for casual planning (use /cfh-plan) or initial intent gathering (use /cfh-make).
 license: MIT
-origin: https://github.com/mattpocock/skills/blob/main/skills/productivity/grill-me/SKILL.md
+origin: https://github.com/mattpocock/skills/blob/main/skills/productivity/grilling/SKILL.md
 commands: [/cfh-grill]
 ---
 
 <provenance>
 
-This skill is adapted from **mattpocock/skills `grill-me`** (MIT). The original 5-line essence:
+This skill is adapted from **mattpocock/skills `grilling`** (MIT). The original 5-line essence:
 
 ```
 Interview me relentlessly about every aspect of this plan until we reach a shared understanding.
@@ -55,7 +55,7 @@ EXAMPLES:
 ```
 
 <s>
-You are grill-me — a relentless but disciplined interview skill that interrogates a plan or design **one question at a time** until shared understanding is reached.
+You are grilling — a relentless but disciplined interview skill that interrogates a plan or design **one question at a time** until shared understanding is reached.
 
 **Core principles**:
 - **One question at a time.** Never dump multiple questions. Wait for each answer before the next.
@@ -282,6 +282,6 @@ If unresolved nodes block progress, recommend either:
 - `commands/references/confidence-tagging.md` — `[verified]`·`[inferred]`·`[guessed]` 마커
 - `commands/cfh-grill.md` — 명시 호출 커맨드
 - `/cfh-plan` — 새 plan을 만들 때 (grill은 기존 plan을 깊이 파는 도구)
-- skills/grill-me/references/decision-tree.md — 트리 walk 알고리즘 상세
+- skills/grilling/references/decision-tree.md — 트리 walk 알고리즘 상세
 
 </related>
