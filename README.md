@@ -87,7 +87,7 @@ cfh check                    # schema lint + skill 진단 모두
 또는: /cfh-plan Phase 2 카드에서 (grill) 옵션 선택
 ```
 
-- Phase 1: 결정 트리 enumerate — State 위치·에러 UX·캐싱·검증 위치 등 + *제외된 후보* 가시화 (자가검증)
+- Phase 1: 결정 트리 enumerate — 도메인에 맞게 (FE: state 위치·에러 UX·캐싱·검증 위치 / BE: transaction boundary·idempotency·event ordering·error envelope) + *제외된 후보* 가시화 (자가검증)
 - Phase 2: 한 가지씩 *깊이* 인터뷰. 매 질문 추천 + 이유 + 대안. 한 번에 하나만.
 - Phase 3: 트리 walk 후 *의도 정렬*된 plan 완성
 
@@ -114,7 +114,9 @@ cfh check                    # schema lint + skill 진단 모두
 
 ```
 /cfh-refactor src/legacy/checkout       # FE — queryKey·tsc·RTL
-/cfh-refactor-gen internal/retry        # non-FE — DB schema·migration·Strangler Fig
+/cfh-refactor-gen internal/retry/policy.go            # Go
+/cfh-refactor-gen app/services/payment_service.py     # Python
+/cfh-refactor-gen com/payment/PaymentService.java     # JVM — Strangler Fig
 ```
 
 - Step 1: Scope Narrowing 8 질문 + 추천+이유 패턴
@@ -127,7 +129,7 @@ cfh check                    # schema lint + skill 진단 모두
 ### 부가 시나리오
 
 - **PR 리뷰**: `/cfh-review develop` → 규모별 1~7 서브에이전트 병렬 → `REVIEW.md`
-- **원인 모를 버그**: 발화에 `500 에러`·`hydration mismatch` 등 → `debug-investigator` 자동 → 5-Phase 증거 기반 조사
+- **원인 모를 버그**: 발화에 `500 에러` (server) · `hydration mismatch` (web) · `deadlock` · `OOM` · `asyncio race` 등 → `debug-investigator` 자동 → 5-Phase 증거 기반 조사
 - **자산 만들기**: `/cfh-new skill <name>` (skill + mirror command 자동) / `/cfh-make` (자산 종류 분류 dispatcher) / `/cfh-team` (멀티 에이전트 팀 + orchestrator skill)
 - **세션 인계**: `/cfh-progress` — `./PROGRESS.md`에 결정 로그·미해결·다음 단계 누적
 
