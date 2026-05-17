@@ -409,8 +409,34 @@ Medium+ 이상이면 기본 7개 에이전트가 실행됩니다. 사용자가 *
 - 시스템 레벨 **기술 근거** 제시 (Event Loop / Heap / Reconciler / DB query plan / connection pool 등)
 - 심각도 Critical/High/Medium/Low
 - 개선 코드 + 영향 파일
-- 측정 방법·도구 명시
+- **정량 손익 — 결정 보조 + 실측 검증 둘 다 출력** (아래 정책)
 - 한국어, 기술 용어 영어 병기
+
+**정량 손익 정책** (도입 결정 → 실측 검증 흐름):
+
+1. **추정값 (결정 보조)** — LLM이 코드만 보고 예상 수치 출력 가능. **반드시 `[guessed]` 라벨**:
+   ```
+   📊 정량 추정 [guessed]: p95 latency -80~150ms (1k user 기준, N+1 → eager fetch 가정)
+                        예상 query 수 -N건/요청 (N = 평균 user 당 detail row 수)
+   ```
+   - **금지**: 라벨 없이 수치 출력. "예상 100ms 개선" 같은 *unmarked 단정* 금지.
+   - **권장**: 범위·기준(1k user·평균값)·가정(N+1 → eager) 명시. 단일 점수치 회피.
+
+2. **측정 가이드 (실측용)** — 결정 후 사용자가 실측할 수 있게 단위·임계값·방법·base 모두 출력:
+   ```
+   📏 측정 단위:     p95 latency / DB query count / heap delta
+   ⚠ 임계값:         > 50ms p95 → High,  > 200ms → Critical (1k user 기준)
+   🔬 측정 방법:     EXPLAIN ANALYZE / Datadog APM span "fetchUsers" / k6 50RPS 10s
+                    또는 vitest bench: bench("fetchUsers", { iterations: 100 })
+   📈 회귀 비교 base: 현 main 캡처 → fix 후 같은 조건 재측정 → PR comment 부착
+   ```
+
+3. **실측 후 갱신** — 사용자가 측정 완료 후 같은 단위로 `[verified]` 갱신:
+   ```
+   📊 실측 [verified]: p95 latency -120ms (k6 50RPS 10s, n=500) — 추정 범위 (80~150) 안
+   ```
+
+4. **추정/실측 추적 가치** — 추정과 실측 차이가 5x+ 빈번하면 LLM 추정 보정 신호 → 다음 audit run 입력으로 기록.
 
 {project_profile, 변경 파일, diff}
 ```
@@ -653,7 +679,32 @@ REVIEW.md에서 **각 지적(Critical·High 수준)** 은 Why/What/How/What if 4
 
 ## ⚡ Performance Review
 
-(Medium+ 에서만)
+(Medium+ 에서만 — 결과 예시)
+
+### 🧩 예시 항목 형식
+
+```
+[High] N+1 query in UserList.tsx:42 — `useUsers().forEach(u => fetchDetail(u.id))`
+
+  근거: React Query 각 detail이 독립 cache key → 1 + N requests.
+        N = 평균 user 당 detail row 수.
+
+  📊 정량 추정 [guessed]:
+     - p95 latency: -80~150ms (1k user, N+1 → batched detail 가정)
+     - DB query: -N건/요청 (현재 N+1 → 1 batch endpoint)
+     - heap: 약간 ↓ (각 useQuery instance 해제)
+
+  📏 측정 단위: p95 latency / DB query count / Datadog APM span
+  ⚠ 임계값:    > 50ms p95 → High,  > 200ms → Critical (1k user 기준)
+  🔬 측정 방법: EXPLAIN ANALYZE 또는 k6 50RPS 10s + APM "fetchUsers" span
+  📈 회귀 base: 현 main 캡처 → fix 후 같은 조건 재측정 → PR comment 부착
+
+  개선 코드: useUserDetails(userIds) batch endpoint (코드 예시 ...)
+
+  실측 후: `[verified]` 라벨로 갱신, 추정 범위 안인지 확인.
+```
+
+→ 추정값(`[guessed]`)으로 *도입 결정 보조* → 측정 가이드로 *실측 검증*. 추정/실측 5x+ 어긋남 빈번 시 다음 audit run 입력 후보.
 
 ---
 

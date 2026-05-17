@@ -180,7 +180,7 @@ cfh check                    # schema lint + skill 진단 모두
 | `/cfh-guide`    | 사용 가이드 출력                                           |
 | `/cfh-trace`    | 발화→스킬 매칭 점수 미리보기                               |
 
-상세 매트릭스 (특화·이번 사이클 변경): [`PLAN.md` § 1](./PLAN.md) 또는 [`DESC_CFL.md` § 8](./DESC_CFL.md).
+설치된 자산의 자세한 description·트리거 키워드는 `cfh list`로 확인 (각 skill의 description은 frontmatter에서 출력).
 
 ---
 
@@ -218,7 +218,7 @@ cfh remove tdd-first             # 제거
 cfh adopt tdd-first              # managed → user-authored 전환 (cfh update 보호)
 ```
 
-> **dev 워크플로**: 패키지 소스에서 직접 작업하려면 `npm link` 사용. `--link` flag는 1.0급 polish에서 제거됨 (`docs/deprecation-policy.md` 참조).
+> **dev 워크플로**: 패키지 소스에서 직접 작업하려면 `npm link` 사용. (참고: `cfh install --link` flag는 0.16.x에서 제거됨 — dev iteration은 `npm link`로 통일.)
 
 ---
 
@@ -306,7 +306,15 @@ cfh adopt tdd-first              # managed → user-authored 전환 (cfh update 
    진행: yes / switch / explain
 ```
 
-대상 페어: `/cfh-tdd ↔ /cfh-tdd-gen`, `/cfh-tc ↔ /cfh-tc-gen`, `/cfh-refactor ↔ /cfh-refactor-gen`. `/cfh-plan` Phase 2 approach card에는 _stack signal_ 추론 섹션 포함. 휴리스틱 상세: `commands/references/soft-routing.md`.
+대상 페어: `/cfh-tdd ↔ /cfh-tdd-gen`, `/cfh-tc ↔ /cfh-tc-gen`, `/cfh-refactor ↔ /cfh-refactor-gen`. `/cfh-plan` Phase 2 approach card에는 _stack signal_ 추론 섹션 포함.
+
+**휴리스틱 핵심**:
+
+- FE 신호: `.tsx`·`.jsx`·`.vue` 확장자, `React`·`Vue`·`Next.js` 라이브러리, `hydration`·`INP`·`CLS` 키워드
+- non-FE 신호: `.go`·`.py`·`.rs`·`.java`·`.kt`·`.swift` 확장자, `handler`·`endpoint`·`migration`·`idempotency`·`p95 latency` 키워드
+- 결정 룰: opposite stack score ≥ current + 2 → suggestion 출력 (둘 다 약하면 출력 안 함, 정책 § 0.15.2 자가검증)
+
+설치 후 더 자세한 휴리스틱·confidence marker·explain mode는 `~/.claude/commands/references/soft-routing.md`에서 확인.
 
 ---
 
@@ -465,10 +473,12 @@ cfh install --link              →  removed (dev: npm link)
 
 ### Deprecation 사이클
 
-상세 정책: [`docs/deprecation-policy.md`](docs/deprecation-policy.md).
+**Deprecation 정책 요약**:
 
 - 0.16.x ~ 0.19.x: 구 명령·플래그·발화 작동 + stderr deprecation warning
 - 1.0 promotion 후 한 사이클: alias 일괄 제거 (사용자 판단으로 시점 결정)
+- BREAKING 차단 안 함 — 한 사이클 안에 자동화 스크립트 migration 권장
+- 새 명령으로 갱신 시 *자기 환경*에서 `cfh check --strict`로 자동 검증 가능
 
 ### 적용 사이클 (Track 7·8·9)
 
@@ -481,7 +491,7 @@ cfh install --link              →  removed (dev: npm link)
 | **0.19.x+** | 다음 audit run 결과 + 외부 사용자 feedback            | 베이킹 + 외부 검증     |
 | **1.0.0**   | (사용자 판단 — 자동 게이트 아님)                      | 안정성 체크리스트 검토 |
 
-상세: [`PLAN.md`](./PLAN.md).
+각 마일스톤의 변경 내역은 `cfh list`로 설치된 자산을 확인 (각 자산의 `managed@<version>` 표시 + frontmatter description).
 
 ---
 
