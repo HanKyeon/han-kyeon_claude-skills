@@ -248,6 +248,56 @@ Medium+ 이상이면 기본 7개 에이전트가 실행됩니다. 사용자가 *
 
 **Tiny/Small**: 제외 인터뷰 건너뜀 (에이전트 수 적으므로).
 
+## Step 2.7: Communication Mode Selection (0.21.0+)
+
+서브에이전트 *생성 직전* agent 간 통신 mode 명시 선택 (→ `commands/references/agent-team-modes.md`).
+
+### 자동 추천 — Expert Pool 기본 정책
+
+cfh-review는 *Expert Pool 패턴 고정* — default **subagent** (독립 평가 + orchestrator 통합).
+
+**teams mode**는 *조건부 가치* — cross-reference·conflict resolution 필요 시:
+
+| 신호 | teams 권장? |
+|---|---|
+| diff가 Tiny/Small | ❌ — subagent 충분 (token 절약) |
+| 채택 에이전트 ≤ 3 | ❌ — cross-reference 가치 적음 |
+| 채택 에이전트 ≥ 5 AND 충돌 가능성 의심 (예: Security ↔ Performance 권고 상충 예상) | 🟡 사용자 결정 |
+| `--mode teams` 명시 호출 | 🟢 — 사용자 명시 의도 |
+
+### 출력 (recommendation+reason)
+
+```
+📌 추천 mode: subagent
+   이유:
+     - [verified] Expert Pool 패턴 — 독립 평가 후 orchestrator 통합
+     - [verified] 채택 에이전트 <N> + diff <규모>
+     - [inferred] cross-reference 신호 약함 (또는 강함이면 표기)
+
+다른 옵션:
+   - teams — cross-reference / conflict resolution 필요 시 (bounded 1 round)
+              ⚠ experimental flag 필요 + token ~30% 증가 예상
+
+답변: 추천대로 / teams / explain
+```
+
+### Teams mode 통신 패턴 (선택 시)
+
+- **bounded 1 round** — orchestrator가 N agents 1차 모음 → 충돌·gap 발견 시 *1 round 재논의* → orchestrator 강제 통합
+- max-round 1 강제 (token 통제). exceed 시 *현재 결과 그대로* REVIEW.md 출력
+- 각 reviewer는 *다른 reviewer 발견을 참조*할 수 있음 (예: Test reviewer가 Logic reviewer 발견에 *테스트 부재* 보강)
+- flag export 명령: `export CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`
+- **fallback**: flag 미설정 환경 → "teams flag 미설정 — subagent mode로 fallback 진행" 명시 메시지 + subagent로 계속
+
+### CLI argument
+
+```bash
+/cfh-review develop --mode subagent    # default (생략 가능)
+/cfh-review develop --mode teams       # cross-reference 모드 명시
+```
+
+명시 선택 받기 전 Step 3 진입 금지. 짧은 동의(`OK`)는 ambiguous로 대기.
+
 ## Step 3: Subagent 생성 (채택된 전략에 따라)
 
 각 subagent에 공통 전달:

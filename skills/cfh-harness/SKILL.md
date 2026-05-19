@@ -134,6 +134,48 @@ Phase 2 이후에 초반 답변이 틀렸다고 판단되면 아래 트리거로
 
 각 패턴 상세는 `references/patterns/<pattern>.md`. 사용자에게 추천 1개 + 이유 + 대안 1개 제시.
 
+## Phase 2.5 — Communication Mode Selection (Pattern 결정 후, 0.21.0+)
+
+패턴 선택 *후* agent 간 통신 mode 명시 선택 (→ `~/.claude/commands/references/agent-team-modes.md`).
+
+### 패턴별 자동 추천
+
+| 선택 패턴 | 추천 mode | 이유 |
+|---|---|---|
+| Pipeline · Fan-out · Expert Pool · Producer-Reviewer (1회) | **subagent** | 한 방향 흐름 또는 독립 평가 — orchestrator 1차 모음으로 충분 |
+| Supervisor · Hierarchical Delegation | **teams** | 런타임 동적 분기 / 하위 팀 통신 — agent 간 메시지 교환 필요 |
+| Producer-Reviewer (iterative loop 필요) | **teams** (bounded 3 round) | reject 시 재생성 — bounded round로 통제 |
+
+### 출력 형식 (recommendation+reason)
+
+```
+📌 추천 mode: <subagent | teams>
+   이유:
+     - [verified] 패턴이 <X> → <적합 mode> 매칭
+     - [inferred] Q5 규모 답이 <N agents> → <subagent 안정 / teams 가치>
+     - [guessed] (있으면)
+
+다른 옵션:
+   - subagent — 토큰 예측 가능·디버깅 쉬움·flag 불필요
+   - teams — agent 간 메시지 교환·런타임 동적·단 experimental flag 의존
+
+답변: 추천대로 / subagent / teams / explain
+```
+
+**명시 선택 받기 전 Phase 3 진입 금지** (정책 § 0). 짧은 동의(`OK`·`응`)는 ambiguous로 대기.
+
+### 생성 자산 차이
+
+선택된 mode에 따라 Phase 3~5에서 생성되는 자산이 다음을 *명시*:
+
+- **subagent mode**: orchestrator가 Agent tool로 N agents 호출. 각 agent input/output contract 명시 (one-shot).
+- **teams mode**:
+  - SKILL.md prompt에 *통신 패턴* 명시 (`memo`·`broadcast`·`targeted`·`request-response`)
+  - max-round budget 명시 (Supervisor 5·Hierarchical 3 per level·Producer-Reviewer 3·Expert Pool 1)
+  - flag export 명령 inline: `export CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`
+  - fallback 정책 명시 (flag 없으면 명시 에러 + 안내)
+  - 예상 token range 명시 (사용자 결정 보조)
+
 ## Phase 3 — Agent Roster
 
 각 에이전트별로 결정 (→ `references/agent-contract.md`):

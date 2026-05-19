@@ -71,7 +71,38 @@
 - 통신 패턴 (broadcast vs targeted)
 - 실패 처리 (early-exit vs continue)
 
-사용자 승인 후 Phase 3.
+사용자 승인 후 Phase 2.5.
+
+## Phase 2.5 — Communication Mode Selection (0.21.0+)
+
+패턴 결정 *후* agent 간 통신 mode 명시 선택 (→ `commands/references/agent-team-modes.md`).
+
+### 패턴별 자동 추천
+
+| 선택 패턴 | 추천 mode | 사용 시 |
+|---|---|---|
+| Pipeline · Fan-out · Expert Pool · Producer-Reviewer (1회) | **subagent** | orchestrator 1차 모음 — 토큰 예측 가능 |
+| **Supervisor · Hierarchical Delegation** | **teams** | 런타임 동적 분기 / 하위 팀 통신 |
+| Producer-Reviewer (iterative loop) | **teams** (bounded 3 round) | reject 시 재생성 |
+
+### 출력 (recommendation+reason)
+
+```
+📌 추천 mode: <subagent | teams>
+   이유:
+     - [verified] 패턴이 <X> → <적합 mode>
+     - [inferred] Q5 규모 <N> → <조건>
+
+다른 옵션:
+   - subagent — flag 불필요·디버깅 쉬움·token 예측 가능
+   - teams — agent 간 메시지 교환·런타임 동적·단 experimental flag 의존
+
+답변: 추천대로 / subagent / teams / explain
+```
+
+**명시 선택 후만 Phase 3 진입** (정책 § 0). teams 선택 시 flag export 명령(`export CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`)이 *생성 자산 본문에 inline* 포함 + fallback 정책·max-round budget 명시.
+
+상세 mode별 통신 패턴·token budget·디버깅 가이드는 `commands/references/agent-team-modes.md`.
 
 ## Phase 3 — Agent Roster
 
