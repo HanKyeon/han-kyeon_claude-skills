@@ -279,7 +279,30 @@ unresolved 노드 남아있으면 Step 1로 회귀 (다음 turn에서).
 
   💡 본격 회고를 영구 기록하려면 /cfh-retro
      (grill 세션의 mini retro != 작업 한 건의 영구 회고)
+
+💡 Team 활용 가치 (0.22.0+, grill 결과 기반 — 신호 medium+ 시만 출력)
+   📊 신호 분석:
+     - [verified] 결정 #<N>이 <축 1>·<축 2>·<축 3> 다축 관련
+     - [verified] 미해결 노드 <M>개 — 추가 시각 필요
+     - [inferred] <도메인>에 <패턴> 가치
+
+   💡 추천 패턴: <Expert Pool | Adversary | Producer-Reviewer | ...>
+      가치: <어떤 영역>에 <어떻게> 유리
+            - <구체 효과 1>
+            - <구체 효과 2>
+
+   📌 만들기:
+      /cfh-team <도메인>     # 7 패턴 중 1 선택 (Adversary 포함)
+      /cfh-make               # 자산 종류 분류부터
+
+   ⚠ 본 grill 결과는 그대로. team 사용은 *별도* 흐름 (선택).
 ```
+
+**Team Suggestion 정책** (`commands/references/team-suggestion.md` § B — grill 예외, full default):
+
+- 신호 medium+: 위 단락 default 출력 (grill 본질이 깊이라 분량 잡음 아님)
+- 신호 weak (결정 노드 ≤ 3 + 모두 resolved + 단일 축): 단락 생략 (자가검증 — slot ≠ purpose)
+- 사용자가 추가 답변 안 하면 grill 결과 그대로 다음 작업 진행 — 본 워크플로 영향 없음
 
 **책임 분리**:
 - 여기 mini retro는 **이 grill 세션 자체에 대한 즉석 메모** — 어떤 가지가 가치 있었나, 어떤 가지가 헛수고였나

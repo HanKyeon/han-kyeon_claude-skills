@@ -210,7 +210,20 @@ it('property: ...', () => {
 다음 단계:
 - 머지 전 자체 점검 → /cfh-review
 - 이번 워크플로 피드백 → /cfh-feedback tdd-first "<comment>"
+- (조건부) 💡 Team 활용 가능 — 신호 강도 따라 1~2줄 hint (`commands/references/team-suggestion.md` § A)
 ```
+
+**Team Suggestion** (0.22.0+, 조건부 출력):
+
+신호 분류 — Producer-Reviewer 패턴 추천:
+- **strong**: Edge Case ≥ 5 + Intent Preservation 위험 (구현 복잡·overfit 패턴 의심) → 2줄 hint
+- **medium**: 컴포넌트 규모 큼 (10+ states / 7+ branches) → 1줄 hint
+- **weak**: 단순 컴포넌트 → 출력 X (자가검증)
+
+medium 예: `💡 (옵션) team 활용 가능 — \`why teams\``
+strong 예: `💡 (옵션) Producer-Reviewer 가치 큼: Intent Preservation 위험 신호 — \`why teams\``
+
+사용자 `why teams` 입력 시 full 분석 lazy load.
 
 `/cfh-review`는 작성한 테스트 + 구현을 PR 단위로 다축 점검. `/cfh-feedback`은 Intent Interview·Test Outline·구현 흐름 등에서 마찰 있었던 부분을 기록 → 추후 `cfh evolve`가 description·원칙 개선에 활용.
 

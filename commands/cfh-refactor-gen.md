@@ -161,6 +161,20 @@ BE / 스택 중립 리팩터링 워크플로를 시작합니다.
 - trace span·metric label 회귀 검증 (관찰성 회귀 위험)
 - **언어별 정적 검증 도구를 회귀 게이트로 활용** — Python: `mypy --strict`·`ruff`·`bandit` / Go: `go vet`·`staticcheck`·`go build ./...` / Rust: `cargo clippy`·`cargo check`·`cargo semver-checks` / JVM: SpotBugs·ErrorProne·`detekt`(Kotlin) / Node: `tsc --noEmit`·`eslint`. interface·trait 추출 시 *암묵 구현 컴파일 안전망*으로 필수.
 
+### Team Suggestion (0.22.0+, 조건부)
+
+Step 8 최종 보고의 "다음 단계 권장" 단락에 *조건부 hint* (정책: `commands/references/team-suggestion.md` § A).
+
+Expert Pool 패턴 추천 신호 (cfh-refactor 동일 + BE 특화):
+- **strong**: Blast Radius ≥ 5축 (string 참조·DB schema·event topic·observability·type 등) + 영향 파일 ≥ 10 + 대규모 legacy → 2줄 hint
+- **medium**: Blast Radius 3~4축 + migration·observability 결정 다수 → 1줄 hint
+- **weak**: 단일 모듈·소규모 → 출력 X
+
+medium 예: `💡 (옵션) team 활용 가능 — \`why teams\``
+strong 예: `💡 (옵션) Expert Pool 가치 큼: Blast Radius <N>축 (FE/BE 경계 + observability) — \`why teams\``
+
+사용자 `why teams` 입력 시 full 분석 lazy load.
+
 ## (grill) 옵션
 
 Step 1 종료 후 사용자가 "결정 트리 sub-branch가 많다"고 느끼면 `/cfh-grill`로 위임. Q1~Q8 답변 + Project Profile + Blast Radius 결과를 컨텍스트로 자동 이관.

@@ -121,7 +121,7 @@ Phase 2 이후에 초반 답변이 틀렸다고 판단되면 아래 트리거로
 
 ## Phase 2 — Pattern Selection
 
-6 패턴 카탈로그 (→ `references/patterns/`):
+7 패턴 카탈로그 (→ `references/patterns/`):
 
 | 패턴 | 언제 | 에이전트 수 | 통신 |
 |---|---|---|---|
@@ -131,8 +131,14 @@ Phase 2 이후에 초반 답변이 틀렸다고 판단되면 아래 트리거로
 | **Producer-Reviewer** | 생성과 검증을 **인격 분리** — 오버핏 방지 | 2 | 2-step |
 | **Supervisor** | 1 supervisor가 worker를 동적 배정 | 1 + N | 중앙집중 |
 | **Hierarchical Delegation** | 큰 문제를 재귀 분해, 깊이 2+ | 3~N | 트리 |
+| **Adversary** *(0.22.0)* | 같은 결과에 *반론·옹호* 인격 분리 — 확증 편향 차단 | 2~3 | bounded 2 round |
 
 각 패턴 상세는 `references/patterns/<pattern>.md`. 사용자에게 추천 1개 + 이유 + 대안 1개 제시.
+
+**Adversary 추천 신호** (0.22.0+):
+- 확증 편향 위험 (debug 가설 검증·security audit·legal review)
+- Q1·Q3에 "반증 시도·취약점 탐색·loophole 찾기" 발화
+- Q4 실패 비용이 *production 사고* 수준 + 가설 ≥ 3
 
 ## Phase 2.5 — Communication Mode Selection (Pattern 결정 후, 0.21.0+)
 

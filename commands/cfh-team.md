@@ -46,6 +46,7 @@
 | **Producer-Reviewer** | Q4 "실패 비용 큼" + Q1 "검증 중심" (테스트 통과만 하는 가짜 구현 위험) |
 | **Supervisor** | Q1 "런타임에 경로가 결정" + Q5 "다이내믹 분기" |
 | **Hierarchical Delegation** | Q5 "10+ 에이전트" + Q3 "여러 도메인 분할" |
+| **Adversary** *(0.22.0)* | Q1 "반증·취약점 탐색·확증 편향 차단" + Q4 "실패 비용 큼" (debug·security audit·legal review) |
 
 **추천 형식**:
 ```

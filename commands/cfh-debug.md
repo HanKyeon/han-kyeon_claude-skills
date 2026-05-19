@@ -312,6 +312,22 @@ Phase 2 Hypothesis로 진행할까요?
 
 원인 확정 안 되면 Phase 2로 복귀 ("새 가설 필요") 또는 Phase 0로 ("증거 부족").
 
+## Phase 3.5 — Team Suggestion (선택, 0.22.0+)
+
+Phase 3 검증 종료 후 *team 가치 신호 자가 평가*. 정책: `commands/references/team-suggestion.md` § A (3단계 + lazy load).
+
+**신호 분류** (debug 특화):
+- **strong**: 채택 가설 ≥ 3 + 동일 시스템 다축 (예: race + locking + GC 동시 의심) → Adversary 패턴 가치
+- **medium**: 가설 1~2이지만 확증 편향 위험 (Q3 답에서 사용자 한 가설 강하게 밀고 있을 때)
+- **weak**: 가설 1개 명확 + 증거 강함 → **출력 안 함** (자가검증)
+
+**출력 위치**: Phase 4 직전 — "다음 단계 권장" 단락에 한 줄 추가:
+
+- medium: `💡 (옵션) team 활용 가능 — \`why teams\``
+- strong: `💡 (옵션) Adversary 가치 큼: 다축 가설 확증 편향 — \`why teams\``
+
+사용자 `why teams` 입력 시 full 분석 (~20줄) lazy load. 본 워크플로 영향 없음 — Phase 4 그대로 진행.
+
 ## Phase 4 — Root Cause + Fix Plan (수정 계획)
 
 **조사 결과를 바탕으로 수정 전략 수립**. 이 단계의 결과물을 `/cfh-plan`·`/cfh-tdd`·`/cfh-refactor`에 넘겨 실제 수정 진행.

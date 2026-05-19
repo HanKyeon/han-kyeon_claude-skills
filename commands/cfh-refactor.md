@@ -207,7 +207,17 @@ PR 설명에 "Found but not fixed" 섹션 자동 생성.
 다음 단계:
 - 머지 전 자체 점검 → /cfh-review (각 PR 단위로)
 - 이번 워크플로 피드백 → /cfh-feedback refactoring-strategy "<comment>"
+- (조건부) 💡 Team 활용 가능 — 신호 강도 따라 1~2줄 hint
 ```
+
+**Team Suggestion** (0.22.0+, 조건부 — `commands/references/team-suggestion.md` § A):
+
+Expert Pool 패턴 추천 신호 (refactor 특화):
+- **strong**: Blast Radius ≥ 5축 + 영향 파일 ≥ 10 + 대규모 legacy (저자 N+·컨벤션 혼재) → 2줄 hint (`💡 (옵션) Expert Pool 가치 큼: Blast Radius <N>축 — \`why teams\``)
+- **medium**: Blast Radius 3~4축, 영향 5~10 파일 → 1줄 hint
+- **weak**: 단일 파일·소규모 → 출력 X
+
+사용자 `why teams` 입력 시 full 분석 lazy load.
 
 **Retro·Commit 블록 형식**: `commands/references/retro-and-commit.md` 단일 출처. **리팩터 특성상 분할이 이미 Step 5에서 결정**돼있으므로 제안 커밋은 PR별로 메시지를 정렬하는 형태로 출력 (단일 통합 커밋 권장 신호 약함).
 
