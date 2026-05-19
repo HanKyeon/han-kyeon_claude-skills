@@ -42,20 +42,20 @@ cfh list
 === Global (~/.claude) ===
 
 Skills (C:\Users\<you>\.claude\skills):
-  asset-factory            managed@0.19.0  →  [/cfh-make]
-  debug-investigator       managed@0.19.0  →  [/cfh-debug]
-  grilling                 managed@0.19.0  →  [/cfh-grill]
-  cfh-harness          managed@0.19.0  →  [/cfh-team]
-  refactoring-strategy     managed@0.19.0  →  [/cfh-refactor, /cfh-refactor-gen]
-  skill-author             managed@0.19.0  →  [/cfh-new]
-  tdd-first                managed@0.19.0  →  [/cfh-tdd, /cfh-tc]
-  tdd-general              managed@0.19.0  →  [/cfh-tdd-gen, /cfh-tc-gen]
+  asset-factory            managed@0.20.0  →  [/cfh-make]
+  debug-investigator       managed@0.20.0  →  [/cfh-debug]
+  grilling                 managed@0.20.0  →  [/cfh-grill]
+  cfh-harness          managed@0.20.0  →  [/cfh-team]
+  refactoring-strategy     managed@0.20.0  →  [/cfh-refactor, /cfh-refactor-gen]
+  skill-author             managed@0.20.0  →  [/cfh-new]
+  tdd-first                managed@0.20.0  →  [/cfh-tdd, /cfh-tc]
+  tdd-general              managed@0.20.0  →  [/cfh-tdd-gen, /cfh-tc-gen]
 
 Commands (C:\Users\<you>\.claude\commands):
   cfh-debug, cfh-feedback, cfh-grill, cfh-guide, cfh-make, cfh-new,
   cfh-plan, cfh-progress, cfh-refactor, cfh-refactor-gen, cfh-retro,
   cfh-review, cfh-tc, cfh-tc-gen, cfh-tdd, cfh-tdd-gen, cfh-team, cfh-trace
-                                          (모두 managed@0.19.0)
+                                          (모두 managed@0.20.0)
 ```
 
 Claude Code를 새 세션으로 시작하거나 `/agents`·`/`로 확인하면 커맨드가 떠야 합니다.

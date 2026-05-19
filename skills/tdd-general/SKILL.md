@@ -80,6 +80,24 @@ Phase 5: Refactor + Intent Preservation (리팩터링 + Phase 1 답변 재확인
 
 각 Phase의 절차·원칙은 `tdd-first` 본문과 동일. **차이는 예시·관용구·라이브러리 가정**입니다.
 
+### Phase 1.5 — Final Intent Confirm (Phase 2 진입 직전, 0.20.0+)
+
+`tdd-first`와 동일하게 Phase 1 6 답변을 *합산 해석·모호 발화 검사·답변 충돌 자가검증* 후 명시 yes 받기 (→ `~/.claude/commands/references/final-confirm.md`).
+
+**non-FE 도메인 동음이의어 예시** (감지 시 명시):
+- "service" → Spring `@Service` bean / OS daemon / domain service / SaaS service
+- "controller" → Spring MVC `@RestController` / domain controller / hardware controller
+- "client" → HTTP client / DB client / SDK consumer / end-user
+- "API" → REST endpoint / library API surface / gRPC stub / public method
+- "event" → Kafka event / domain event / lifecycle event / analytics event
+
+**검증 게이트** (`tdd-first` 동일):
+- Happy Path / Edge Case / Error Cases / Out of scope 4 카테고리 모두 답
+- 관찰 방법 명확
+- Phase 0 Scope와 정합
+
+답변: `yes` (Phase 2 진입) / `정정 <Q번호>` / `처음부터` (Phase 0 회귀) / `pass`. 짧은 동의는 ambiguous로 *대기*.
+
 ## 스택별 Test Outline 예시
 
 > 도메인 *다양화*: tdd-general이 stack 외에도 *문제 영역*도 stack-agnostic임을 worked example로 보여줍니다. Node 1 anchor + 다른 3 영역으로 분산.

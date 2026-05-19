@@ -108,6 +108,25 @@ React/Vue 컴포넌트는 `/cfh-tc`(FE-friendly RTL)로 가세요.
 **Priority 4 — Error**: throw·panic / 에러 응답 / 재시도·timeout / circuit breaker
 **Priority 5 — Integration**: 실제 의존성과의 통합 (test container·in-memory DB·simulator)
 
+### Phase 2.5: Final Intent Confirm (Phase 3 작성 직전, 0.20.0+)
+
+Phase 0~2의 *현재 동작·테스트 환경·시나리오 설계*를 **합산 해석·모호 발화 검사·답변 충돌 자가검증** 후 명시 yes 받기 (→ `~/.claude/commands/references/final-confirm.md`).
+
+**합산 대상**:
+- Phase 0 *기존 동작 인용* (Characterization Test 대상의 input/output 매핑)
+- Phase 1 *테스트 환경* — runner (pytest·go test·cargo test·JUnit5) / mock 라이브러리 / fixture 위치
+- Phase 2 *보강 시나리오 범위* — 도메인별(server·embedded·mobile·ML) 어디 우선
+- *모호 발화* — non-FE 도메인 동음이의어 (예: "service" → Spring `@Service` / OS daemon / domain service / "client" → HTTP client / DB client / SDK)
+- *답변 간 충돌·gap* — 예: Q "DB mock" vs Q "test container 사용" 충돌
+
+**검증 게이트**:
+- 기존 테스트 컨벤션 파악 (AAA·table-driven·Given-When-Then 중 무엇)
+- 보강 범위 명확 (5 우선순위 중 *어디까지*)
+- *외부 IO mock 경계* 명시 (HTTP·DB·시간·랜덤·환경변수·GPIO·터치·rng seed)
+- *기존 파일 mutation 없음* 명시 (artifact mode 본질)
+
+답변: `yes` (Phase 3 작성) / `정정 <항목>` / `처음부터` / `pass`. 짧은 동의는 *대기*, 명시 `yes` 후 Phase 3.
+
 ### Phase 3: 테스트 코드 작성
 
 스택별 관용구는 `~/.claude/skills/tdd-general/SKILL.md`의 "스택별 Test Outline 예시" 참조.

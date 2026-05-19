@@ -202,6 +202,24 @@ describe('<subject>', () => {
 **Priority 4 — A11y**: role, aria-*, 키보드, 포커스 관리
 **Priority 5 — Integration**: Context/Store/Router 연동
 
+### Phase 2.5: Final Intent Confirm (Phase 3 작성 직전, 0.20.0+)
+
+Phase 0~2의 *현재 동작 파악·테스트 환경·시나리오 설계*를 **합산 해석·모호 발화 검사·답변 충돌 자가검증** 후 명시 yes 받기 (→ `~/.claude/commands/references/final-confirm.md`).
+
+**합산 대상**:
+- Phase 0 *기존 동작 인용* (현재 코드가 무엇을 하는가)
+- Phase 1 *테스트 환경* — runner / Testing Library version / MSW / fixture 위치
+- Phase 2 *보강 시나리오 범위* — 5 우선순위 중 어디까지 (Core·Async만 / 전체)
+- *모호 발화* — 예: "에러 처리" → throw / return null / fallback UI / toast 어느 것?
+- *답변 간 충돌·gap* — 기존 컨벤션과 새 시나리오 충돌
+
+**검증 게이트**:
+- 기존 테스트 컨벤션 파악 (snapshot vs RTL·jest vs vitest·fixture 위치)
+- 보강 범위 명확 (모든 5 우선순위 X — *선택*)
+- *기존 파일 mutation 없음* 명시 (artifact mode 본질)
+
+답변: `yes` (Phase 3 작성) / `정정 <항목>` / `처음부터` / `pass`. 짧은 동의는 *대기*, 명시 `yes` 후 Phase 3.
+
 ### Phase 3: 테스트 코드 작성
 
 (쿼리 우선순위, 유저 이벤트, 비동기 규칙은 공통 규칙 섹션 참조)

@@ -488,7 +488,8 @@ cfh install --link              →  removed (dev: npm link)
 | **0.17.0**  | Track 8 — TDD/TC mode 분기 (intent×artifact 매트릭스) | ✅ release             |
 | **0.18.0**  | Track 9 — Soft routing suggestion (bold 강조, 강제 X) | ✅ release             |
 | **0.19.0**  | Skill 디렉터리 rename (`grilling`·`cfh-harness`) — 네임스페이스 충돌 회피 | ✅ release             |
-| **0.19.x+** | 다음 audit run 결과 + 외부 사용자 feedback            | 베이킹 + 외부 검증     |
+| **0.20.0**  | Final Intent Confirm — 작업 실행 직전 답변 합산·모호 발화·충돌 자가검증 (6 자산) | ✅ release             |
+| **0.20.x+** | 다음 audit run 결과 + 외부 사용자 feedback            | 베이킹 + 외부 검증     |
 | **1.0.0**   | (사용자 판단 — 자동 게이트 아님)                      | 안정성 체크리스트 검토 |
 
 각 마일스톤의 변경 내역은 `cfh list`로 설치된 자산을 확인 (각 자산의 `managed@<version>` 표시 + frontmatter description).

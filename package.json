@@ -1,6 +1,6 @@
 {
   "name": "@han-kyeon/claude-skills",
-  "version": "0.19.3",
+  "version": "0.20.0",
   "description": "Portable Claude Code skills, commands, and team-agent factory. FE-friendly with general-purpose meta-skills for authoring, team design, and evolution.",
   "publishConfig": {
     "access": "public"

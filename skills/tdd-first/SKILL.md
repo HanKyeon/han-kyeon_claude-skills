@@ -77,7 +77,23 @@ AI가 코드 쓰기 전에 **반드시** 아래 질문을 던진다 (→ `refere
 5. **Out of Scope** — 이번에 **하지 않을** 것
 6. **관찰 방법** — 반환값/DOM/state/side effect 중 무엇으로 검증?
 
-답변이 모두 모이면 Phase 2로.
+답변이 모두 모이면 Phase 1.5로.
+
+## Phase 1.5 — Final Intent Confirm (Phase 2 진입 직전)
+
+Phase 1 6 답변을 **합산 해석·모호 발화 검사·답변 충돌 자가검증** 후 명시 yes 받기 (→ `~/.claude/commands/references/final-confirm.md`).
+
+**합산 대상**:
+- 6 질문 답변 각각 *짧게 인용* + Claude 해석
+- *모호 발화* — FE 도메인 동음이의어 (예: "form" → React Hook Form / native HTMLFormElement / form data validation 등 / "controller" → React form controller / RHF Controller / view controller)
+- *답변 간 충돌·gap* — 예: Q3 Edge Case "null 거부" vs Q5 Out of scope "null 처리 안 함" 충돌
+
+**검증 게이트**:
+- Happy Path / Edge Case / Error Cases / Out of scope 4 카테고리 모두 답 존재
+- 관찰 방법 명확 (반환값·DOM·callback·store·네트워크 중 *하나 이상* 명시)
+- Phase 0 Scope Narrowing 답이 *현재 작업 단위*와 정합
+
+답변: `yes` (Phase 2 진입) / `정정 <Q번호>` / `처음부터` (Phase 0 회귀) / `pass`. 짧은 동의는 ambiguous로 *대기*, 명시 `yes` 받기 전엔 Phase 2 진입 금지.
 
 ## Phase 2 — Test Outline (제목 먼저)
 
