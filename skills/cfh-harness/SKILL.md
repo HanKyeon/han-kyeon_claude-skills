@@ -178,7 +178,9 @@ Phase 2 이후에 초반 답변이 틀렸다고 판단되면 아래 트리거로
 - **teams mode**:
   - SKILL.md prompt에 *통신 패턴* 명시 (`memo`·`broadcast`·`targeted`·`request-response`)
   - max-round budget 명시 (Supervisor 5·Hierarchical 3 per level·Producer-Reviewer 3·Expert Pool 1)
-  - flag export 명령 inline: `export CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`
+  - flag 활성화 — *두 갈래 모두 명시*:
+    - 즉시 (세션): `export CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`
+    - 영구: `~/.claude/settings.json` 또는 `./.claude/settings.json`의 `"env"`에 `"CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"` 추가
   - fallback 정책 명시 (flag 없으면 명시 에러 + 안내)
   - 예상 token range 명시 (사용자 결정 보조)
 

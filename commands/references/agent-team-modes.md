@@ -68,6 +68,56 @@ token 폭증 차단 위해 *반드시 max-round budget*:
 | `targeted` | agent A → agent B (응답 기대) | "Performance 결과 봤는데 Test 추가 필요?" |
 | `request-response` | A → B → A | bounded round 안에서만 |
 
+## Settings — 영구 활성화 (shell export 대안)
+
+shell `export CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`은 *세션 한정*. 매 Claude Code 새 세션마다 재설정 부담 줄이려면 `settings.json`에 박아두기:
+
+### 글로벌 — 모든 프로젝트에 적용
+
+```jsonc
+// ~/.claude/settings.json
+{
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  }
+}
+```
+
+### 프로젝트 로컬 — 해당 프로젝트만
+
+```jsonc
+// ./.claude/settings.json
+{
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  }
+}
+```
+
+기존 `env` 필드 있으면 **병합** (덮어쓰기 X). settings.json 자동 편집 시 백업 권장.
+
+### 적용 우선순위
+
+1. 프로젝트 로컬 (`./.claude/settings.json`) — 가장 강함
+2. 글로벌 (`~/.claude/settings.json`)
+3. shell export (세션 한정)
+4. flag 없음 → Fallback 정책 (다음 절) 적용
+
+### 자산 본문 안내 권장 형식
+
+teams mode 자산 생성 시 두 가지 다 명시:
+
+```
+agent teams 활성화 — 둘 중 선택:
+
+(a) 즉시 (이 세션만):
+    export CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1
+
+(b) 영구 (settings.json):
+    ~/.claude/settings.json 또는 ./.claude/settings.json에
+    "env": { "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1" } 추가
+```
+
 ## Fallback 정책 — flag 없는 환경
 
 teams mode 자산을 *`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` 없는 환경*에서 실행:

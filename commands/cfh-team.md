@@ -101,7 +101,11 @@
 답변: 추천대로 / subagent / teams / explain
 ```
 
-**명시 선택 후만 Phase 3 진입** (정책 § 0). teams 선택 시 flag export 명령(`export CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`)이 *생성 자산 본문에 inline* 포함 + fallback 정책·max-round budget 명시.
+**명시 선택 후만 Phase 3 진입** (정책 § 0). teams 선택 시 생성 자산 본문에 *flag 활성화 두 갈래 모두 inline* 포함:
+- 세션: `export CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`
+- 영구: `~/.claude/settings.json` 또는 `./.claude/settings.json`의 `"env": { "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1" }`
+
+추가로 fallback 정책·max-round budget 명시.
 
 상세 mode별 통신 패턴·token budget·디버깅 가이드는 `commands/references/agent-team-modes.md`.
 
