@@ -118,3 +118,27 @@ test('reference lists adversary pattern + related references', () => {
     assert.ok(body.includes(ref), `Reference must mention related ${ref}`);
   }
 });
+
+test('cfh-plan Phase 2.5 wires side-effect gate (0.23.1+)', () => {
+  const body = fs.readFileSync(path.join(REPO_ROOT, 'commands/cfh-plan.md'), 'utf8');
+
+  // Must reference the 6th axis source
+  assert.ok(body.includes('progress-audit.md'), 'must reference progress-audit.md as source');
+
+  // Side-effect 7-area catalog (sample 4 to avoid Tier-1 wording drift)
+  const sideEffectAreas = [
+    /다른 결정/, /다른 자산/, /인터페이스|계약/, /환경|설정/,
+  ];
+  for (const re of sideEffectAreas) {
+    assert.match(body, re, `cfh-plan Phase 2.5 must cover side-effect area matching ${re}`);
+  }
+
+  // Conditional self-validation language
+  assert.match(body, /자가검증|slot ≠ purpose|단순 plan.*생략/i, 'must enforce self-validation (no slot-filling)');
+
+  // Adversary hint pointer (0.24.0 후보)
+  assert.match(body, /Adversary|cfh-plan-audit/, 'must include conditional Adversary hint or pointer');
+
+  // Confidence tagging
+  assert.match(body, /\[verified\]|\[inferred\]|\[guessed\]/, 'must use confidence markers');
+});
