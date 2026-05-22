@@ -110,7 +110,23 @@
 
 다음 단계:
 - 변경사항을 git에 커밋하시겠습니까? (사용자 명시 yes 필요 — 자동 commit 안 함)
+- (조건부) 🔍 PROGRESS.md audit 안내 — 신호 강도 따라 1~2줄 hint
 ```
+
+### Audit Hint (0.23.0+, 조건부 출력)
+
+작성·갱신 결과의 *외부 독자 검증 가치* 자가 평가 후 hint 출력 (정책: `commands/references/progress-audit.md` § 안내 정책).
+
+**신호 분류**:
+- **strong**: 결정 ≥ 6, 또는 모호 발화 감지 ≥ 2건, 또는 *컨벤션·인터페이스 변경* 결정 포함 (side-effect 큰 영역) → 2줄 hint
+- **medium**: 결정 3~5, 또는 미해결 노드 ≥ 1, 또는 다음 단계 단락이 짧음 (모호 의심) → 1줄 hint
+- **weak**: 결정 ≤ 2 + 미해결 0 + 단순 갱신 → **출력 X** (자가검증)
+
+**출력 예시**:
+- medium: `🔍 (옵션) PROGRESS.md audit 가능 — /cfh-progress-audit`
+- strong: `🔍 (옵션) PROGRESS.md audit 권장: <구체 신호 — 예: 결정 8건·컨벤션 변경 2건> — /cfh-progress-audit`
+
+**자가검증 (slot ≠ purpose)**: 매번 hint 출력 강제 X. weak면 침묵. "audit 가치 큼" templated 안내 금지 — 구체 신호 인용 필수.
 
 ## 모드: show
 

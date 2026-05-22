@@ -491,7 +491,8 @@ cfh install --link              →  removed (dev: npm link)
 | **0.20.0**  | Final Intent Confirm — 작업 실행 직전 답변 합산·모호 발화·충돌 자가검증 (6 자산) | ✅ release             |
 | **0.21.0**  | Agent Communication Mode — subagent vs teams 명시 선택 (`cfh-harness`·`cfh-team`·`cfh-review`) | ✅ release             |
 | **0.22.0**  | Team Suggestion + Adversary 패턴 — 6 자산 조건부 안내 (`why teams` lazy load) + 7번째 패턴 신설 | ✅ release             |
-| **0.22.x+** | 다음 audit run 결과 + 외부 사용자 feedback            | 베이킹 + 외부 검증     |
+| **0.23.0**  | PROGRESS.md Audit — 6축 체크리스트 + Adversary side-effect (Tier 1·2, `/cfh-progress-audit` 신설) | ✅ release             |
+| **0.23.x+** | 다음 audit run 결과 + 외부 사용자 feedback            | 베이킹 + 외부 검증     |
 | **1.0.0**   | (사용자 판단 — 자동 게이트 아님)                      | 안정성 체크리스트 검토 |
 
 각 마일스톤의 변경 내역은 `cfh list`로 설치된 자산을 확인 (각 자산의 `managed@<version>` 표시 + frontmatter description).
