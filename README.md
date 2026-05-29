@@ -493,7 +493,8 @@ cfh install --link              →  removed (dev: npm link)
 | **0.22.0**  | Team Suggestion + Adversary 패턴 — 6 자산 조건부 안내 (`why teams` lazy load) + 7번째 패턴 신설 | ✅ release             |
 | **0.23.0**  | PROGRESS.md Audit — 6축 체크리스트 + Adversary side-effect (Tier 1·2, `/cfh-progress-audit` 신설) | ✅ release             |
 | **0.23.1**  | cfh-plan Phase 2.5에 side-effect 게이트 (7 영역 카탈로그 자가 확인 + 조건부 Adversary hint) | ✅ release             |
-| **0.23.x+** | 다음 audit run 결과 + 외부 사용자 feedback            | 베이킹 + 외부 검증     |
+| **0.24.0**  | cfh-plan Q5 선행 의존성(inbound, side-effect와 대칭) + Phase 2.5 강제 명시 + 인라인 version·Track 표기 정리 | ✅ release             |
+| **0.24.x+** | 다음 audit run 결과 + 외부 사용자 feedback            | 베이킹 + 외부 검증     |
 | **1.0.0**   | (사용자 판단 — 자동 게이트 아님)                      | 안정성 체크리스트 검토 |
 
 각 마일스톤의 변경 내역은 `cfh list`로 설치된 자산을 확인 (각 자산의 `managed@<version>` 표시 + frontmatter description).

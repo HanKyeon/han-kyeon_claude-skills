@@ -93,7 +93,7 @@ You are grilling — a relentless but disciplined interview skill that interroga
 
 ## Phase 0 — Context absorption
 
-**Core principle**: No automatic context absorption. Grill target comes only from explicit `$ARGUMENTS` or explicit user answer. Aligned with 0.14.6 ambiguous-response rule.
+**Core principle**: No automatic context absorption. Grill target comes only from explicit `$ARGUMENTS` or explicit user answer. Aligned with the ambiguous-response rule.
 
 1. If invoked from `/cfh-plan` (grill) option → `/cfh-plan` outputs an **explicit Context handoff block + explicit command line**. The user invokes `/cfh-grill <Q1>` themselves; we then have the handoff block visible in the conversation as explicit reference. **Do not re-ask the Q1~Q4 since the user already answered them — the handoff block carries them.**
 2. If standalone (`/cfh-grill <topic-or-goal>`) — `$ARGUMENTS` accepts plan / design / goal / topic in any form. Two sub-cases:

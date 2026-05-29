@@ -29,7 +29,7 @@
 ## Phase 0 — 발동 자가 판정 (훅 경로일 때만)
 
 Stop 훅에서 호출된 경우, **이번 세션에서 다음 신호가 있어야** 회고 작성 진행:
-- `/cfh-plan`·`/cfh-tdd`·`/cfh-refactor`·`/cfh-debug`·`/cfh-review` 중 **하나의 완료 보고**가 직전 turn에 출력됨
+- `/cfh-plan`·`/cfh-tdd(-gen)`·`/cfh-tc(-gen)`·`/cfh-refactor(-gen)`·`/cfh-debug`·`/cfh-review` 중 **하나의 완료 보고**가 직전 turn에 출력됨
 - 그 보고에 "Retro" 블록이 이미 채워져 있음 (이걸 영구화하는 것이 이 훅의 목적)
 
 신호 없으면 조용히 종료 (출력 없음).

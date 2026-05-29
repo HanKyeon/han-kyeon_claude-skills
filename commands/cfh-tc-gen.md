@@ -17,11 +17,11 @@ React/Vue 컴포넌트는 `/cfh-tc`(FE-friendly RTL)로 가세요.
 </s>
 
 <target>
-대상: `$ARGUMENTS` — **기존** non-FE 파일/디렉토리 경로 (0.17.0 Track 8 — artifact mode only).
+대상: `$ARGUMENTS` — **기존** non-FE 파일/디렉토리 경로 (artifact mode only).
 
 - 파일 경로 (예: `src/services/auth.ts`, `app/api/users.py`, `internal/retry/policy.go`): 해당 파일의 테스트 작성·보강
 - 디렉토리 경로 (예: `src/services/`): 하위 모든 파일
-- **파일 미존재** → **deprecation warning** (Track 8 1.0.x 사이클):
+- **파일 미존재** → **deprecation warning** (1.0.x 사이클):
   ```
   !  /cfh-tc-gen은 기존 파일 대상입니다 (artifact mode).
      새 코드 TDD는 /cfh-tdd-gen <목적>을 사용하세요.
@@ -30,7 +30,7 @@ React/Vue 컴포넌트는 `/cfh-tc`(FE-friendly RTL)로 가세요.
   사용자 명시 yes 후만 진행. 그 외 종료.
 - **빈 입력** → "어느 파일을 보강하시겠습니까? (경로)"를 질문
 
-### Stack × Mode 매트릭스 (0.17.0)
+### Stack × Mode 매트릭스
 
 |   | **intent** (새로) | **artifact** (기존) |
 |---|---|---|
@@ -52,7 +52,7 @@ React/Vue 컴포넌트는 `/cfh-tc`(FE-friendly RTL)로 가세요.
 
 <soft_suggestion>
 
-## Phase 0a — Stack misroute suggestion (Track 9, 0.18.0)
+## Phase 0a — Stack misroute suggestion
 
 입력 받은 직후 stack 신호 자가 평가. opposite(`/cfh-tc`) 신호가 강하면 (`[verified]`/`[inferred]` 2+) 다음 형식으로 제안 (강제 X):
 
@@ -68,7 +68,7 @@ React/Vue 컴포넌트는 `/cfh-tc`(FE-friendly RTL)로 가세요.
 
 <mode_detection>
 
-## Mode — Artifact only (0.17.0 Track 8)
+## Mode — Artifact only
 
 이 커맨드는 **기존 non-FE 파일** 테스트 추가·보강을 owning합니다. TDD Mode 분기는 0.17.0에서 **제거**됨 — 새 코드는 `/cfh-tdd-gen <목적>`을 사용하세요.
 
@@ -108,7 +108,7 @@ React/Vue 컴포넌트는 `/cfh-tc`(FE-friendly RTL)로 가세요.
 **Priority 4 — Error**: throw·panic / 에러 응답 / 재시도·timeout / circuit breaker
 **Priority 5 — Integration**: 실제 의존성과의 통합 (test container·in-memory DB·simulator)
 
-### Phase 2.5: Final Intent Confirm (Phase 3 작성 직전, 0.20.0+)
+### Phase 2.5: Final Intent Confirm (Phase 3 작성 직전)
 
 Phase 0~2의 *현재 동작·테스트 환경·시나리오 설계*를 **합산 해석·모호 발화 검사·답변 충돌 자가검증** 후 명시 yes 받기 (→ `~/.claude/commands/references/final-confirm.md`).
 

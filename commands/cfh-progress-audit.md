@@ -4,7 +4,7 @@
 - 스킬 자체에 대한 의견 → `/cfh-feedback <skill> "<comment>"`
 - 새 작업 시작 → `/cfh-plan`
 
-이 커맨드는 **이미 작성된 PROGRESS.md를 *외부 독자 시점*에서 검증**합니다. 6축 체크리스트(Tier 1) + Adversary 인격의 반증 시도(Tier 2). 본 PROGRESS.md를 *수정하지 않음* — 갱신은 사용자 명시 yes 후만.
+이 커맨드는 **이미 작성된 PROGRESS.md를 *외부 독자 시점*에서 검증**합니다. 6축 체크리스트(Tier 1) + Adversary 인격의 반증 시도(Tier 2). 검증만 하며 PROGRESS.md를 *자동 수정하지 않음* — 갱신이 필요하면 사용자 명시 yes 후에만 append.
 
 **핵심 원칙** (→ `commands/references/progress-audit.md` 단일 출처):
 - **책임 분리.** 작성자(`/cfh-progress`)와 검토자(`/cfh-progress-audit`) 인격 분리 — 확증 편향 차단.
@@ -45,7 +45,7 @@ PROGRESS.md를 읽고 *외부 독자 시점*에서 6축 yes/no 검증.
 | 2 | 결정 근거 | 결정마다 *왜* 인용·증거? |
 | 3 | 다음 단계 명확성 | *무엇을* *어떻게* 명시? |
 | 4 | 미해결 추적 | resolved/unresolved 분리? |
-| 5 | 모ho 발화 | 동음이의어·도메인 가정 — 외부 독자 가능? |
+| 5 | 모호 발화 | 동음이의어·도메인 가정 — 외부 독자 가능? |
 | 6 | Side-effect 명시 | 결정의 외부 영향 명시? |
 
 ### 출력 형식

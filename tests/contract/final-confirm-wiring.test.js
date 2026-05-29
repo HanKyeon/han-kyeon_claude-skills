@@ -80,3 +80,24 @@ test('Final Intent Confirm asset list is documented in reference', () => {
     );
   }
 });
+
+// 0.24.0 — cfh-plan Q5 (선행 의존성, inbound) regression guard.
+// Prevents accidental removal + Q-number drift between Phase 1 / 2.5.
+test('cfh-plan defines Q5 선행 의존성 and folds it into Final Intent Confirm', () => {
+  const body = fs.readFileSync(path.join(REPO_ROOT, 'commands/cfh-plan.md'), 'utf8');
+
+  // Q5 question exists in Phase 1
+  assert.match(body, /Q5\.\s*선행 의존성/, 'Phase 1 must define Q5 선행 의존성');
+
+  // Agent actively proposes (not a blank question) — recommendation-pattern markers
+  assert.match(body, /\[verified\][^\n]*\n[\s\S]*?\[inferred\][\s\S]*?\[guessed\]/,
+    'Q5 must use confidence markers (agent proposes candidates, not blank ask)');
+
+  // inbound/outbound symmetry with side-effect gate is documented
+  assert.match(body, /inbound/i, 'Q5 must document inbound (선행조건) framing');
+  assert.match(body, /outbound/i, 'must contrast with outbound side-effect gate');
+
+  // Phase 2.5 folds Q5 into 합산 대상 (no Q1~Q4 stale range left)
+  assert.ok(!/Q[12]~Q4\b/.test(body), 'no stale Q1~Q4 / Q2~Q4 range should remain');
+  assert.match(body, /Q5 선행 의존성/, 'Phase 2.5 합산 대상 must include Q5 선행 의존성');
+});

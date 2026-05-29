@@ -312,7 +312,7 @@ Phase 2 Hypothesis로 진행할까요?
 
 원인 확정 안 되면 Phase 2로 복귀 ("새 가설 필요") 또는 Phase 0로 ("증거 부족").
 
-## Phase 3.5 — Team Suggestion (선택, 0.22.0+)
+## Phase 3.5 — Team Suggestion (선택)
 
 Phase 3 검증 종료 후 *team 가치 신호 자가 평가*. 정책: `commands/references/team-suggestion.md` § A (3단계 + lazy load).
 

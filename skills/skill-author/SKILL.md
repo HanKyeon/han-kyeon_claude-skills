@@ -48,9 +48,9 @@ Phase 2: Trigger Design          (description 초안 + 사용자 승인)
 Phase 3: Outline                 (SKILL.md 섹션·references 목록 제안)
    ↓
 Phase 4: Write Files             (cfh new로 스캐폴드 + Edit으로 채움)
-                                  • 1.0 기본: skill + auto-mirror command 동시 생성 (Track 5.3)
+                                  • 1.0 기본: skill + auto-mirror command 동시 생성
                                   • --no-mirror 옵션으로 mirror 생략 가능
-                                  • frontmatter `commands: [/cfh-<name>]` 자동 채움 (Track 5.1)
+                                  • frontmatter `commands: [/cfh-<name>]` 자동 채움
                                   • references/ 분리 권장 여부도 Phase 3에서 결정
    ↓
 Phase 5: Validate + Iterate      (cfh check schema 실행 + 드라이런 시험 트리거)

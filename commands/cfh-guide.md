@@ -203,14 +203,14 @@ Pipeline·Expert Pool처럼 오케스트레이터가 한 번씩 호출하는 경
 
 ## Section: Make (Dispatcher)
 
-"뭔가 만들고 싶은데 skill인지 command인지 team인지 잘 모르겠다" — 바로 이 상황을 위한 0.3.0 신규 dispatcher입니다.
+"뭔가 만들고 싶은데 skill인지 command인지 team인지 잘 모르겠다" — 바로 이 상황을 위한 신규 dispatcher입니다.
 
 ### 기본 흐름
 
 ```
 사용자: /cfh-make 팀 API 응답 규칙을 claude가 자동 적용하게
 Claude: (asset-factory 메타-스킬 활성화)
-        Phase 1 Intent Capture (0.4.0+ goal-first):
+        Phase 1 Intent Capture (goal-first):
           Step 1a 요구사항 한 문장 확인
           Step 1b Scoped Pre-scan (요구사항 토큰과 겹치는 기존 자산만 노출)
           Step 1c 3 분류 질문
@@ -252,12 +252,13 @@ Claude: (asset-factory 메타-스킬 활성화)
 
 ```
 사용자: /cfh-plan legacy 결제 모듈에 쿠폰 검증 로직 추가
-Claude: (3 Phase, 0.4.0+ goal-first)
+Claude: (3 Phase, goal-first)
         Phase 1 Intent Capture:
           Step 1a Q1 목표 한 문장 확인 ($ARGUMENTS 또는 질문)
           Step 1b Scoped Pre-scan — 목표에 필요한 영역만 (대상 디렉터리·CLAUDE.md·package.json scripts)
-          Step 1c Q2~Q4 (성공 기준 / 제약·out-of-scope / 긴급도)
+          Step 1c Q2~Q5 (성공 기준 / 제약·out-of-scope / 긴급도 / 선행 의존성)
         Phase 2 Approach Proposal — 태스크 분류 + 접근법 카드 (사용자 승인)
+        Phase 2.5 Final Intent Confirm — 답변 합산·모호 발화·선행 의존성·side-effect 점검 (명시 yes 후 진행)
         Phase 3 Execution — 전용 스킬(/cfh-tdd·/cfh-refactor·/cfh-tc·/cfh-review) 위임 또는 직접 실행
 ```
 
@@ -286,7 +287,7 @@ Claude: (3 Phase, 0.4.0+ goal-first)
 
 ## Section: Maintain (Upkeep)
 
-설치된 스킬·커맨드를 관리·진단하는 0.3.0 신규 도구.
+설치된 스킬·커맨드를 관리·진단하는 신규 도구.
 
 ### `cfh adopt <name>` — managed → user-authored
 
@@ -395,7 +396,7 @@ cfh evolve tdd-first                      # 특정 스킬만
 
 ### 제안 적용
 
-0.3.0에는 `--apply` 기능이 없습니다. 제안을 참고해 사용자가 SKILL.md를 직접 편집하신 뒤 `cfh validate`로 확인하시면 됩니다.
+`--apply` 기능이 없습니다. 제안을 참고해 사용자가 SKILL.md를 직접 편집하신 뒤 `cfh validate`로 확인하시면 됩니다.
 
 ---
 
@@ -460,13 +461,13 @@ cfh validate                             # 검증
 cfh generate --list                      # 프리셋 목록
 cfh generate <preset>                    # 팀 생성 (./.claude/에)
 
-# Maintain (0.3.0 신규)
+# Maintain
 cfh adopt <name>                         # managed → user-authored
 cfh diff <name> [--full]                 # 내 변경분 확인
 cfh doctor [--warn-only]                 # 전체 점검
 cfh trace "<query>" [--top N]            # 트리거 시뮬레이션
 
-# Evolve (0.3.0 신규, 옵트인)
+# Evolve (옵트인)
 cfh log --enable|--disable|--status      # 텔레메트리 제어
 cfh log <skill> --event E --utterance U  # 사용 이벤트 기록
 cfh evolve [<skill>]                     # 제안 출력 (자동 수정 없음)

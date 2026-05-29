@@ -29,7 +29,7 @@ BE / 스택 중립 리팩터링 워크플로를 시작합니다.
 
 <workflow>
 
-## Phase 0a — Stack misroute suggestion (Track 9, 0.18.0)
+## Phase 0a — Stack misroute suggestion
 
 입력 받은 직후 stack 신호 자가 평가. opposite(`/cfh-refactor`) 신호가 강하면 (`[verified]`/`[inferred]` 2+) 다음 형식으로 제안 (강제 X):
 
@@ -57,7 +57,7 @@ BE / 스택 중립 리팩터링 워크플로를 시작합니다.
 
 답을 받기 전에 코드 수정 금지. 마이그레이션·성능·관찰성 리팩터면 follow-up 질문 추가.
 
-**각 질문은 추천 + 이유 + 다른 옵션 형식** (0.14.1+):
+**각 질문은 추천 + 이유 + 다른 옵션 형식**:
 
 ```
 ❓ Q1: 범위 축은?
@@ -161,7 +161,7 @@ BE / 스택 중립 리팩터링 워크플로를 시작합니다.
 - trace span·metric label 회귀 검증 (관찰성 회귀 위험)
 - **언어별 정적 검증 도구를 회귀 게이트로 활용** — Python: `mypy --strict`·`ruff`·`bandit` / Go: `go vet`·`staticcheck`·`go build ./...` / Rust: `cargo clippy`·`cargo check`·`cargo semver-checks` / JVM: SpotBugs·ErrorProne·`detekt`(Kotlin) / Node: `tsc --noEmit`·`eslint`. interface·trait 추출 시 *암묵 구현 컴파일 안전망*으로 필수.
 
-### Team Suggestion (0.22.0+, 조건부)
+### Team Suggestion (조건부)
 
 Step 8 최종 보고의 "다음 단계 권장" 단락에 *조건부 hint* (정책: `commands/references/team-suggestion.md` § A).
 
@@ -192,7 +192,7 @@ BE 컨텍스트에서 자주 grill 가치 있는 sub-branches:
 
 각 Step 결과는 Why/What/How/What if 4축 형식 (`refactoring-strategy/references/reasoning-format.md`) 권장.
 
-**Retro·Commit 블록** (5개 작업 커맨드 공통, 0.9.0+):
+**Retro·Commit 블록** (5개 작업 커맨드 공통):
 - 작업 완료 시 🔄 Retro 블록 + 📝 제안 커밋 블록 자동 포함
 - 자동 commit 금지 — 사용자 명시 yes 후만 진행
 - 형식: `commands/references/retro-and-commit.md`

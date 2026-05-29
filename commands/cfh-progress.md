@@ -113,7 +113,7 @@
 - (조건부) 🔍 PROGRESS.md audit 안내 — 신호 강도 따라 1~2줄 hint
 ```
 
-### Audit Hint (0.23.0+, 조건부 출력)
+### Audit Hint (조건부 출력)
 
 작성·갱신 결과의 *외부 독자 검증 가치* 자가 평가 후 hint 출력 (정책: `commands/references/progress-audit.md` § 안내 정책).
 

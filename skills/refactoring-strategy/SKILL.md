@@ -23,7 +23,7 @@ EXAMPLES:
   - 'zustand → jotai 마이그레이션' → Step 4 Safety Net + Step 5 Small PR 분할
 ```
 
-### FE / BE 컨텍스트 분기 (0.16.1+, `-gen` suffix 컨벤션)
+### FE / BE 컨텍스트 분기 (`-gen` suffix 컨벤션)
 
 같은 5 Step 메타 워크플로(Scope · Profile · Blast Radius · Safety Net · Small PR)를 적용하되, **컨텍스트별 가이드가 다름**:
 

@@ -23,7 +23,7 @@ TRIGGER:  non-FE intent TDD (새로 만든다) — '백엔드 TDD', 'library TDD
           'mobile TDD', 'embedded TDD', 'ML 학습 step TDD'.
 SKIP:     React/Vue 컴포넌트 → tdd-first.
           기존 non-FE 파일 *보강*만 (artifact mode) → /cfh-tc-gen 명시 호출 권장.
-INTENT vs ARTIFACT (0.17.0 Track 8):
+INTENT vs ARTIFACT:
   intent (새 모듈·핸들러·CLI 명령) → tdd-general 자동 트리거
   artifact (기존 *.go·*.py·*.swift 보강) → 자동 트리거 약함, /cfh-tc-gen 명시 호출 권장
 EXAMPLES:
@@ -80,7 +80,7 @@ Phase 5: Refactor + Intent Preservation (리팩터링 + Phase 1 답변 재확인
 
 각 Phase의 절차·원칙은 `tdd-first` 본문과 동일. **차이는 예시·관용구·라이브러리 가정**입니다.
 
-### Phase 1.5 — Final Intent Confirm (Phase 2 진입 직전, 0.20.0+)
+### Phase 1.5 — Final Intent Confirm (Phase 2 진입 직전)
 
 `tdd-first`와 동일하게 Phase 1 6 답변을 *합산 해석·모호 발화 검사·답변 충돌 자가검증* 후 명시 yes 받기 (→ `~/.claude/commands/references/final-confirm.md`).
 

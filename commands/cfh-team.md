@@ -34,7 +34,7 @@
 4. 실패 비용
 5. 규모
 
-## Phase 2 — Pattern Selection (추천+이유 패턴, 0.14.1+)
+## Phase 2 — Pattern Selection (추천+이유 패턴)
 
 `cfh-harness/references/patterns/`의 6 패턴 중 1개 자동 추천:
 
@@ -46,7 +46,7 @@
 | **Producer-Reviewer** | Q4 "실패 비용 큼" + Q1 "검증 중심" (테스트 통과만 하는 가짜 구현 위험) |
 | **Supervisor** | Q1 "런타임에 경로가 결정" + Q5 "다이내믹 분기" |
 | **Hierarchical Delegation** | Q5 "10+ 에이전트" + Q3 "여러 도메인 분할" |
-| **Adversary** *(0.22.0)* | Q1 "반증·취약점 탐색·확증 편향 차단" + Q4 "실패 비용 큼" (debug·security audit·legal review) |
+| **Adversary** | Q1 "반증·취약점 탐색·확증 편향 차단" + Q4 "실패 비용 큼" (debug·security audit·legal review) |
 
 **추천 형식**:
 ```
@@ -74,7 +74,7 @@
 
 사용자 승인 후 Phase 2.5.
 
-## Phase 2.5 — Communication Mode Selection (0.21.0+)
+## Phase 2.5 — Communication Mode Selection
 
 패턴 결정 *후* agent 간 통신 mode 명시 선택 (→ `commands/references/agent-team-modes.md`).
 

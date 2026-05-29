@@ -17,7 +17,7 @@
 
 <workflow>
 
-## Phase 0a — Stack misroute suggestion (Track 9, 0.18.0)
+## Phase 0a — Stack misroute suggestion
 
 입력 받은 직후 stack 신호 자가 평가. opposite(`/cfh-refactor-gen`) 신호가 강하면 (`[verified]`/`[inferred]` 2+) 다음 형식으로 제안 (강제 X):
 
@@ -32,7 +32,7 @@
 
 ## Step 1 — Scope Narrowing (사용자 질문, 추천+이유 패턴 적용)
 
-`refactoring-strategy/references/scope-narrowing.md`의 8 질문을 **3~4개씩 묶지 말고 한 번에 한 질문**으로 순차 수행 (0.14.1+ grilling 컨벤션):
+`refactoring-strategy/references/scope-narrowing.md`의 8 질문을 **3~4개씩 묶지 말고 한 번에 한 질문**으로 순차 수행 (grilling 컨벤션):
 
 - Q1 범위 축 (Breadth)
 - Q2 깊이 축 (Depth)
@@ -45,7 +45,7 @@
 
 답을 받기 전에 코드 수정 금지. 레거시/마이그레이션/성능/접근성 리팩터링이면 follow-up 질문 추가.
 
-**각 질문은 추천 + 이유 + 다른 옵션 형식** (0.14.1+):
+**각 질문은 추천 + 이유 + 다른 옵션 형식**:
 
 ```
 ❓ Q1: 범위 축은? 단일 파일인가 디렉터리 전체인가?
@@ -70,7 +70,7 @@
 
 상세 추천 패턴: `commands/references/recommendation-pattern.md`.
 
-**(grill) 옵션** (0.14.1+): Step 1 종료 후 사용자가 "더 깊이 봐야 할 결정이 많다"고 느끼면 `/cfh-grill`로 위임. Q1~Q8 답변 + Project Profile + Blast Radius 결과 컨텍스트로 자동 이관.
+**(grill) 옵션**: Step 1 종료 후 사용자가 "더 깊이 봐야 할 결정이 많다"고 느끼면 `/cfh-grill`로 위임. Q1~Q8 답변 + Project Profile + Blast Radius 결과 컨텍스트로 자동 이관.
 
 자주 grill 가치 있는 sub-branches (Step 1 종료 시 hint로 노출 권장):
 - migration 전략 (big-bang vs strangler-fig vs adapter)
@@ -120,7 +120,7 @@
 - 목표 크기: Small 이하 (50~200줄, 5파일 이내)
 - 쪼개는 전략: Vertical Slice / Horizontal Slice / Scaffolding / Adapter
 
-**분할 전략 추천** (0.14.1+):
+**분할 전략 추천**:
 
 ```
 📌 추천 분할 전략: <Vertical Slice | Horizontal Slice | Scaffolding | Adapter>
@@ -210,7 +210,7 @@ PR 설명에 "Found but not fixed" 섹션 자동 생성.
 - (조건부) 💡 Team 활용 가능 — 신호 강도 따라 1~2줄 hint
 ```
 
-**Team Suggestion** (0.22.0+, 조건부 — `commands/references/team-suggestion.md` § A):
+**Team Suggestion** (조건부 — `commands/references/team-suggestion.md` § A):
 
 Expert Pool 패턴 추천 신호 (refactor 특화):
 - **strong**: Blast Radius ≥ 5축 + 영향 파일 ≥ 10 + 대규모 legacy (저자 N+·컨벤션 혼재) → 2줄 hint (`💡 (옵션) Expert Pool 가치 큼: Blast Radius <N>축 — \`why teams\``)

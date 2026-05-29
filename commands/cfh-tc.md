@@ -29,7 +29,7 @@ TDD 철학(의도 기반 테스트)과 오버핏 방지 원칙을 지킵니다.
 
 <soft_suggestion>
 
-## Phase 0a — Stack misroute suggestion (Track 9, 0.18.0)
+## Phase 0a — Stack misroute suggestion
 
 입력 받은 직후 stack 신호 자가 평가. opposite(`/cfh-tc-gen`) 신호가 강하면 (`[verified]`/`[inferred]` 2+) 다음 형식으로 제안 (강제 X):
 
@@ -45,7 +45,7 @@ TDD 철학(의도 기반 테스트)과 오버핏 방지 원칙을 지킵니다.
 
 <mode_detection>
 
-## Mode — Artifact only (0.17.0 Track 8)
+## Mode — Artifact only
 
 이 커맨드는 **기존 FE 파일**(`.tsx`·`.vue`·`.jsx`·기존 훅) 테스트 추가·보강을 owning합니다. TDD Mode 분기는 0.17.0에서 **제거**됨 — 새 컴포넌트는 `/cfh-tdd <목적>`을 사용하세요.
 
@@ -54,7 +54,7 @@ TDD 철학(의도 기반 테스트)과 오버핏 방지 원칙을 지킵니다.
 작업 시작 전 `$ARGUMENTS` 경로 확인:
 
 - **파일 존재** → 정상 진행 (Test-Fill / Characterization 접근)
-- **파일 미존재** → **deprecation warning** (Track 8 1.0.x 사이클):
+- **파일 미존재** → **deprecation warning** (1.0.x 사이클):
   ```
   !  /cfh-tc는 기존 파일 대상입니다 (artifact mode).
      새 컴포넌트는 /cfh-tdd <목적>을 사용하세요.
@@ -63,7 +63,7 @@ TDD 철학(의도 기반 테스트)과 오버핏 방지 원칙을 지킵니다.
   사용자 명시 yes 후만 진행. 그 외 종료.
 - **빈 입력** → "어느 파일을 보강하시겠습니까? (경로)"를 질문
 
-### Stack × Mode 매트릭스 (0.17.0)
+### Stack × Mode 매트릭스
 
 |   | **intent** (새로) | **artifact** (기존) |
 |---|---|---|
@@ -74,7 +74,7 @@ TDD 철학(의도 기반 테스트)과 오버핏 방지 원칙을 지킵니다.
 
 <tdd_mode>
 
-> ⚠️ **(0.17.0 Track 8 deprecated)** 이 섹션은 *과거 호환* 자료로만 유지됩니다. 새 컴포넌트 TDD는 `/cfh-tdd <목적>`이 owning합니다. 이 섹션은 자동 진입 안 되며, 사용자가 `--mode=tdd`로 명시 호출하거나 deprecation warning 통과 후 yes한 경우에만 진행. 향후 (다음 major) 자동 차단 예정.
+> ⚠️ **(deprecated)** 이 섹션은 *과거 호환* 자료로만 유지됩니다. 새 컴포넌트 TDD는 `/cfh-tdd <목적>`이 owning합니다. 이 섹션은 자동 진입 안 되며, 사용자가 `--mode=tdd`로 명시 호출하거나 deprecation warning 통과 후 yes한 경우에만 진행. 향후 (다음 major) 자동 차단 예정.
 
 ## TDD Mode — 5 Phase (과거 호환)
 
@@ -202,7 +202,7 @@ describe('<subject>', () => {
 **Priority 4 — A11y**: role, aria-*, 키보드, 포커스 관리
 **Priority 5 — Integration**: Context/Store/Router 연동
 
-### Phase 2.5: Final Intent Confirm (Phase 3 작성 직전, 0.20.0+)
+### Phase 2.5: Final Intent Confirm (Phase 3 작성 직전)
 
 Phase 0~2의 *현재 동작 파악·테스트 환경·시나리오 설계*를 **합산 해석·모호 발화 검사·답변 충돌 자가검증** 후 명시 yes 받기 (→ `~/.claude/commands/references/final-confirm.md`).
 
