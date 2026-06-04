@@ -1,4 +1,4 @@
-# Soft routing suggestion — reference (0.18.0 Track 9)
+# Soft routing suggestion — reference
 
 > **정책 § 0 정합**: 강제 라우팅 거부. 사용자가 호출한 명령 *그대로 default 진행*. 다른 stack 신호가 강할 때만 **bold + 💡로 대안 명령 제안** (사용자 명시 `switch` 후만 분기). silent 자동 위임 금지.
 

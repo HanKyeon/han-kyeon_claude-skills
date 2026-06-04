@@ -1,4 +1,4 @@
-# PROGRESS.md Audit — 6축 검증 + Adversary side-effect (단일 출처, 0.23.0+)
+# PROGRESS.md Audit — 6축 검증 + Adversary side-effect (단일 출처)
 
 > `/cfh-progress`가 작성·갱신한 PROGRESS.md를 **외부 독자 시점**에서 검증. *작성자 인격*과 *검토자 인격* 분리(Adversary 패턴)로 확증 편향 차단. 본 작업 영향 없음 — 검토 결과는 *갱신 권장*만 출력.
 

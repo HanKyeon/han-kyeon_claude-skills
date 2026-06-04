@@ -1,4 +1,4 @@
-# Team Suggestion — 안내 패턴 (단일 출처, 0.22.0+)
+# Team Suggestion — 안내 패턴 (단일 출처)
 
 > 자산이 *team 가치 신호*를 감지하면 사용자에게 명시 안내. **강제 X — 거부해도 default 워크플로 그대로 진행**. multi-agent team은 *별 흐름*이라는 정신 강조.
 

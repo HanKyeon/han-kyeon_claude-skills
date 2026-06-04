@@ -100,6 +100,9 @@
 - 테스트 의존
 - 설정 파일 영향
 
+**정형 데이터 크로스체크** (→ `commands/references/structured-crosscheck.md`):
+Blast Radius를 *추론으로만* 끝내지 말고, 변경 대상 심볼을 **Grep으로 실제 참조와 대조**해 추론이 놓친 영향처를 잡는다. 추론 영향처 vs `grep -rn "<symbol>"` → 누락 시 severity 분기(직접 import=high→`[verified]`). 정형 데이터(dependency-cruiser·madge·tsconfig refs)가 *있으면* 활용. **한계**: grep 정적 — 동적/리플렉션 못 잡음, "참고용".
+
 **사용자에게 영향 범위 브리핑**한 뒤 진행 승인 받기.
 
 ## Step 4 — Safety Net 구축

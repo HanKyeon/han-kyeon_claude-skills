@@ -1,4 +1,4 @@
-# Agent Communication Mode — subagent vs teams (단일 출처, 0.21.0+)
+# Agent Communication Mode — subagent vs teams (단일 출처)
 
 > 멀티 에이전트 자산이 *어떻게 통신*하는지 결정하는 단일 출처. `cfh-harness` 생성 팀·`cfh-review` 등 *멀티 agent 패턴 자산*에서 인용.
 

@@ -20,7 +20,7 @@ TRIGGER:  '팀 에이전트', 'team agents', 'multi-agent', 'orchestrate agents'
           '서브에이전트 구성' 같이 *여러 에이전트를 묶는* 의도.
 SKIP:     단일 skill 작성은 skill-author. 기존 에이전트 사용은 트리거 안 됨.
 EXAMPLES:
-  - 'PR 응답 검증 팀 만들어줘' → Phase 1 인터뷰 + 6 패턴 중 1 선택
+  - 'PR 응답 검증 팀 만들어줘' → Phase 1 인터뷰 + 7 패턴 중 1 선택
   - 'producer-reviewer 패턴으로' → 인터뷰 단축, 즉시 Phase 2
 ```
 도메인 설명을 받아 **에이전트 팀 + 전용 스킬**을 프로젝트 로컬(`.claude/`)에 생성하는 메타-스킬입니다. revfactory/harness와 같은 L3 meta-factory 역할.
@@ -29,7 +29,7 @@ EXAMPLES:
 
 1. **Pre-scan 먼저.** Phase 0에서 프로젝트 구조·기존 에이전트·CLAUDE.md를 훑어 Phase 1 답변 초안을 만든 뒤 진입.
 2. **도메인 인터뷰 다음, 패턴은 그 후에.** Q1~Q5 + 옵션 Deep-dive + Sanity check 순. 작업 특성 답변 전 패턴 확정 금지.
-3. **6 패턴 중 1개만 선택.** 혼합은 실패 원인. 필요하면 2개 팀으로 분리.
+3. **7 패턴 중 1개만 선택.** 혼합은 실패 원인. 필요하면 2개 팀으로 분리.
 4. **프로젝트 로컬에 작성.** 출력은 `.claude/agents/`, `.claude/skills/` (사용자 전역 `~/.claude`가 아님).
 5. **CLI가 있으면 CLI 우선.** `cfh generate <preset>`으로 해결 가능한 경우는 그것을 제안. 커스텀이 필요할 때만 직접 파일 작성.
 6. **생성 후 실험 플래그 안내.** 에이전트 간 메시지 교환이 필요하면 `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` 필요함을 알림. Deep-dive D1에서 이미 확인된 경우 중복 안내 생략.
@@ -42,7 +42,7 @@ Phase 0: Pre-scan                (프로젝트 스캔 → Phase 1 답변 초안)
    ↓
 Phase 1: Domain Interview        (기본 5 질문 + 옵션 Deep-dive 7 축 + Sanity check)
    ↓
-Phase 2: Pattern Selection       (6 패턴 중 1개 추천 + 사용자 확인)
+Phase 2: Pattern Selection       (7 패턴 중 1개 추천 + 사용자 확인)
    ↓
 Phase 3: Agent Roster            (각 에이전트 책임·도구·입출력 확정)
    ↓

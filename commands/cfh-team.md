@@ -36,7 +36,7 @@
 
 ## Phase 2 — Pattern Selection (추천+이유 패턴)
 
-`cfh-harness/references/patterns/`의 6 패턴 중 1개 자동 추천:
+`cfh-harness/references/patterns/`의 7 패턴 중 1개 자동 추천:
 
 | 패턴 | 적합 신호 |
 |---|---|

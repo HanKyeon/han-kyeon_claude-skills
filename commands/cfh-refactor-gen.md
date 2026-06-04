@@ -105,6 +105,9 @@ BE / 스택 중립 리팩터링 워크플로를 시작합니다.
 - **테스트 의존** (unit + integration + contract + load)
 - **관찰성 의존** (trace span name·metric label·log field — string 참조)
 
+**정형 데이터 크로스체크** (→ `commands/references/structured-crosscheck.md`):
+위 축들을 *추론으로만* 끝내지 말고, 변경 대상 심볼을 **Grep으로 실제 참조와 대조**해 누락을 잡는다. 추론 영향처 vs `grep -rn "<symbol>"` → 누락 시 severity 분기(직접 import=high→`[verified]`). 정형 데이터(`go list -deps`·import graph·OpenAPI spec·migration 이력)가 *있으면* 활용. **한계**: grep 정적 — 동적 호출·DI 컨테이너·런타임 라우팅 못 잡음, "참고용".
+
 **사용자에게 영향 범위 브리핑**한 뒤 진행 승인 받기.
 
 ## Step 4 — Safety Net 구축 (BE 컨텍스트)

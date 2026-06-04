@@ -1,4 +1,4 @@
-# Final Intent Confirm — 최종 종합 확인 (단일 출처, 0.20.0+)
+# Final Intent Confirm — 최종 종합 확인 (단일 출처)
 
 > *결론 → 작업 실행 직전*에 사용자 답변을 *합산 해석*하고 *모호 발화*를 명시한 뒤 최종 yes를 받는 단계. 각 turn 단위 확인(국소)과 다른 *전체 흐름*(합산) 검증. mattpocock grilling의 *"멈추고 묻기"* 정신 + cfh의 *명시성* 정책 확장.
 

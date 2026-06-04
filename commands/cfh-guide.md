@@ -170,7 +170,7 @@ Claude: (cfh-harness 6 Phase 워크플로)
 ```
 
 1. Domain Interview (5 질문)
-2. Pattern Selection (6 패턴 중 1개)
+2. Pattern Selection (7 패턴 중 1개)
 3. Agent Roster (책임·도구·입출력)
 4. Skill Design (팀 트리거 스킬)
 5. Scaffold (`cfh generate` 또는 Claude Write)

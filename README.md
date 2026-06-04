@@ -10,7 +10,7 @@
 # 1. 설치
 npm install -g @han-kyeon/claude-skills
 cfh install                  # ~/.claude/skills + ~/.claude/commands 복사
-cfh list                     # 8 skills + 19 commands + mapping (→ /cfh-*) 확인
+cfh list                     # 8 skills + 20 commands + mapping (→ /cfh-*) 확인
 ```
 
 Claude Code 새 세션 시작 후 대화창에 차례로 입력:
@@ -159,7 +159,7 @@ cfh check                    # schema lint + skill 진단 모두
 | ------------------------------------- | ---------------------------------------------------------------- |
 | `/cfh-new` + `skill-author` skill     | skill·command·agent 스캐폴드 (skill 시 mirror command 자동 생성) |
 | `/cfh-make` + `asset-factory` skill   | 자산 종류 모를 때 3 질문 분류 dispatcher                         |
-| `/cfh-team` + `cfh-harness` skill | 에이전트 팀 설계 (6 패턴 중 1)                                   |
+| `/cfh-team` + `cfh-harness` skill | 에이전트 팀 설계 (7 패턴 중 1)                                   |
 
 ### 인터뷰·인사이트
 
@@ -281,7 +281,7 @@ cfh adopt tdd-first              # managed → user-authored 전환 (cfh update 
 /cfh-new skill my-skill                  # skill + mirror command 자동 생성
 /cfh-new skill my-skill --no-mirror      # mirror 안 만들기
 /cfh-make 우리 팀 PR 응답 자동화          # 자산 종류 모를 때 분류기
-/cfh-team 결제 모듈 멀티 에이전트 팀       # 6 패턴 중 1 선택
+/cfh-team 결제 모듈 멀티 에이전트 팀       # 7 패턴 중 1 선택
 ```
 
 ### 결정 깊이 파기
@@ -495,7 +495,8 @@ cfh install --link              →  removed (dev: npm link)
 | **0.23.1**  | cfh-plan Phase 2.5에 side-effect 게이트 (7 영역 카탈로그 자가 확인 + 조건부 Adversary hint) | ✅ release             |
 | **0.24.0**  | cfh-plan Q5 선행 의존성(inbound, side-effect와 대칭) + Phase 2.5 강제 명시 + 인라인 version·Track 표기 정리 | ✅ release             |
 | **0.25.0**  | `/cfh-ask` 실험 command — 설명 텍스트 + AskUserQuestion 선택, 워크플로 중간 호출 지원(검증 후 plan/grill 내장 예정) + cfh-progress-audit 등록 | ✅ release             |
-| **0.25.x+** | 다음 audit run 결과 + 외부 사용자 feedback            | 베이킹 + 외부 검증     |
+| **0.26.0**  | sdk-ai-workflow 도입 — ① 정형 데이터 크로스체크(`[guessed]`→`[verified]`, cfh-plan·refactor(-gen)·grill) ② cfh-review 모델 차등(권장) | ✅ release             |
+| **0.26.x+** | 다음 audit run 결과 + 외부 사용자 feedback            | 베이킹 + 외부 검증     |
 | **1.0.0**   | (사용자 판단 — 자동 게이트 아님)                      | 안정성 체크리스트 검토 |
 
 각 마일스톤의 변경 내역은 `cfh list`로 설치된 자산을 확인 (각 자산의 `managed@<version>` 표시 + frontmatter description).
