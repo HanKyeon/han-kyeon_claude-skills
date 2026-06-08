@@ -496,7 +496,8 @@ cfh install --link              →  removed (dev: npm link)
 | **0.24.0**  | cfh-plan Q5 선행 의존성(inbound, side-effect와 대칭) + Phase 2.5 강제 명시 + 인라인 version·Track 표기 정리 | ✅ release             |
 | **0.25.0**  | `/cfh-ask` 실험 command — 설명 텍스트 + AskUserQuestion 선택, 워크플로 중간 호출 지원(검증 후 plan/grill 내장 예정) + cfh-progress-audit 등록 | ✅ release             |
 | **0.26.0**  | sdk-ai-workflow 도입 — ① 정형 데이터 크로스체크(`[guessed]`→`[verified]`, cfh-plan·refactor(-gen)·grill) ② cfh-review 모델 차등(권장) | ✅ release             |
-| **0.26.x+** | 다음 audit run 결과 + 외부 사용자 feedback            | 베이킹 + 외부 검증     |
+| **0.27.0**  | refactoring-strategy 방향 제안 — 대안 탐색 + 정량 비교 카탈로그(영향범위·복잡도·중복제거·결합도·타입안전성·번들·성능·테스트, 조건부·추정/실측) + 트레이드오프·현행 유지 동등 선택지 | ✅ release             |
+| **0.27.x+** | 다음 audit run 결과 + 외부 사용자 feedback            | 베이킹 + 외부 검증     |
 | **1.0.0**   | (사용자 판단 — 자동 게이트 아님)                      | 안정성 체크리스트 검토 |
 
 각 마일스톤의 변경 내역은 `cfh list`로 설치된 자산을 확인 (각 자산의 `managed@<version>` 표시 + frontmatter description).

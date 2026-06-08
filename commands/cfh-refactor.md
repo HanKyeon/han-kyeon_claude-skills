@@ -103,6 +103,12 @@
 **정형 데이터 크로스체크** (→ `commands/references/structured-crosscheck.md`):
 Blast Radius를 *추론으로만* 끝내지 말고, 변경 대상 심볼을 **Grep으로 실제 참조와 대조**해 추론이 놓친 영향처를 잡는다. 추론 영향처 vs `grep -rn "<symbol>"` → 누락 시 severity 분기(직접 import=high→`[verified]`). 정형 데이터(dependency-cruiser·madge·tsconfig refs)가 *있으면* 활용. **한계**: grep 정적 — 동적/리플렉션 못 잡음, "참고용".
 
+**FE 정량 지표** (방향 비교 시 — `refactoring-strategy` "방향 제안" 공통 지표에 *추가*):
+- **번들**: import·번들 사이즈 증감 (라이브러리 추가/교체 시), tree-shaking 영향
+- **성능**: 리렌더 횟수·INP·CLS (React Profiler·Lighthouse 측정, hot path 시)
+- **타입 안전성**: `tsc --noEmit` 위반·`any` 개수 (TS)
+- 측정 가능하면 `[verified]`, 아니면 `[guessed] 추정` + 측정 방법 명시 / 무관하면 생략 (slot ≠ purpose)
+
 **사용자에게 영향 범위 브리핑**한 뒤 진행 승인 받기.
 
 ## Step 4 — Safety Net 구축
