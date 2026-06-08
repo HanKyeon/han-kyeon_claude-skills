@@ -138,6 +138,15 @@ describe('<subject>', () => {
 4. **Property-based 보강**: 핵심 로직에는 `fast-check` (→ `references/property-based-examples.md`)
 5. **Intent Preservation**: 구현 완료 후 Phase 1 답변 재확인을 잊지 않기
 
+## 테스트 품질 (오버핏 방지와 별개 — "좋은 테스트")
+
+오버핏 방지가 "테스트에 맞춘 가짜 구현"을 막는다면, **테스트 품질**은 "좋은 테스트 자체"를 만든다 (→ `commands/references/test-quality.md`):
+- **리트머스**: 구현 바꿔도 행동 같으면 green 유지 (공개 계약 결합, 내부 구조 결합 금지)
+- **피라미드**: 순수 함수로 될 걸 컴포넌트 렌더로 테스트하지 않음 (싼 계층 우선)
+- **부작용 테스트**: cleanup·blob revoke·async race·unmount 후 setState 미발생 — 가장 강력한 리팩터 안전망. 실제 버그는 회귀 테스트로 고정
+- **의도 명시**: 이름=보장 행동 한 문장 / 회귀·table·비직관 setup만 한 줄 주석 / 미커버 영역 JSDoc
+- **FE 구체**: 쿼리 우선순위(`getByRole`>label>testid>querySelector), `userEvent` 우선, 시간·랜덤·네트워크 고정
+
 ## 이 스킬이 활성화되면 반드시
 
 1. **Phase 0 Scope Narrowing 7 질문 먼저** (→ `references/scope-narrowing.md`). 범위가 크면 분해 제안.

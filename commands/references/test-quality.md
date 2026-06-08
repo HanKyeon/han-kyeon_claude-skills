@@ -1,0 +1,112 @@
+# 좋은 테스트 코드 원칙 — Test Quality (단일 출처)
+
+> "테스트를 통과시키는 코드"가 아니라 **"회귀 시 사용자 타격이 큰 행동을 고정하는 테스트"**를 쓰기 위한 원칙. tdd-first(FE)·tdd-general(BE)·cfh-tc(-gen)가 공유. 오버핏 방어는 `skills/tdd-first/references/anti-overfit-rules.md`가 담당 — 여기선 *겹치지 않는* 품질 원칙만.
+
+## 리트머스 (가장 중요한 판별 기준)
+
+> **구현을 바꿔도 행동이 동일하면 테스트는 green을 유지해야 한다. 깨지면 구현에 결합된 나쁜 테스트다.**
+
+- 테스트는 **공개 계약(행동)**에 결합한다. 내부 함수·state·DOM 구조·클래스명에 결합하지 않는다.
+- 이 한 줄이 리팩터 안전망의 핵심 — 리팩터로 구조가 바뀌어도 행동 테스트는 green이라, *진짜 회귀*만 빨갛게 된다.
+- (오버핏 방어 — hard-coding·테스트 수정 금지 등은 → `anti-overfit-rules.md`)
+
+## 무엇을 테스트하는가 (우선순위)
+
+- **자체 로직이 있는 코드 우선**: 분기·계산이 있는 순수 함수, 사용자 인터랙션, 부작용, 공개 계약.
+- **라이브러리가 보장하는 동작은 재테스트 안 함** (예: 라이브러리가 보장하는 자동 disable·정렬 등).
+- 시각 세부·타입·자명한 getter는 테스트 안 함.
+- **커버리지 %를 목표로 삼지 않는다.** "회귀 시 사용자 타격이 큰 행동"을 먼저.
+
+## 테스트 피라미드 — 더 싼 계층 우선
+
+> 같은 신뢰를 더 싼 계층에서 얻을 수 있으면 내려간다.
+
+- **우선순위: 순수 함수(다수) > hook/부작용 > 컴포넌트·통합 > E2E(소수)**
+- 순수 함수로 검증 가능한 것을 컴포넌트 렌더(또는 통합 테스트)로 테스트하지 않는다.
+- 비싼 계층(렌더·E2E)은 *그 계층에서만 드러나는 것*(인터랙션 흐름·통합 경계)에 아껴 쓴다.
+
+## 부작용 테스트 (가장 강력한 리팩터 안전망)
+
+cleanup·메모리 해제·async race·외부 호출은 **명시적으로** 검증한다 — 잊으면 조용히 깨지는 영역이라 회귀 비용이 크다.
+
+- 이벤트 리스너·타이머 **cleanup** (unmount/dispose 시 해제)
+- 메모리 해제 (blob URL revoke, 구독 해제, 커넥션 close)
+- **async race** (먼저 시작한 요청이 나중에 끝나는 경우의 순서)
+- unmount/취소 후 **상태 갱신 미발생** (setState-after-unmount, 취소된 컨텍스트)
+- 외부 호출 (알림·로깅·form setValue·메시지 발행 등 모듈 경계)
+
+> **실제 발생했던 버그는 부작용 테스트로 고정한다.** (→ 회귀 테스트, 아래 "의도 명시")
+
+## 작성 규칙
+
+- **테스트 1개 = 하나의 행동.** 이름이 "무엇을 보장하는지" 한 문장으로 말해야 한다. (`it('renders correctly')` 같은 모호한 이름 금지)
+- **AAA 구조** (Arrange → Act → Assert) 또는 given-when-then.
+- **단언은 하나의 논리적 결과**를 겨냥. 단언 3개 초과면 테스트 분리를 먼저 검토. (순차 의존 단언 — 입력→submit→결과 — 은 각 단계 의도를 한 줄 주석)
+- **시간·랜덤·네트워크는 고정한다** (비결정 제거): 현재시각(`new Date()`·`dayjs()`)·`Math.random()`·fetch·타이머. 실제 시간/타이머/실행 순서에 의존하는 flaky 테스트 금지.
+
+## 모킹 경계
+
+mock은 다음에 **한해** 허용:
+1. **비결정 요소** (시간·랜덤·네트워크) — 반드시 고정
+2. **부작용 검증용 모듈 경계 spy** (URL API·외부 라이브러리 호출 등)
+3. **테스트 대상 외부 의존성 격리**
+
+→ **테스트 대상 자체의 내부 로직은 mock하지 않는다.** (내부를 mock하면 리트머스 위반 — 구현 결합)
+
+## 금지 사항
+
+- 내부 state 직접 접근·내부 함수 spy
+- 전체 스냅샷을 **유일한** 단언으로 사용 (깨지면 무지성 update → 안전망 못 됨)
+- **동어반복 단언**: 콜백을 mock하고 그 콜백을 직접 호출한 뒤 호출 여부만 검증 (대상 로직 미검증)
+- 한 테스트에 여러 행동 검증
+- flaky (실제 시간·타이머·네트워크·실행 순서 의존)
+
+## 테스트 의도 명시
+
+- `it`/`test` 이름 = "무엇을 보장하는가" 한 문장. **모호한 이름을 시나리오 주석으로 덮지 않는다.**
+- `describe`로 그룹 의도 표현. 그룹이 *회귀 안전망·계약 검증* 등 특수 목적이면 `describe` 위 JSDoc으로 명시.
+- 다음 경우만 이름 옆/아래 **한 줄 주석**:
+  - **회귀 테스트**: 어떤 버그·인시던트를 막는지
+  - **테이블 주도**(`it.each`/parametrize): 케이스들이 함께 cover하는 경계 조건
+  - **비직관적 setup·mock·시간 고정**: 왜 그렇게 했는지 / 어떤 실제 상황을 모사하는지
+- **미커버 영역 JSDoc** (파일 상단) — 단위 테스트가 못 잡는 영역이 *명시적으로 존재할 때만*:
+  1. cover하지 않는 영역
+  2. 그 영역이 드러나는 화면·기능
+  3. 검증 방법 — 자동화 상위 검증(E2E·시각 회귀·통합) 우선, 없거나 불확실하면 *수동 확인 시나리오*
+  - ⚠️ **자동화 상위 검증의 존재 자체를 신뢰 근거로 삼지 않는다.** 실제 cover되는지 확인하거나 수동 시나리오를 함께 적는다.
+
+## 스택별 적용
+
+- **FE (tdd-first·cfh-tc)**: 쿼리 우선순위 `getByRole` > `getByLabelText`/`getByText` > `getByTestId` > `container.querySelector`(최후). 인터랙션은 `userEvent`(불가능할 때만 `fireEvent`). `data-testid`는 role/label로 접근 불가한 정당한 경우만. 부작용 예: blob URL revoke·리스너 cleanup·snackbar 호출.
+- **BE/일반 (tdd-general·cfh-tc-gen)**: 쿼리·DOM은 N/A. AAA/given-when-then + table-driven(parametrize). 부작용 예: 커넥션 close·트랜잭션 롤백·이벤트 발행·goroutine/async 취소·파일 핸들 해제.
+- **공통** (스택 무관): 리트머스·피라미드·부작용 개념·의도 명시·시간 고정·모킹 경계.
+
+## 코드 예시 (FE)
+
+```tsx
+// ❌ Bad — 구현 결합. 내부 구조 변경 시 깨짐 (리트머스 위반)
+expect(wrapper.find('SelectInner').state('selectProps')).toEqual(...);
+
+// ❌ Bad — 동어반복. 컴포넌트 로직 미검증
+const onChange = vi.fn(); onChange('a'); expect(onChange).toHaveBeenCalled();
+
+// ✅ Good — 행동 결합. 사용자 관점으로 공개 계약 검증
+await user.click(screen.getByRole('combobox'));
+await user.click(screen.getByRole('option', { name: 'Blue' }));
+expect(screen.getByTestId('probe-color')).toHaveTextContent('blue');
+```
+
+## 체크리스트 (테스트 1개당 — 강제 슬롯 아님, 판단 보조)
+
+- 이름이 보장하는 행동을 한 문장으로 말하는가?
+- 구현을 바꿔도(행동 동일) green을 유지하는가? (리트머스)
+- 사용자 관점(FE: getByRole/userEvent / BE: 공개 API·반환·부작용)인가?
+- 단언이 하나의 논리적 결과를 겨냥하는가?
+- 시간·랜덤·네트워크를 고정했는가?
+- 더 싼 계층(순수 함수)으로 검증할 수 있는가?
+
+## 관련
+
+- `skills/tdd-first/references/anti-overfit-rules.md` — 오버핏 방어 (Test Lock·Writer/Implementer 분리·property-based·Intent Preservation). 본 문서와 *역할 분리*: 여기는 "좋은 테스트", 거기는 "오버핏 방지"
+- `commands/references/confidence-tagging.md` — 미커버 영역 confidence 표기
+- `skills/tdd-first/references/property-based-examples.md` — 속성 기반 테스트

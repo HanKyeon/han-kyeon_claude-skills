@@ -271,6 +271,15 @@ class CouponValidatorTest {
 | HTTP·DB 실제 호출 | mock·stub 또는 격리된 test container |
 | 출력 형식 자체를 assertion (e.g., 줄바꿈 위치) | 의미 있는 필드·값만 |
 
+## 테스트 품질 (좋은 테스트 — 스택 무관 부분)
+
+오버핏 방지와 별개로 "좋은 테스트 자체"의 원칙 (→ `commands/references/test-quality.md`). DOM·RTL 쿼리는 N/A, 나머지는 그대로 적용:
+- **리트머스**: 구현 바꿔도 행동 같으면 green 유지 (public 인터페이스·반환·부작용 결합, 내부 결합 금지)
+- **피라미드**: 순수 함수로 될 걸 통합·E2E로 올리지 않음 (싼 계층 우선)
+- **부작용 테스트**: 커넥션 close·트랜잭션 롤백·이벤트 발행·goroutine/async 취소·파일 핸들 해제 — 명시 검증. 실제 버그는 회귀 테스트로 고정
+- **의도 명시**: 이름=보장 행동 한 문장 / 회귀·table-driven(parametrize)·비직관 setup만 한 줄 주석 / 미커버 영역(통합·실제 라이브러리) JSDoc
+- 시간·랜덤·네트워크 고정 (위 안티패턴 표와 일관)
+
 ## Property-Based Boost (선택)
 
 순수 함수·파서·reducer·정렬 등 **수학적 속성이 명확한 코드**에는 property-based 테스트 추가:

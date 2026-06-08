@@ -14,6 +14,7 @@ React/Vue 컴포넌트는 `/cfh-tc`(FE-friendly RTL)로 가세요.
 - 의존성 주입 우선. mock·stub은 외부 IO(HTTP·DB·파일·시간)에 한정.
 - 테스트는 **격리** — 글로벌 상태 누수·시간 의존·파일 mutation 금지.
 - 기존 테스트 컨벤션을 따른다. 새 패턴 도입 금지.
+- **좋은 테스트 품질** (→ `commands/references/test-quality.md`, 스택 무관 부분): 리트머스(구현 바꿔도 행동 같으면 green)·피라미드(싼 계층 우선)·부작용 테스트(커넥션 close·트랜잭션 롤백·async 취소 — 리팩터 안전망)·의도 명시(회귀 주석·table-driven 경계·미커버 JSDoc).
 </s>
 
 <target>
