@@ -32,6 +32,21 @@ test('test-quality reference exists with the 6 principles', () => {
   assert.match(body, /시간·랜덤·네트워크|시간.*고정/, 'freeze time/random/network');
 });
 
+test('test-quality has 생략 규칙 (skip requires a reason) + coverage as diagnostic', () => {
+  const body = fs.readFileSync(path.join(REPO_ROOT, REF), 'utf8');
+  // coverage = diagnostic (both 상한 and 하한)
+  assert.match(body, /진단 도구/, 'coverage is a diagnostic tool, not a goal');
+  assert.match(body, /상한/, 'upper bound — no trivial tests to pad %');
+  assert.match(body, /하한|누락 신호/, 'lower bound — uncovered logic is a gap signal');
+  // skip rule: not a default, needs a reason from the catalog
+  assert.match(body, /생략.*기본값이 아니|기본값이 아니/, 'skipping is not the default');
+  assert.match(body, /자명함/, 'skip reason: trivial');
+  assert.match(body, /라이브러리.*보장|보장/, 'skip reason: library-guaranteed');
+  assert.match(body, /더 싼 계층.*이미|이미.*검증/, 'skip reason: already covered at cheaper layer (not planned)');
+  // behavior classification for gap visibility
+  assert.match(body, /행동.*열거|행동 분류|테스트함.*생략|생략.*사유/, 'must classify changed behaviors as tested/skipped(reason)');
+});
+
 test('test-quality is role-split from anti-overfit (no duplication, points to it)', () => {
   const body = fs.readFileSync(path.join(REPO_ROOT, REF), 'utf8');
   assert.match(body, /anti-overfit-rules\.md/, 'must point to anti-overfit for overlap');

@@ -499,6 +499,7 @@ cfh install --link              →  removed (dev: npm link)
 | **0.27.0**  | refactoring-strategy 방향 제안 — 대안 탐색 + 정량 비교 카탈로그(영향범위·복잡도·중복제거·결합도·타입안전성·번들·성능·테스트, 조건부·추정/실측) + 트레이드오프·현행 유지 동등 선택지 | ✅ release             |
 | **0.28.0**  | test-quality 단일 출처 — 리트머스·피라미드·부작용 테스트·의도 명시·AAA·시간고정 (tdd-first·tdd-general·cfh-tc(-gen) 공유, anti-overfit과 역할 분리, FE/BE 분기) | ✅ release             |
 | **0.28.1**  | cfh-plan 직접 실행 경로에 품질 도구 연결 (crosscheck·test-quality) — 위임/직접 *모든 경로*에서 코드 품질 측정 전이 도달 | ✅ release             |
+| **0.28.2**  | test-quality에 테스트 생략 규칙 — 커버리지=진단(상한/하한), 생략엔 사유 카탈로그(자명·타입·시각·라이브러리·싼계층), 변경 행동 테스트함/생략 분류로 누락 가시화 | ✅ release             |
 | **0.28.x+** | 다음 audit run 결과 + 외부 사용자 feedback            | 베이킹 + 외부 검증     |
 | **1.0.0**   | (사용자 판단 — 자동 게이트 아님)                      | 안정성 체크리스트 검토 |
 
