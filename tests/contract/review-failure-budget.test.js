@@ -28,6 +28,13 @@ test('② 서브에이전트 실행 실패 — 재시도 후 커버리지 구멍
   assert.match(b, /다른 축 결과의 재해석으로 채우지 말/, 'no faking coverage from other axes');
 });
 
+test('retro 환류: 서브에이전트는 REVIEW.md 직접 write 금지 (5/8 덮어쓰기 사고)', () => {
+  const b = body();
+  assert.match(b, /REVIEW\.md를 절대 직접 write|직접 write\/edit하지 말 것/, 'subagents must not write REVIEW.md');
+  assert.match(b, /응답 텍스트로만 반환/, 'results returned as response text only');
+  assert.match(b, /오케스트레이터가.*단독 수행|Step 5에서 단독/, 'orchestrator alone writes the file');
+});
+
 test('반복 지적 추적은 도입하지 않음 — run 간 상태 금지 (일회성 리포트 정책)', () => {
   const b = body();
   // 철회 근거: 반복 지적은 정직한 출력이고, run 사이 수렴 판단은 사람의 몫.
