@@ -10,7 +10,7 @@
 # 1. 설치
 npm install -g @han-kyeon/claude-skills
 cfh install                  # ~/.claude/skills + ~/.claude/commands 복사
-cfh list                     # 8 skills + 20 commands + mapping (→ /cfh-*) 확인
+cfh list                     # 8 skills + 21 commands + mapping (→ /cfh-*) 확인
 ```
 
 Claude Code 새 세션 시작 후 대화창에 차례로 입력:
@@ -179,6 +179,7 @@ cfh check                    # schema lint + skill 진단 모두
 | `/cfh-feedback` | 스킬 피드백 — `~/.claude/.cfh-logs/<skill>.jsonl` (옵트인) |
 | `/cfh-guide`    | 사용 가이드 출력                                           |
 | `/cfh-trace`    | 발화→스킬 매칭 점수 미리보기                               |
+| `/cfh-clone`    | CFH-aware 세션 꼬리 클론 — 확정 의도(confirm 카드)·진행 중 워크플로 보존 (`cfh clone`) |
 
 설치된 자산의 자세한 description·트리거 키워드는 `cfh list`로 확인 (각 skill의 description은 frontmatter에서 출력).
 
@@ -501,6 +502,7 @@ cfh install --link              →  removed (dev: npm link)
 | **0.28.1**  | cfh-plan 직접 실행 경로에 품질 도구 연결 (crosscheck·test-quality) — 위임/직접 *모든 경로*에서 코드 품질 측정 전이 도달 | ✅ release             |
 | **0.28.2**  | test-quality에 테스트 생략 규칙 — 커버리지=진단(상한/하한), 생략엔 사유 카탈로그(자명·타입·시각·라이브러리·싼계층), 변경 행동 테스트함/생략 분류로 누락 가시화 | ✅ release             |
 | **0.29.0**  | FEEDBACK §2·§3 — TDD 인터뷰 Draft-and-Confirm fast path(신호 충분 시 채워진 초안 교정, 약하면 순차) + 의도 헤더 기본 작성(테스트 파일 일부 · FE=JSDoc / non-FE=docstring 등 관용 주석) + review·refactor(-gen)·tc(-gen) "있으면 활용" | ✅ release             |
+| **0.30.0**  | `/cfh-clone`·`cfh clone(-cut)` — CFH-aware 세션 클론(confirm sentinel·cfh 명령 앵커 중 이른 쪽부터 꼬리 보존, 앵커 없으면 절반 컷 폴백) + final-confirm sentinel + cfh-review 실패 예산(finding 인용 Read 검증·실패 축 가시화 — 각 1회 bounded) | ✅ release             |
 | **0.29.x+** | FEEDBACK §1 — Phase 0 self-sample 측정 (신규 동결)    | 측정 우선              |
 | **1.0.0**   | (사용자 판단 — 자동 게이트 아님)                      | 안정성 체크리스트 검토 |
 

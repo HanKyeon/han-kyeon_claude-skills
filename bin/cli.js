@@ -12,6 +12,7 @@ const { adopt } = require('../lib/adopt');
 const { diff } = require('../lib/diff');
 const { doctor } = require('../lib/doctor');
 const { trace } = require('../lib/trace');
+const { cloneCut } = require('../lib/clone-cut');
 const { logEvent, evolve } = require('../lib/evolve');
 const { search } = require('../lib/search');
 const { open: openCmd } = require('../lib/open');
@@ -67,6 +68,7 @@ const flags = {
   match: getFlagValue(args, '--match'),
   session: getFlagValue(args, '--session'),
   json: args.includes('--json'),
+  sh: args.includes('--sh'),
   manual: args.includes('--manual'),
   executor: getFlagValue(args, '--executor'),
   baseline: args.includes('--baseline'),
@@ -128,6 +130,8 @@ function printHelp() {
     '  diff <name>                   Show what you changed since install (summary)',
     '  diff --skills-vs-evals        Detect skills whose SKILL.md is newer than evals',
     '  trace "<query>"               Simulate which skill would be triggered by an utterance',
+    '  clone <session-id> [project]  CFH-aware tail clone of a session (preserves latest confirmed intent)',
+    '  clone-cut <session.jsonl>     CFH-aware session cut point (confirm sentinel·cfh command anchors; --sh for eval)',
     '  (legacy: `cfh validate` / `cfh doctor` still work with a deprecation warning until 2.0.)',
     '',
     'Feedback / evolution (opt-in, local only):',
@@ -349,6 +353,23 @@ async function main() {
           top: flags.top ? Number(flags.top) : 5,
         });
         break;
+      case 'clone-cut':
+        await cloneCut({ file: positional[0], sh: flags.sh });
+        break;
+      case 'clone': {
+        // CFH-aware tail clone — runs the bundled bash script (requires bash, e.g. Git Bash on Windows)
+        const path = require('path');
+        const { spawnSync } = require('child_process');
+        const scriptPath = path.join(__dirname, '..', 'scripts', 'cfh-clone-conversation.sh');
+        if (!positional[0]) {
+          console.error('Usage: cfh clone <session-id> [project-path]');
+          process.exitCode = 1;
+          break;
+        }
+        const res = spawnSync('bash', [scriptPath, ...positional], { stdio: 'inherit' });
+        process.exitCode = res.status == null ? 1 : res.status;
+        break;
+      }
       case 'log': {
         console.warn('  !  `cfh log` is deprecated (removed in 2.0). Use `cfh feedback` subcommands instead.');
         // Legacy flag-style routing — same args as 0.x

@@ -2,7 +2,7 @@
 
 // Contract test — FEEDBACK.md §2·§3 도입분 (0.29.0).
 // §2 Draft-and-Confirm fast path: 빈 질문 대신 채워진 초안 제시, 신호 약하면 순차 인터뷰로.
-// §3 의도 영속화: opt-in(명시 yes)일 때만 테스트 헤더 JSDoc, 소비자는 "있으면 활용".
+// §3 의도 영속화: 테스트 파일 헤더에 기본 포함(별도 질문 없음), 소비자는 "있으면 활용".
 
 const { test } = require('node:test');
 const assert = require('node:assert/strict');

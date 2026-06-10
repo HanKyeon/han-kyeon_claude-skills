@@ -24,7 +24,7 @@ npm install -g @han-kyeon/claude-skills
 cfh install
 ```
 
-끝. 두 번째 줄이 `~/.claude/skills/`와 `~/.claude/commands/`에 번들된 **8개 스킬 + 20개 슬래시 커맨드 + 11개 reference 파일 + JSON Schema 파일**을 복사합니다.
+끝. 두 번째 줄이 `~/.claude/skills/`와 `~/.claude/commands/`에 번들된 **8개 스킬 + 21개 슬래시 커맨드 + 11개 reference 파일 + JSON Schema 파일**을 복사합니다.
 
 > 🧭 **정책 anchor**: FE/non-FE **명시 분기 유지**. `cfh-tdd`/`cfh-tc`/`cfh-refactor`는 FE 전용, `-gen` suffix는 **non-FE 전반** (BE/library/CLI/mobile/embedded/ML). 자세한 자산별 매트릭스는 [`DESC_CFL.md` § 8](./DESC_CFL.md) 또는 [`PLAN.md` § 1](./PLAN.md).
 
@@ -42,20 +42,20 @@ cfh list
 === Global (~/.claude) ===
 
 Skills (C:\Users\<you>\.claude\skills):
-  asset-factory            managed@0.29.0  →  [/cfh-make]
-  debug-investigator       managed@0.29.0  →  [/cfh-debug]
-  grilling                 managed@0.29.0  →  [/cfh-grill]
-  cfh-harness          managed@0.29.0  →  [/cfh-team]
-  refactoring-strategy     managed@0.29.0  →  [/cfh-refactor, /cfh-refactor-gen]
-  skill-author             managed@0.29.0  →  [/cfh-new]
-  tdd-first                managed@0.29.0  →  [/cfh-tdd, /cfh-tc]
-  tdd-general              managed@0.29.0  →  [/cfh-tdd-gen, /cfh-tc-gen]
+  asset-factory            managed@0.30.0  →  [/cfh-make]
+  debug-investigator       managed@0.30.0  →  [/cfh-debug]
+  grilling                 managed@0.30.0  →  [/cfh-grill]
+  cfh-harness          managed@0.30.0  →  [/cfh-team]
+  refactoring-strategy     managed@0.30.0  →  [/cfh-refactor, /cfh-refactor-gen]
+  skill-author             managed@0.30.0  →  [/cfh-new]
+  tdd-first                managed@0.30.0  →  [/cfh-tdd, /cfh-tc]
+  tdd-general              managed@0.30.0  →  [/cfh-tdd-gen, /cfh-tc-gen]
 
 Commands (C:\Users\<you>\.claude\commands):
-  cfh-ask*, cfh-debug, cfh-feedback, cfh-grill, cfh-guide, cfh-make, cfh-new,
+  cfh-ask*, cfh-clone, cfh-debug, cfh-feedback, cfh-grill, cfh-guide, cfh-make, cfh-new,
   cfh-plan, cfh-progress, cfh-progress-audit, cfh-refactor, cfh-refactor-gen,
   cfh-retro, cfh-review, cfh-tc, cfh-tc-gen, cfh-tdd, cfh-tdd-gen, cfh-team, cfh-trace
-                                          (모두 managed@0.29.0 · *=experimental)
+                                          (모두 managed@0.30.0 · *=experimental)
 ```
 
 Claude Code를 새 세션으로 시작하거나 `/agents`·`/`로 확인하면 커맨드가 떠야 합니다.
