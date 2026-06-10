@@ -122,6 +122,7 @@ Phase 0~2의 *현재 동작·테스트 환경·시나리오 설계*를 **합산 
 
 **검증 게이트**:
 - 기존 테스트 컨벤션 파악 (AAA·table-driven·Given-When-Then 중 무엇)
+- 기존 테스트 파일 상단 **의도 주석**(docstring·doc comment 등 스택 관용 — TDD 영속화 산출물) *있으면* 읽기 — 원래 의도와 충돌하는 테스트 추가 방지
 - 보강 범위 명확 (5 우선순위 중 *어디까지*)
 - *외부 IO mock 경계* 명시 (HTTP·DB·시간·랜덤·환경변수·GPIO·터치·rng seed)
 - *기존 파일 mutation 없음* 명시 (artifact mode 본질)

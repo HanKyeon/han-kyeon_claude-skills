@@ -79,6 +79,30 @@ AI가 코드 쓰기 전에 **반드시** 아래 질문을 던진다 (→ `refere
 
 답변이 모두 모이면 Phase 1.5로.
 
+### Fast path — Draft-and-Confirm (신호 충분하면 이쪽이 default)
+
+6개를 빈 질문으로 던지기 전에, 컨텍스트(`$ARGUMENTS`·대상 코드·CLAUDE.md·기존 테스트 컨벤션)에서 **답을 먼저 추론해 채워진 초안으로 제시**하고 사용자는 틀린 것만 고친다 (빈 폼 아님 — *채워진 초안의 교정*):
+
+```
+📝 Intent 초안 — 추론으로 채웠습니다. 틀린 항목만 정정해 주세요.
+
+1. 목표:   <초안>  [inferred — $ARGUMENTS "<인용>"]
+2. Happy:  <초안>  [inferred — 대상 코드 시그니처]
+3. Edge:   <초안>  [guessed — 확인 권장]
+4. Error:  <초안>  [guessed]
+5. Out:    <초안>  [inferred]
+6. 관찰:   <초안>  [verified — 기존 테스트 컨벤션]
+
+(모호 발화·답변 간 충돌 검사 포함 — 이 카드가 Phase 1.5 합산 확인을 겸함)
+
+답변: yes (Phase 2 진입) / 정정 <번호> <내용> / 전체 인터뷰 (순차 질문으로 전환)
+```
+
+- **발동 조건**: 6답 중 **과반이 `[verified]/[inferred]`**일 때만. 과반이 `[guessed]`면 fast path 금지 — 기존 순차 인터뷰로 (추측 초안 강요는 정렬이 아니라 오염).
+- **이중 확인 방지**: 초안에 `yes`면 Phase 1.5를 *별도 출력하지 않음* (이 카드가 합산 확인 겸임). 정정이 2개 이상 나오면 정정 반영 후 Phase 1.5를 1회 수행.
+- Phase 0 Scope 답도 신호가 있으면 같은 카드에 초안으로 포함 가능 (왕복 추가 절약).
+- **escalation**: 사용자가 `전체 인터뷰` 선택 또는 초안이 연속 2회 크게 틀리면 순차 인터뷰로 전환.
+
 ## Phase 1.5 — Final Intent Confirm (Phase 2 진입 직전)
 
 Phase 1 6 답변을 **합산 해석·모호 발화 검사·답변 충돌 자가검증** 후 명시 yes 받기 (→ `~/.claude/commands/references/final-confirm.md`).
@@ -114,6 +138,7 @@ describe('<subject>', () => {
 
 - 본문을 채우되 **구현 파일은 아직 읽거나 쓰지 않는다**.
 - 테스트는 **함수 시그니처와 Phase 1~2 합의**만 참조.
+- **의도 헤더 기본 포함**: 테스트 파일 상단에 Phase 1.5 확정 답을 JSDoc으로 — `@intent 목표 / @happy / @edge / @error / @outofscope / @observe`. 별도 질문 불필요 (작성 중인 파일의 일부).
 - 모든 테스트가 **FAIL**인 상태로 커밋:
   ```
   test: add failing tests for <subject>
@@ -129,6 +154,11 @@ describe('<subject>', () => {
 
 - 테스트 GREEN 유지하며 구조 개선.
 - **Intent Preservation 체크**: Phase 1 답변을 다시 읽고 구현이 의도를 충족하는지 **테스트와 별개로** 확인.
+
+### 의도 헤더 동기화 (Phase 3에서 기본 작성된 것)
+
+- Intent Preservation 체크 시 **의도 헤더도 현행과 일치하는지** 확인 — Phase 2~5 도중 의도가 정정됐으면 헤더 갱신 (테스트 파일과 같이 살므로 diff에 자연 노출).
+- 이 헤더는 이후 `/cfh-review`(리뷰 기준 원래 의도)·`/cfh-refactor`(보존할 행동)·`/cfh-tc`(의도 충돌 방지)가 *있으면* 읽는다 — 없어도 각 자산은 정상 동작 (강제 아님).
 
 ## 오버핏 방지 — 반드시 지킬 5가지
 

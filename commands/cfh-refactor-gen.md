@@ -118,6 +118,8 @@ BE / 스택 중립 리팩터링 워크플로를 시작합니다.
 
 ## Step 4 — Safety Net 구축 (BE 컨텍스트)
 
+대상의 테스트 파일 상단에 **의도 주석**(docstring·doc comment — TDD 영속화 산출물)이 *있으면* "보존해야 할 행동"의 출처로 우선 사용. 없으면 생략.
+
 | 테스트 상태 | 대응 |
 |---|---|
 | 충분 | unit + integration GREEN 확인 후 Step 5 |

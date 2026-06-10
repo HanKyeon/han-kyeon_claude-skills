@@ -500,7 +500,8 @@ cfh install --link              →  removed (dev: npm link)
 | **0.28.0**  | test-quality 단일 출처 — 리트머스·피라미드·부작용 테스트·의도 명시·AAA·시간고정 (tdd-first·tdd-general·cfh-tc(-gen) 공유, anti-overfit과 역할 분리, FE/BE 분기) | ✅ release             |
 | **0.28.1**  | cfh-plan 직접 실행 경로에 품질 도구 연결 (crosscheck·test-quality) — 위임/직접 *모든 경로*에서 코드 품질 측정 전이 도달 | ✅ release             |
 | **0.28.2**  | test-quality에 테스트 생략 규칙 — 커버리지=진단(상한/하한), 생략엔 사유 카탈로그(자명·타입·시각·라이브러리·싼계층), 변경 행동 테스트함/생략 분류로 누락 가시화 | ✅ release             |
-| **0.28.x+** | 다음 audit run 결과 + 외부 사용자 feedback            | 베이킹 + 외부 검증     |
+| **0.29.0**  | FEEDBACK §2·§3 — TDD 인터뷰 Draft-and-Confirm fast path(신호 충분 시 채워진 초안 교정, 약하면 순차) + 의도 헤더 기본 작성(테스트 파일 일부 · FE=JSDoc / non-FE=docstring 등 관용 주석) + review·refactor(-gen)·tc(-gen) "있으면 활용" | ✅ release             |
+| **0.29.x+** | FEEDBACK §1 — Phase 0 self-sample 측정 (신규 동결)    | 측정 우선              |
 | **1.0.0**   | (사용자 판단 — 자동 게이트 아님)                      | 안정성 체크리스트 검토 |
 
 각 마일스톤의 변경 내역은 `cfh list`로 설치된 자산을 확인 (각 자산의 `managed@<version>` 표시 + frontmatter description).

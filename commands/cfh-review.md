@@ -105,6 +105,7 @@ Step 1로 진행.
 - `.eslintrc*`, `.prettierrc*`, `tsconfig.json` — 정적 규칙
 - `package.json` 또는 `pyproject.toml` / `Cargo.toml` / `go.mod` / `pom.xml` — 스택·주요 라이브러리
 - `src/` 또는 `app/` 내 대표 파일 3~5개 (기존 스타일 샘플링)
+- 변경 대상의 테스트 파일 상단 **의도 JSDoc**(`@intent`·`@outofscope` 등 — TDD Phase 5 영속화 산출물) — *있으면* 리뷰 기준 "원래 의도"로 수집. 없으면 생략
 
 ### 스택 감지 (`stack_kind`)
 

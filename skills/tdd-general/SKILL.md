@@ -80,6 +80,10 @@ Phase 5: Refactor + Intent Preservation (리팩터링 + Phase 1 답변 재확인
 
 각 Phase의 절차·원칙은 `tdd-first` 본문과 동일. **차이는 예시·관용구·라이브러리 가정**입니다.
 
+**Fast path — Draft-and-Confirm** (`tdd-first` Phase 1 동일): 신호 충분하면(6답 과반 `[verified]/[inferred]`) 빈 질문 대신 *채워진 초안*을 제시하고 틀린 것만 정정받는다. 초안 `yes`면 Phase 1.5 별도 출력 생략(카드가 겸임). 과반 `[guessed]`면 순차 인터뷰로.
+
+**의도 헤더** (`tdd-first` Phase 3 동일 — 테스트 파일 작성 시 **기본 포함**, 별도 질문 불필요, **단 형식은 스택 관용 주석**): JSDoc은 JS 컨벤션이므로 해당 언어의 관용으로 — Python **docstring**, Go 함수/패키지 주석, Rust `///` doc comment, Java/Kotlin Javadoc/KDoc 등. 내용 구조(목표/happy/edge/error/out-of-scope/관찰)는 동일.
+
 ### Phase 1.5 — Final Intent Confirm (Phase 2 진입 직전)
 
 `tdd-first`와 동일하게 Phase 1 6 답변을 *합산 해석·모호 발화 검사·답변 충돌 자가검증* 후 명시 yes 받기 (→ `~/.claude/commands/references/final-confirm.md`).
