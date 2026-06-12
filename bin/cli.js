@@ -367,8 +367,11 @@ async function main() {
           process.exitCode = 1;
           break;
         }
+        // positional은 flag '값'을 제거하지 않음 — --anchor half의 'half'가
+        // 스크립트의 [project-path] 인자로 새는 것을 차단 (e2e 실측에서 발견)
+        const clonePositional = positional.filter((p) => p !== flags.anchor);
         const anchorArgs = flags.anchor ? ['--anchor', flags.anchor] : [];
-        const res = spawnSync('bash', [scriptPath, ...positional, ...anchorArgs], { stdio: 'inherit' });
+        const res = spawnSync('bash', [scriptPath, ...clonePositional, ...anchorArgs], { stdio: 'inherit' });
         process.exitCode = res.status == null ? 1 : res.status;
         break;
       }

@@ -262,20 +262,21 @@ cfh_clone_conversation() {
 
     # CFH-aware cut point. --anchor <sentinel|command|half> 가 있으면 그 후보를 사용 (사용자 선택),
     # 없으면 추천 룰: sentinel·command 중 더 이른 쪽 (확정 의도는 항상 생존). 둘 다 없으면 halfway.
-    local skip_clean_count="" cut_reason="halfway" cut_trim_pct=""
+    local skip_clean_count="" cut_reason="halfway" cut_trim_pct="" cut_anchor_line=""
     if command -v cfh &> /dev/null; then
         local cut_vars
         if cut_vars=$(cfh clone-cut "$source_file" --sh 2>/dev/null); then
             eval "$cut_vars"
             # 1) 사용자 선택 (--anchor)
-            local want_skip="" want_trim=""
+            local want_skip="" want_trim="" want_line=""
             case "${CFH_ANCHOR:-}" in
-                sentinel) want_skip="${CFH_CUT_SKIP_SENTINEL:-}"; want_trim="${CFH_CUT_TRIM_SENTINEL:-}" ;;
-                command)  want_skip="${CFH_CUT_SKIP_COMMAND:-}";  want_trim="${CFH_CUT_TRIM_COMMAND:-}" ;;
-                half|halfway) want_skip="${CFH_CUT_SKIP_HALF:-}"; want_trim="${CFH_CUT_TRIM_HALF:-}" ;;
+                sentinel) want_skip="${CFH_CUT_SKIP_SENTINEL:-}"; want_trim="${CFH_CUT_TRIM_SENTINEL:-}"; want_line="${CFH_CUT_LINE_SENTINEL:-}" ;;
+                command)  want_skip="${CFH_CUT_SKIP_COMMAND:-}";  want_trim="${CFH_CUT_TRIM_COMMAND:-}"; want_line="${CFH_CUT_LINE_COMMAND:-}" ;;
+                half|halfway) want_skip="${CFH_CUT_SKIP_HALF:-}"; want_trim="${CFH_CUT_TRIM_HALF:-}"; want_line="${CFH_CUT_LINE_HALF:-}" ;;
             esac
             if [ -n "${CFH_ANCHOR:-}" ] && [ -n "$want_skip" ]; then
                 skip_clean_count=$want_skip
+                cut_anchor_line=$want_line
                 cut_reason="${CFH_ANCHOR}(selected)"
                 cut_trim_pct=$want_trim
             elif [ -n "${CFH_ANCHOR:-}" ]; then
@@ -284,6 +285,7 @@ cfh_clone_conversation() {
             # 2) 추천 룰
             if [ -z "$skip_clean_count" ] && [ "${CFH_CUT_REASON:-none}" != "none" ] && [ -n "${CFH_CUT_SKIP:-}" ]; then
                 skip_clean_count=$CFH_CUT_SKIP
+                cut_anchor_line=${CFH_CUT_ANCHOR_LINE:-}
                 cut_reason=$CFH_CUT_REASON
                 cut_trim_pct=${CFH_CUT_TRIM_PCT:-}
             fi
@@ -304,9 +306,14 @@ cfh_clone_conversation() {
 
     # Get the line number of the (skip_clean_count + 1)th clean user message
     local skip_count
-    skip_count=$(echo "$clean_user_line_numbers" | sed -n "$((skip_clean_count + 1))p")
-    # We want to skip lines BEFORE this one, so subtract 1
-    skip_count=$((skip_count - 1))
+    if [ -n "$cut_anchor_line" ]; then
+        # clone-cut이 준 라인을 직접 사용 — lib(JSON.parse)와 awk 분류가 어긋나도 절단점은 정확
+        skip_count=$((cut_anchor_line - 1))
+    else
+        skip_count=$(echo "$clean_user_line_numbers" | sed -n "$((skip_clean_count + 1))p")
+        # We want to skip lines BEFORE this one, so subtract 1
+        skip_count=$((skip_count - 1))
+    fi
 
     log_info "Skipping first $skip_clean_count clean user messages ($skip_count lines), keeping $keep_clean_count clean user messages"
 
