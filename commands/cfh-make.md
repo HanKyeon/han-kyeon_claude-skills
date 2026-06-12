@@ -87,10 +87,10 @@ Q3 트리거: <답변 or N/A>
 
 📌 추천: <skill | command | team | agent> 생성
    이유:
-     - [verified] Q1 답이 "<인용>" — 반복 작업 신호
-     - [verified] Q2 답이 "<인용>" — 단일/협업 분기 결정
-     - [inferred] Q3 트리거 명확/모호 → skill vs command 분기
-     - [guessed] (필요 시) — 사용자 확인 권장
+     - 🟢 [verified] Q1 답이 "<인용>" — 반복 작업 신호
+     - 🟢 [verified] Q2 답이 "<인용>" — 단일/협업 분기 결정
+     - 🟡 [inferred] Q3 트리거 명확/모호 → skill vs command 분기
+     - 🔴 [guessed] (필요 시) — 사용자 확인 권장
 
 다른 옵션:
   - <대안 종류> — 사용자가 <조건>이면 적합 (예: "처음엔 command로 시작, 정착하면 skill로")

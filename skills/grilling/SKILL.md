@@ -175,9 +175,9 @@ For each unresolved node, in tree order:
 
 📌 추천: <your recommended answer>
    이유:
-     - [verified] <fact from code/Q>
-     - [inferred] <reasonable deduction>
-     - [guessed] <weak signal, needs user confirmation>
+     - 🟢 [verified] <fact from code/Q>
+     - 🟡 [inferred] <reasonable deduction>
+     - 🔴 [guessed] <weak signal, needs user confirmation>
 
 다른 옵션:
    - <option B> — when <condition>
@@ -214,8 +214,8 @@ Code may inform the **rationale** of your recommendation, but never the decision
 
 📌 추천: zustand 사용
    이유:
-     - [verified] src/features/coupon/CouponInput.tsx:5에 useCouponStore 이미 사용 — 일관성
-     - [inferred] 다른 페이지에서도 쿠폰 상태 접근 가능성 → shared store 적합
+     - 🟢 [verified] src/features/coupon/CouponInput.tsx:5에 useCouponStore 이미 사용 — 일관성
+     - 🟡 [inferred] 다른 페이지에서도 쿠폰 상태 접근 가능성 → shared store 적합
    ⚠ 다만 이 plan은 새 진입점이라 사용자가 다른 선택 가능 — local state·server state·URL state 옵션 열려 있음.
 
 다른 옵션:

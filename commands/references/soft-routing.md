@@ -113,8 +113,8 @@
 
 ```
 📦 Stack signal
-  - [inferred] 발화에 'API handler' + 'idempotency' → BE 컨텍스트
-  - [verified] 인자에 .go 확장자 → Go backend
+  - 🟡 [inferred] 발화에 'API handler' + 'idempotency' → BE 컨텍스트
+  - 🟢 [verified] 인자에 .go 확장자 → Go backend
   - 결론: BE 작업으로 가정. /cfh-tdd-gen·/cfh-refactor-gen·/cfh-tc-gen 권장.
   - 다른 stack이면 사용자가 명시 정정.
 ```

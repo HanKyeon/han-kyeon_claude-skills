@@ -187,9 +187,9 @@ Phase 2 Hypothesis로 진행할까요?
 ```
 📌 추천: 가설 <N>부터 검증
    이유:
-     - [verified] <Phase 0 증거 인용 — 시점/스택트레이스/환경 등>
-     - [inferred] 확인 비용 가장 낮음 — <도구·시간 추정 1줄>
-     - [guessed] (있다면 명시) 다른 가설보다 prior probability 높음
+     - 🟢 [verified] <Phase 0 증거 인용 — 시점/스택트레이스/환경 등>
+     - 🟡 [inferred] 확인 비용 가장 낮음 — <도구·시간 추정 1줄>
+     - 🔴 [guessed] (있다면 명시) 다른 가설보다 prior probability 높음
 
 다른 옵션:
    - 가설 <M>부터 — <조건: 예 "프로덕션 환경 접근이 어려울 때 dev 재현 우선">

@@ -69,6 +69,7 @@ const flags = {
   session: getFlagValue(args, '--session'),
   json: args.includes('--json'),
   sh: args.includes('--sh'),
+  anchor: getFlagValue(args, '--anchor'),
   manual: args.includes('--manual'),
   executor: getFlagValue(args, '--executor'),
   baseline: args.includes('--baseline'),
@@ -366,7 +367,8 @@ async function main() {
           process.exitCode = 1;
           break;
         }
-        const res = spawnSync('bash', [scriptPath, ...positional], { stdio: 'inherit' });
+        const anchorArgs = flags.anchor ? ['--anchor', flags.anchor] : [];
+        const res = spawnSync('bash', [scriptPath, ...positional, ...anchorArgs], { stdio: 'inherit' });
         process.exitCode = res.status == null ? 1 : res.status;
         break;
       }

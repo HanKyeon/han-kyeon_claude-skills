@@ -52,9 +52,9 @@ grep -rn "validateCoupon\|from.*coupon" --include=*.{ts,tsx,js,py,go,java,kt,rs}
 
 ```
 🔍 영향범위 크로스체크
-   추론: <LLM이 말한 영향처>  [guessed/inferred]
+   추론: <LLM이 말한 영향처>  🔴/🟡 [guessed/inferred]
    추출: grep "<symbol>" → <실제 참조 위치 목록>
-   ⚠ 누락: <추론에 없던 참조> [verified] (high)
+   ⚠ 누락: <추론에 없던 참조> 🟢 [verified] (high)
            예: admin/couponPanel.tsx:42 — validateCoupon import, 추론에서 누락
    ✅ 일치: <추론과 추출이 맞은 부분>
    ℹ 한계: grep은 정적 — 동적 import·리플렉션·문자열 참조는 못 잡음 (참고용)
@@ -62,7 +62,7 @@ grep -rn "validateCoupon\|from.*coupon" --include=*.{ts,tsx,js,py,go,java,kt,rs}
 
 누락이 없으면:
 ```
-🔍 크로스체크: 추론한 영향처가 grep 결과와 일치 — 누락 없음 [verified]
+🔍 크로스체크: 추론한 영향처가 grep 결과와 일치 — 누락 없음 🟢 [verified]
 ```
 
 ## 한계 (과대평가 방지 — 반드시 명시)

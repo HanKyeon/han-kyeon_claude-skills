@@ -66,13 +66,13 @@ BE / 스택 중립 리팩터링 워크플로를 시작합니다.
    예 (단일 endpoint 리팩터):
      "단일 파일 (handler)"
      이유:
-       - [verified] $ARGUMENTS가 src/api/foo.controller.ts 한 파일
-       - [inferred] Blast Radius가 좁아 contract 테스트로 안전망 충분
+       - 🟢 [verified] $ARGUMENTS가 src/api/foo.controller.ts 한 파일
+       - 🟡 [inferred] Blast Radius가 좁아 contract 테스트로 안전망 충분
    예 (DB 모델 변경 동반):
      "모듈 (handler + repository + migration)"
      이유:
-       - [verified] DB schema 영향
-       - [inferred] migration·repository·handler가 한 묶음으로 가야 일관성
+       - 🟢 [verified] DB schema 영향
+       - 🟡 [inferred] migration·repository·handler가 한 묶음으로 가야 일관성
 
 다른 옵션:
   - <대안> — <조건>일 때 적합
@@ -139,9 +139,9 @@ BE / 스택 중립 리팩터링 워크플로를 시작합니다.
 ```
 📌 추천 분할 전략: <Vertical Slice | Horizontal Slice | Scaffolding | Adapter | Strangler Fig>
    이유:
-     - [verified] Blast Radius 결과 — 영향 endpoint·repository·migration 수
-     - [verified] Q3 행동 변경 여부 — API contract 보존이면 Adapter / Strangler Fig 적합
-     - [inferred] migration 의존성 — DB 변경이 먼저 deploy되어야 backward-compat 유지
+     - 🟢 [verified] Blast Radius 결과 — 영향 endpoint·repository·migration 수
+     - 🟢 [verified] Q3 행동 변경 여부 — API contract 보존이면 Adapter / Strangler Fig 적합
+     - 🟡 [inferred] migration 의존성 — DB 변경이 먼저 deploy되어야 backward-compat 유지
 
 다른 옵션:
    - Vertical Slice — endpoint + handler + repository + migration 한 PR (작은 새 기능에 적합)

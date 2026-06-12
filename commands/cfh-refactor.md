@@ -54,13 +54,13 @@
    예 (대상이 단일 컴포넌트일 때):
      "단일 파일"
      이유:
-       - [verified] 대상이 src/components/Foo.tsx 한 파일
-       - [inferred] Blast Radius가 좁아 안전망 작게 가능
+       - 🟢 [verified] 대상이 src/components/Foo.tsx 한 파일
+       - 🟡 [inferred] Blast Radius가 좁아 안전망 작게 가능
    예 (legacy 디렉터리 정리일 때):
      "디렉터리 전체"
      이유:
-       - [verified] $ARGUMENTS가 디렉터리 경로
-       - [inferred] 일관성 유지 위해 한 PR에 묶는 게 자연스러움
+       - 🟢 [verified] $ARGUMENTS가 디렉터리 경로
+       - 🟡 [inferred] 일관성 유지 위해 한 PR에 묶는 게 자연스러움
 
 다른 옵션:
   - <대안> — <조건>일 때 적합
@@ -136,9 +136,9 @@ Blast Radius를 *추론으로만* 끝내지 말고, 변경 대상 심볼을 **Gr
 ```
 📌 추천 분할 전략: <Vertical Slice | Horizontal Slice | Scaffolding | Adapter>
    이유:
-     - [verified] Blast Radius 결과 — <영향 파일 수·도메인 경계>
-     - [verified] Q3 행동 변경 여부 — 보존만이면 Scaffolding 적합 등
-     - [inferred] PR 분할 시 의존성 순서 — 어느 PR이 먼저 가야 하는지
+     - 🟢 [verified] Blast Radius 결과 — <영향 파일 수·도메인 경계>
+     - 🟢 [verified] Q3 행동 변경 여부 — 보존만이면 Scaffolding 적합 등
+     - 🟡 [inferred] PR 분할 시 의존성 순서 — 어느 PR이 먼저 가야 하는지
 
 다른 옵션:
    - Vertical Slice — 사용자 동선 전체를 한 PR에 (test→impl→consumer) — 작은 기능에 적합

@@ -157,9 +157,9 @@ Phase 2 이후에 초반 답변이 틀렸다고 판단되면 아래 트리거로
 ```
 📌 추천 mode: <subagent | teams>
    이유:
-     - [verified] 패턴이 <X> → <적합 mode> 매칭
-     - [inferred] Q5 규모 답이 <N agents> → <subagent 안정 / teams 가치>
-     - [guessed] (있으면)
+     - 🟢 [verified] 패턴이 <X> → <적합 mode> 매칭
+     - 🟡 [inferred] Q5 규모 답이 <N agents> → <subagent 안정 / teams 가치>
+     - 🔴 [guessed] (있으면)
 
 다른 옵션:
    - subagent — 토큰 예측 가능·디버깅 쉬움·flag 불필요

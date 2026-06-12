@@ -99,9 +99,9 @@ Adversary agent prompt:
   3. 다음 단계가 *명확해 보이지만 사실 모호한 이유*
   
   각 발견:
-    - [verified]: PROGRESS.md 본문 명시 영향
-    - [inferred]: 코드·이전 PROGRESS.md·자산 보고 합리적 추론
-    - [guessed]: 근거 약함 — 사용자 명시 확인 권장
+    - 🟢 [verified]: PROGRESS.md 본문 명시 영향
+    - 🟡 [inferred]: 코드·이전 PROGRESS.md·자산 보고 합리적 추론
+    - 🔴 [guessed]: 근거 약함 — 사용자 명시 확인 권장
   
   '깨질 수도' 남발 금지 — [guessed]는 *직접 인용 가능한 신호*가 있을 때만.
   
@@ -134,9 +134,9 @@ Defender agent prompt:
 
 Round 1:
   Adversary 발견:
-    - [verified] <발견 1 — 본문 인용>
-    - [inferred] <발견 2 — 추론 근거>
-    - [guessed] <발견 3 — 약한 신호, 확인 권장>
+    - 🟢 [verified] <발견 1 — 본문 인용>
+    - 🟡 [inferred] <발견 2 — 추론 근거>
+    - 🔴 [guessed] <발견 3 — 약한 신호, 확인 권장>
   
   Defender 결정:
     - 발견 1: <(a)/(b)/(c)> — <근거>

@@ -33,9 +33,9 @@
 ```
 📌 추천 mode: <subagent | teams>
    이유:
-     - [verified] 패턴이 <X> → <적합 mode> 매칭
-     - [inferred] 사용자 규모 답이 <N agents> → <조건>
-     - [guessed] (있으면 표기)
+     - 🟢 [verified] 패턴이 <X> → <적합 mode> 매칭
+     - 🟡 [inferred] 사용자 규모 답이 <N agents> → <조건>
+     - 🔴 [guessed] (있으면 표기)
 
 다른 옵션:
    - subagent — 토큰 예측 가능·디버깅 쉬움·flag 불필요

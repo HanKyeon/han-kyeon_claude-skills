@@ -503,7 +503,8 @@ cfh install --link              →  removed (dev: npm link)
 | **0.28.2**  | test-quality에 테스트 생략 규칙 — 커버리지=진단(상한/하한), 생략엔 사유 카탈로그(자명·타입·시각·라이브러리·싼계층), 변경 행동 테스트함/생략 분류로 누락 가시화 | ✅ release             |
 | **0.29.0**  | FEEDBACK §2·§3 — TDD 인터뷰 Draft-and-Confirm fast path(신호 충분 시 채워진 초안 교정, 약하면 순차) + 의도 헤더 기본 작성(테스트 파일 일부 · FE=JSDoc / non-FE=docstring 등 관용 주석) + review·refactor(-gen)·tc(-gen) "있으면 활용" | ✅ release             |
 | **0.30.0**  | `/cfh-clone`·`cfh clone(-cut)` — CFH-aware 세션 클론(confirm sentinel·cfh 명령 앵커 중 이른 쪽부터 꼬리 보존, 앵커 없으면 절반 컷 폴백) + final-confirm sentinel + cfh-review 실패 예산(finding 인용 Read 검증·실패 축 가시화 — 각 1회 bounded) | ✅ release             |
-| **0.29.x+** | FEEDBACK §1 — Phase 0 self-sample 측정 (신규 동결)    | 측정 우선              |
+| **0.31.0**  | confidence 마커 신호등 병기 — 출력 카드에서 `🟢 [verified]`·`🟡 [inferred]`·`🔴 [guessed]` (emoji+공백, prose·백틱 제외, bracket 토큰은 기계 기준 유지, 🟢🟡🔴 confidence 전용 예약) + cfh-clone 절단 지점 선택(확정의도/워크플로/절반 후보를 trim%와 함께 제시, `--anchor`로 실행 — 타이핑 선택이라 카드 생존+선택 기록이 새 세션에 남음. 같은 turn 실행 시 카드 잘리는 버그 수정) | ✅ release             |
+| **0.31.x+** | FEEDBACK §1 — Phase 0 self-sample 측정 (신규 동결)    | 측정 우선              |
 | **1.0.0**   | (사용자 판단 — 자동 게이트 아님)                      | 안정성 체크리스트 검토 |
 
 각 마일스톤의 변경 내역은 `cfh list`로 설치된 자산을 확인 (각 자산의 `managed@<version>` 표시 + frontmatter description).

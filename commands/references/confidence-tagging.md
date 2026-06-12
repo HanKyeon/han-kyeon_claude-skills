@@ -14,13 +14,23 @@
 
 모두 같은 톤으로 출력되면, 사용자는 어느 부분에 압박을 줘야 하는지 모릅니다. 추측이 사실처럼 보이면 잘못된 의사결정의 출발점이 됨.
 
-## 권장 마커 — 3 단계
+## 권장 마커 — 3 단계 (신호등 emoji 병기)
 
 | 마커 | 의미 | 사용 예 |
 |---|---|---|
-| `[verified]` | 코드·문서·사용자 답변에서 **직접 확인** | `[verified] package.json에 react 18.3.1 명시` |
-| `[inferred]` | 직접 보지 않았지만 **합리적 추론** | `[inferred] Vitest 사용 → MSW 같이 쓸 가능성 높음` |
-| `[guessed]` | 근거 약한 추측, **사용자 검증 필요** | `[guessed] strict mode 선호로 보임 — 확인 부탁` |
+| `🟢 [verified]` | 코드·문서·사용자 답변에서 **직접 확인** | `🟢 [verified] package.json에 react 18.3.1 명시` |
+| `🟡 [inferred]` | 직접 보지 않았지만 **합리적 추론** | `🟡 [inferred] Vitest 사용 → MSW 같이 쓸 가능성 높음` |
+| `🔴 [guessed]` | 근거 약한 추측, **사용자 검증 필요** | `🔴 [guessed] strict mode 선호로 보임 — 확인 부탁` |
+
+### Emoji 병기 규칙
+
+출력 카드에서 마커는 신호등 emoji와 병기 — **emoji와 tag 사이 공백 하나** (`🟢 [verified]`).
+
+- **이유**: 색 그라데이션은 글자보다 먼저 스캔됨 — 사용자가 읽기 전에 "🔴만 압박"이 가능
+- 🔴은 경고를 겸함 — 추측은 검증 없이 믿지 말라는 `[guessed]`의 본뜻
+- **기계 토큰은 bracket이 기준**: `cfh doctor --strict-confidence`·contract test는 `[verified]` 텍스트를 검사. emoji는 시각 접두라 검사와 무관 — 단 출력 표준은 병기
+- **prose·백틱 인용에는 병기 안 함**: 마커를 *언급*할 때(예: "답이 모두 `[guessed]`면")는 글자만. emoji는 실제 출력 카드 전용
+- **🟢🟡🔴은 confidence 전용 예약** — severity(high/medium/low) 등 다른 3단계 척도에 재사용 금지 (의미 충돌 방지)
 
 ## 적용 예시
 
@@ -39,10 +49,10 @@
 
 ```
 프로젝트 분석 결과:
-- [verified] React 18.3.1 사용 (package.json 확인)
-- [verified] Vitest 5.x — vite.config.ts에서 setup
-- [inferred] MSW 같이 쓸 가능성 — Vitest + 테스트에서 fetch mock 패턴 발견
-- [guessed] strict mode 선호 — tsconfig.json 미확인, 일반적 컨벤션 가정
+- 🟢 [verified] React 18.3.1 사용 (package.json 확인)
+- 🟢 [verified] Vitest 5.x — vite.config.ts에서 setup
+- 🟡 [inferred] MSW 같이 쓸 가능성 — Vitest + 테스트에서 fetch mock 패턴 발견
+- 🔴 [guessed] strict mode 선호 — tsconfig.json 미확인, 일반적 컨벤션 가정
 ```
 
 → 사용자가 "guessed 부분만 확인해 줘"라고 빠르게 좁힐 수 있음.
@@ -81,10 +91,10 @@
 
 ## 출력 컨벤션
 
-분석·추론 결과는 confidence 마커를 붙여 표기:
-- `[verified]` 직접 확인한 사실
-- `[inferred]` 합리적 추론
-- `[guessed]` 근거 약한 추측 — 사용자 검증 권장
+분석·추론 결과는 confidence 마커를 붙여 표기 (신호등 emoji + 공백 병기):
+- `🟢 [verified]` 직접 확인한 사실
+- `🟡 [inferred]` 합리적 추론
+- `🔴 [guessed]` 근거 약한 추측 — 사용자 검증 권장
 
 상세는 `commands/references/confidence-tagging.md`.
 
@@ -106,9 +116,9 @@
 
 ```
 📦 Project Alignment Check
-  - [verified] 신규 의존성 없음 — package.json 변경 없음
-  - [inferred] 모듈 경계 유지 — payments/·orders/ 구조 그대로
-  - [guessed] migration 일치 — CLAUDE.md 명시 없어 추정 기반
+  - 🟢 [verified] 신규 의존성 없음 — package.json 변경 없음
+  - 🟡 [inferred] 모듈 경계 유지 — payments/·orders/ 구조 그대로
+  - 🔴 [guessed] migration 일치 — CLAUDE.md 명시 없어 추정 기반
 ```
 
 마지막 항목이 `[guessed]`로 표시되면 사용자는 "이건 내가 확인해봐야겠다"를 즉시 인지.

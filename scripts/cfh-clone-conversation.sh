@@ -260,14 +260,29 @@ cfh_clone_conversation() {
         exit 1
     fi
 
-    # CFH-aware cut point: latest Final-Intent-Confirm sentinel vs latest /cfh-* command,
-    # whichever is EARLIER (confirmed intent always survives). Falls back to halfway.
+    # CFH-aware cut point. --anchor <sentinel|command|half> 가 있으면 그 후보를 사용 (사용자 선택),
+    # 없으면 추천 룰: sentinel·command 중 더 이른 쪽 (확정 의도는 항상 생존). 둘 다 없으면 halfway.
     local skip_clean_count="" cut_reason="halfway" cut_trim_pct=""
     if command -v cfh &> /dev/null; then
         local cut_vars
         if cut_vars=$(cfh clone-cut "$source_file" --sh 2>/dev/null); then
             eval "$cut_vars"
-            if [ "${CFH_CUT_REASON:-none}" != "none" ] && [ -n "${CFH_CUT_SKIP:-}" ]; then
+            # 1) 사용자 선택 (--anchor)
+            local want_skip="" want_trim=""
+            case "${CFH_ANCHOR:-}" in
+                sentinel) want_skip="${CFH_CUT_SKIP_SENTINEL:-}"; want_trim="${CFH_CUT_TRIM_SENTINEL:-}" ;;
+                command)  want_skip="${CFH_CUT_SKIP_COMMAND:-}";  want_trim="${CFH_CUT_TRIM_COMMAND:-}" ;;
+                half|halfway) want_skip="${CFH_CUT_SKIP_HALF:-}"; want_trim="${CFH_CUT_TRIM_HALF:-}" ;;
+            esac
+            if [ -n "${CFH_ANCHOR:-}" ] && [ -n "$want_skip" ]; then
+                skip_clean_count=$want_skip
+                cut_reason="${CFH_ANCHOR}(selected)"
+                cut_trim_pct=$want_trim
+            elif [ -n "${CFH_ANCHOR:-}" ]; then
+                log_warning "--anchor ${CFH_ANCHOR}: candidate not present in this session — falling back to recommended rule"
+            fi
+            # 2) 추천 룰
+            if [ -z "$skip_clean_count" ] && [ "${CFH_CUT_REASON:-none}" != "none" ] && [ -n "${CFH_CUT_SKIP:-}" ]; then
                 skip_clean_count=$CFH_CUT_SKIP
                 cut_reason=$CFH_CUT_REASON
                 cut_trim_pct=${CFH_CUT_TRIM_PCT:-}
@@ -623,6 +638,17 @@ fi
 if [ $# -lt 1 ]; then
     usage
 fi
+
+# --anchor <sentinel|command|half> 추출 (위치 무관)
+CFH_ANCHOR=""
+_args=()
+_expect_anchor=""
+for _a in "$@"; do
+    if [ -n "$_expect_anchor" ]; then CFH_ANCHOR="$_a"; _expect_anchor=""; continue; fi
+    if [ "$_a" = "--anchor" ]; then _expect_anchor=1; continue; fi
+    _args+=("$_a")
+done
+set -- ${_args[@]+"${_args[@]}"}
 
 SESSION_ID="$1"
 PROJECT_PATH="${2:-$(pwd)}"

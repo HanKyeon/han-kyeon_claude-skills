@@ -52,10 +52,10 @@
 ```
 📌 추천 패턴: <Pattern>
    이유:
-     - [verified] Q1 답이 "<인용>" — <적합 신호> 매칭
-     - [verified] Q4 실패 비용이 "<인용>"
-     - [inferred] Q3 전문성 축이 N개 — 패턴의 sweet spot
-     - [guessed] (있다면) 사용자 답에서 추정한 부분
+     - 🟢 [verified] Q1 답이 "<인용>" — <적합 신호> 매칭
+     - 🟢 [verified] Q4 실패 비용이 "<인용>"
+     - 🟡 [inferred] Q3 전문성 축이 N개 — 패턴의 sweet spot
+     - 🔴 [guessed] (있다면) 사용자 답에서 추정한 부분
 
 다른 옵션:
    - <대안 패턴> — 사용자가 <조건>이면 적합 (예: "런타임 분기가 더 명확하면 Supervisor")
@@ -91,8 +91,8 @@
 ```
 📌 추천 mode: <subagent | teams>
    이유:
-     - [verified] 패턴이 <X> → <적합 mode>
-     - [inferred] Q5 규모 <N> → <조건>
+     - 🟢 [verified] 패턴이 <X> → <적합 mode>
+     - 🟡 [inferred] Q5 규모 <N> → <조건>
 
 다른 옵션:
    - subagent — flag 불필요·디버깅 쉬움·token 예측 가능

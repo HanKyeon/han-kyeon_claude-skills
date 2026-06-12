@@ -88,9 +88,9 @@
 
 ```
 📊 신호 분석:
-  - [verified] <감지 신호 1 — 인용·정량 포함>
-  - [verified] <감지 신호 2>
-  - [inferred] <보조 신호>
+  - 🟢 [verified] <감지 신호 1 — 인용·정량 포함>
+  - 🟢 [verified] <감지 신호 2>
+  - 🟡 [inferred] <보조 신호>
 
 💡 추천 패턴: <Adversary | Producer-Reviewer | Expert Pool | ...>
    가치: <어떤 영역>에 <어떻게> 유리
@@ -112,9 +112,9 @@ Phase 3 종료 보고 안에 *Retro 옆*에 inline:
 ```
 💡 Team 활용 가치 (grill 결과 기반)
    📊 신호 분석:
-     - [verified] 결정 #<N>이 <축 1>·<축 2>·<축 3> 다축 관련
-     - [verified] 미해결 노드 <M>개 — 추가 시각 필요
-     - [inferred] <도메인>에 <패턴> 가치
+     - 🟢 [verified] 결정 #<N>이 <축 1>·<축 2>·<축 3> 다축 관련
+     - 🟢 [verified] 미해결 노드 <M>개 — 추가 시각 필요
+     - 🟡 [inferred] <도메인>에 <패턴> 가치
 
    💡 추천 패턴: <Expert Pool | Adversary | Producer-Reviewer | ...>
       가치: <2~3 문장>

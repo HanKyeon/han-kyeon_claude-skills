@@ -86,12 +86,12 @@ AI가 코드 쓰기 전에 **반드시** 아래 질문을 던진다 (→ `refere
 ```
 📝 Intent 초안 <<cfh:final-confirm>> — 추론으로 채웠습니다. 틀린 항목만 정정해 주세요.
 
-1. 목표:   <초안>  [inferred — $ARGUMENTS "<인용>"]
-2. Happy:  <초안>  [inferred — 대상 코드 시그니처]
-3. Edge:   <초안>  [guessed — 확인 권장]
-4. Error:  <초안>  [guessed]
-5. Out:    <초안>  [inferred]
-6. 관찰:   <초안>  [verified — 기존 테스트 컨벤션]
+1. 목표:   <초안>  🟡 [inferred — $ARGUMENTS "<인용>"]
+2. Happy:  <초안>  🟡 [inferred — 대상 코드 시그니처]
+3. Edge:   <초안>  🔴 [guessed — 확인 권장]
+4. Error:  <초안>  🔴 [guessed]
+5. Out:    <초안>  🟡 [inferred]
+6. 관찰:   <초안>  🟢 [verified — 기존 테스트 컨벤션]
 
 (모호 발화·답변 간 충돌 검사 포함 — 이 카드가 Phase 1.5 합산 확인을 겸함)
 
